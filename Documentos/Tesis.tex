@@ -1,0 +1,229 @@
+\documentclass[12pt]{report}
+\usepackage[spanish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{geometry}
+\geometry{letterpaper, margin=2.5cm}
+\usepackage{setspace}
+
+\title{Tesis}
+\author{Ricardo Valera Martinez}
+\date{Febrero 2026}
+
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    
+    {\Large \textbf{Benemérita Universidad Autónoma de Puebla}\par}
+    \vspace{0.3cm}
+    
+    {\large Facultad de Ciencias de la Computación\par}    
+    \vspace{1cm}
+
+    % Asegúrate de que el archivo Logo_BUAP.png esté subido
+    \includegraphics[width=7cm]{Logo_BUAP.png}\par 
+    \vspace{0.8cm}
+
+    {\Large \textbf{T E S I S}\par}
+    \vspace{1.5cm}
+    
+    {\Large \textbf{``Predicción de congestión en redes de computadoras utilizando técnicas de Machine Learning''}\par}
+    \vspace{1.5cm}
+    
+    \begin{spacing}{1.2}
+    Presenta:\\
+    \textbf{Ricardo Valera Martinez}\par
+    \vspace{0.8cm}
+    
+    Para obtener el grado de:\\
+    \textbf{Licenciatura en Ingeniería en Ciencias de la Computación}\par
+    \vspace{1cm}
+    
+    Director: \textbf{Mauro Alberto López Muñoz}\\
+    Codirector: \textbf{Guillermo Colorado Jiménez}
+    \end{spacing}
+    
+    \vfill
+    
+    \begin{flushright}
+    Puebla, Pue., Febrero 2026
+    \end{flushright}
+    
+\end{titlepage}
+
+\tableofcontents
+\listoffigures
+\listoftables
+
+\cleardoublepage
+
+\thispagestyle{empty}
+\begin{center}
+    {\Large \textbf{DEDICATORIA}}\\[2cm]
+
+    \begin{minipage}{0.8\textwidth}
+    \itshape
+    A mi padre, \textbf{Ricardo Valera Hernandez}, por ser el pilar constante en cada etapa de mi formación, por su paciencia, su apoyo incondicional y por nunca dejar de creer en mí incluso cuando yo dudaba, por su ejemplo de responsabilidad y esfuerzo, por enseñarme que el trabajo honesto y la perseverancia son el camino para alcanzar cualquier meta.\\[0.3cm]
+
+    A mi madre, \textbf{Maria Margarita Irma Martinez Perez},  por ser la guía y el apoyo incondicional que hizo posible este trayecto. Gracias por su confianza infinita, por sus palabras que siempre supieron darme fuerza y por estar presente en cada paso de mi formación profesional. Este trabajo es testimonio de su esfuerzo y dedicación constante en mi vida\\[0.3cm]
+
+    A mi novia, \textbf{Vanessa F. Linarte Castañeda}, por su amor, su comprensión y su compañía en los momentos de cansancio y dificultad, por motivarme a seguir adelante cuando parecía imposible y por ser parte fundamental de este logro.\\[0.3cm]
+
+    A mi hermano menor, \textbf{Emilio Valera Martinez}, por su complicidad y apoyo en los momentos de distracción y de enfoque. Gracias por estar ahí, por los consejos y por ser un compañero constante en este camino.\\[0.3cm]
+
+    Al \textbf{Sr. Hector H. Linarte} y la \textbf{Sra. Cristina E. Castañeda}, por recibirme en su familia como a un hijo más, por sus palabras de aliento y por el apoyo incondicional brindado durante este proceso. Su confianza y cariño fueron fundamentales para mantener el ánimo en la recta final.\\[0.3cm]
+
+    A mi director de tesis, el \textbf{Mtro. Mauro Alberto López Muñoz}, y a mi codirector, el \textbf{Mtro. Guillermo Colorado Jiménez}, por su invaluable guía, su paciencia y por compartir su conocimiento para llevar este proyecto a buen puerto.
+    \end{minipage}
+\end{center}
+
+\cleardoublepage
+
+\chapter{Introducción}
+
+\vspace{0.5cm}
+
+\begin{flushright}
+\textit{“El futuro de las redes de computadoras no solo depende de transmitir datos más rápido, sino de hacerlo de manera inteligente.”}
+\end{flushright}
+
+\vspace{0.5cm}
+
+La evolucion en las redes de computadoras ha permitido el desarrollo de una gran cantidad de servicios y aplicaciones que forman parte de la vida cotidiana,
+desde la navegacion web y las plataformas comunicación, hasta los sistemas distribuidos, la computacion en la nube y el intercambio masivo de información en 
+tiempo real. Debido a este crecimiento consatante en la cantidad de dispositivos conectados y el volumen de tráfico generado, las redes modernas enfrentan cada 
+vez mayores desafios relacionados con el rendimiento, la disponibilidad y la calidad del servicio.
+
+\section{Planteamiento del problema}
+Vivimos en una era digital en la que la conectividad se ha convertido en un servicio escencial, tan fundamental como la electricidad o el agua corriente. Desde 
+las videollamadas que nos acercan a nuestros familiares y colegas, hasta las plataformas de streaming que nos ofrecen entretenimiento bajo demanda, pasando por 
+la explosión del internet de las cosas (IoT) que llena nuestros hogares y ciudades de sensores inteligentes, gran parte de nuestra vida cotidiana depende de un 
+flujo constante e ininterrumpido de datos. Según el informe \textit{Cisco Annual Internet Report (2018--2023)}, el número de usuarios de Internet a nivel mundial 
+pasó de 3,900 millones en 2018 a 5,300 millones en 2023, mientras que los dispositivos conectados a redes IP aumentaron de 18,400 millones a 29,300 millones en 
+el mismo período \cite{cisco2020}.
+
+\section{Objetivos}
+\subsection{Objetivo General}
+\subsection{Objetivos Específicos}
+
+\section{Justificacion}
+
+\section{Alcances y Limitaciones}
+
+\cleardoublepage
+
+\chapter{Marco Teórico}
+\section{Fundamentos de redes de computadoras}
+\subsection{Modelo OSI y TCP/IP}
+\subsection{Concepto de congestión}
+
+La congestión de red ocurre cuando la cantidad de datos que intenta atravesar un nodo o enlace supera su capacidad de procesamiento y transmisión. 
+Este fenómeno es común en redes de comunicación donde múltiples dispositivos compiten de manera simultánea por los mismos recursos de red, provocando 
+una degradación progresiva en el rendimiento general del sistema.
+
+Una forma sencilla de comprender este problema es imaginar el ancho de banda como una tubería por la que circula agua. Mientras el flujo se mantenga 
+dentro de la capacidad de la tubería, los datos pueden transmitirse de manera eficiente. Sin embargo, cuando la cantidad de paquetes excede un límite 
+crítico, los depósitos temporales de los routers, conocidos como *buffers*, comienzan a llenarse rápidamente. Como consecuencia, los paquetes deben permanecer 
+más tiempo en espera antes de ser procesados y reenviados, lo que incrementa la latencia de la comunicación. Este retraso no crece de forma lineal, sino que puede 
+aumentar de manera acelerada y desproporcionada conforme se incrementa el tráfico de red.
+
+Desde una perspectiva operativa, uno de los principales síntomas de la congestión es la pérdida de paquetes. Cuando la memoria intermedia del router 
+alcanza su capacidad máxima, el dispositivo se ve obligado a descartar los paquetes entrantes debido a la falta de espacio disponible. Esta situación provoca 
+retransmisiones por parte de los protocolos de comunicación, especialmente en TCP, lo que incrementa aún más la carga de tráfico y agrava el estado de congestión 
+de la red.
+
+Además de la pérdida de paquetes, la congestión puede ocasionar otros efectos negativos, como aumento en el tiempo de respuesta, variaciones en el retardo, 
+disminución del rendimiento efectivo y una experiencia deficiente para aplicaciones sensibles al tiempo, como videollamadas, transmisión multimedia o servicios en 
+tiempo real.
+
+En esta tesis, la congestión de red se evalúa mediante el factor de utilización, el cual representa qué tan cerca se encuentra un enlace de alcanzar su capacidad 
+máxima de transmisión. Este parámetro permite analizar el comportamiento de la red bajo diferentes niveles de carga y determinar el punto en el que el rendimiento 
+comienza a degradarse significativamente, provocando inestabilidad en la comunicación y reducción en la calidad del servicio.
+
+
+\subsection{Métricas de rendimiento}
+
+\section{Técnicas de Machine Learning aplicables}
+\subsection{Aprendizaje supervisado: regresión vs clasificación}
+\subsection{Modelos de series temporales (ARIMA)}
+\subsection{Modelos de aprendizaje automático (Random Forest, SVR)}
+\subsection{Modelos de Deep Learning (LSTM, GRU)}
+\subsection{Métricas de evaluación (RMSE, MAE, MAPE)}
+
+\cleardoublepage
+\chapter{Estado del Arte}
+
+\section{Revisión de trabajos sobre predicción de tráfico con métodos estadísticos}
+
+\section{Predicción de tráfico/congestión con Machine Learning clásico}
+
+\section{Predicción con Deep Learning}
+
+\section{Herramientas de monitoreo y datasets utilizados}
+
+\section{Síntesis del estado del arte y brecha a cubrir}
+
+\chapter{Metodología}
+
+\section{Tipo de investigación}
+
+\section{Definición operativa de congestión}
+
+\section{Descripción de las métricas a utilizar}
+
+\section{Fuente de datos}
+
+\section{Preprocesamiento de datos}
+
+\section{Modelos a implementar y justificación de su elección}
+
+\section{Métricas de evaluación del modelo}
+
+\section{Herramientas y entorno}
+
+\chapter{Desarrollo e Implementación}
+
+\section{Obtención y exploración del dataset}
+
+\section{Preprocesamiento}
+
+\section{Construcción del modelo ARIMA}
+
+\section{Construcción del modelo Random Forest}
+
+\section{Construcción del modelo LSTM}
+
+\chapter{Resultados y Discusión}
+
+\section{Resultados de ARIMA}
+
+\section{Resultados de Random Forest}
+
+\section{Resultados de LSTM}
+
+\section{Comparativa de modelos}
+
+\section{Discusión}
+
+\chapter{Conclusiones}
+
+\section{Cumplimiento de objetivos}
+
+\section{Contribuciones}
+
+\section{Limitaciones del estudio}
+
+\cleardoublepage
+\chapter*{Referencias bibliográficas}
+\addcontentsline{toc}{chapter}{Referencias bibliográficas}
+\bibliographystyle{IEEEtran}
+\bibliography{referencias}
+
+\appendix
+
+\chapter{Código fuente completo}
+
+\chapter{Capturas de pantalla adicionales}
+
+\end{document}

@@ -1,0 +1,33 @@
+## Archivos auxiliares de LaTeX
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+.*.lb
+
+## Archivos de bibliografía
+*.bbl
+*.bcf
+*.blg
+*-blx.aux
+*-blx.bib
+*.run.xml
+
+## Archivos de herramientas de construcción
+*.fdb_latexmk
+*.synctex.gz
+*.pdfsync
+
+## El PDF final, opcional (recomiendo no subirlo)
+# tesis.pdf
+
+## Archivos del sistema (Windows/Mac)
+Thumbs.db
+.DS_Store

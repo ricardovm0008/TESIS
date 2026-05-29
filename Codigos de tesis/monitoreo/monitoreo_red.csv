@@ -1,0 +1,5 @@
+fecha_hora,latencia_ms,bytes_tx_s,bytes_rx_s,ssid,bssid,senal,radio,canal,velocidad_rx_mbps,velocidad_tx_mbps
+2025-12-10 15:41:43,--,0,0,Megacable_2.4G_6213,14:09:b4:d5:62:13,--,802.11n,1,--,--
+2025-12-10 15:41:48,--,0,0,Megacable_2.4G_6213,14:09:b4:d5:62:13,--,802.11n,1,--,--
+2025-12-10 15:41:54,--,0,0,Megacable_2.4G_6213,14:09:b4:d5:62:13,--,802.11n,1,--,--
+2025-12-10 15:41:59,--,0,0,Megacable_2.4G_6213,14:09:b4:d5:62:13,--,802.11n,1,--,--
