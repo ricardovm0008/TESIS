@@ -6,12 +6,9 @@
 \usepackage{tikz}
 \usepackage{float}
 \usepackage{setspace}
+\usepackage{amsmath}
 \usetikzlibrary{positioning, arrows.meta, babel}
 
-% TikZ libraries (se carga solo una vez)
-\usetikzlibrary{positioning, arrows.meta}
-
-% Configuración de página
 \geometry{letterpaper, margin=2.5cm}
 
 \title{Tesis}
@@ -29,7 +26,6 @@
     {\large Facultad de Ciencias de la Computación\par}    
     \vspace{1cm}
 
-    % Asegúrate de que el archivo Logo_BUAP.png esté en el directorio
     \includegraphics[width=7cm]{Logo_BUAP.png}\par 
     \vspace{0.8cm}
 
@@ -125,10 +121,16 @@ presenta una limitación fundamental:
 actúa después de que el problema ya ha comenzado a degradar la calidad del servicio. Pensemos en un coche autónomo que necesita tomar decisiones en milisegundos en tiempo 
 real o en un cirujano operando a distancia mediante un robot; reaccionar después ya no es una opción, se necesita anticipación.
 
-En este contexto, surge una pregunta clave: ¿es posible predecir que un enlace se va a congestionar con suficiente antelación para que un sistema automático o un administrador
-pueda evitarlo? La respuesta a esta pregunta pasa por abandonar la simple monitorización para adentrarse en el terreno del análisis predictivo. Aquí es donde entran en 
-juego las técnicas de Machine Learning (ML), una rama de la inteligencia artificial que permite a las máquinas aprender patrones a partir de datos históricos y realizar
-predicciones sin ser programadas explícitamente para cada escenario.
+De lo anterior se desprende el problema central que da origen a esta investigación: los mecanismos actuales de gestión de redes de computadoras carecen, en su mayoría, de la 
+capacidad de anticipar la congestión antes de que esta se manifieste, limitándose a detectarla y corregirla una vez que ya ha comenzado a degradar la calidad del servicio. 
+Esta naturaleza reactiva impide a los administradores de red y a los sistemas automatizados de gestión tomar decisiones oportunas —como redirigir tráfico, priorizar aplicaciones 
+críticas o escalar recursos— antes de que el impacto sea perceptible para el usuario final. El problema de investigación puede formularse, entonces, de la siguiente manera: 
+\textbf{¿es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un 
+estado de congestión, de tal forma que dicha predicción resulte útil para la toma de decisiones antes de que la degradación del servicio se materialice?}
+
+En este contexto, y una vez planteado formalmente el problema, las técnicas de Machine Learning (ML) se presentan como una vía prometedora para abordarlo. El ML, una rama de la 
+inteligencia artificial, permite a las máquinas aprender patrones a partir de datos históricos y realizar predicciones sin ser programadas explícitamente para cada escenario, lo 
+que lo convierte en una herramienta natural para atacar el problema de anticipación recién descrito.
 
 El presente trabajo de tesis se sitúa justo en esta intersección entre las redes de computadoras y la inteligencia artificial. El objetivo central es desarrollar un sistema
 basado en técnicas de Machine Learning que sea capaz de predecir la congestión en un enlace de red a partir del análisis de métricas de tráfico obtenidas de forma pasiva. En 
@@ -139,10 +141,11 @@ este enlace alcanzará el 85\% de su capacidad; toma medidas ahora''.
 
 A continuación se detallan los objetivos que guían el presente trabajo de tesis, los cuales fueron definidos en el protocolo de investigación y constituyen la hoja de ruta para el 
 desarrollo del sistema propuesto.
+
 \subsection{Objetivo General}
 
-El objetivo general es desarrollar un sistema basado en Machine Learning que permita predecir la congestión de redes de computadoras a partir del análisis de datos de operación,
-con el fin de optimizar la gestión de recursos, mejorar el rendimiento y garantizar la calidad del servicio en diferentes entornos.
+El objetivo general es desarrollar un sistema basado en Machine Learning que permita predecir la congestión de redes de computadoras a partir del análisis de datos de operación, 
+evaluando su desempeño en escenarios de tráfico de distinta escala y naturaleza, con el fin de aportar evidencia sobre la viabilidad de este enfoque predictivo para optimizar la gestión de recursos y la calidad del servicio en redes de computadoras.
 
 \subsection{Objetivos Específicos}
 \begin{itemize}
@@ -195,10 +198,11 @@ un conjunto de datos de operación de red. El alcance del proyecto se limita a l
 el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o un sistema de producción completo. Por lo tanto, los resultados deben interpretarse como una prueba de concepto que 
 demuestra la capacidad predictiva de los algoritmos seleccionados, no como una solución lista para ser desplegada en un entorno operacional real.
 
-En términos de datos, el prototipo trabaja sobre un único dataset recolectado de forma pasiva en un escenario de red específico. Si bien esto permite controlar las condiciones del experimento y 
-asegurar la reproducibilidad, también restringe la generalización de las conclusiones a otras topologías, escalas de red o patrones de tráfico. No se contempla, por el momento, la adquisición de 
-múltiples fuentes de datos, la simulación de diversas arquitecturas de red ni la incorporación de tráfico sintético. Estas decisiones metodológicas, comunes en estudios de factibilidad tempranos, 
-constituyen una limitación que deberá ser abordada en futuras iteraciones del sistema \cite{boukerche2021}.
+En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación 
+durante un periodo de dos meses, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. Si bien esta combinación permite evaluar el desempeño 
+de los modelos bajo condiciones de tráfico de naturaleza y escala distintas, ampliando el alcance de las conclusiones respecto de un estudio basado en una única fuente, no debe interpretarse como 
+una validación exhaustiva sobre la totalidad de topologías, tecnologías de acceso o patrones de tráfico posibles en una red de computadoras. La generalización de los resultados a escenarios sustancialmente 
+distintos a los aquí evaluados —por ejemplo, redes móviles, entornos industriales o infraestructuras de centros de datos— queda fuera del alcance de este trabajo y se plantea como una línea de investigación futura.
 
 Desde el punto de vista computacional, se ha establecido un límite práctico en la complejidad de los algoritmos y en los recursos de hardware empleados. El prototipo se ejecuta en un entorno de estación 
 de trabajo convencional, sin recurrir a infraestructura de cómputo distribuido o aceleración especializada (GPU de alto rendimiento). En consecuencia, los modelos profundos se configuran con un número 
@@ -220,120 +224,91 @@ concentrar los esfuerzos en la metodología propuesta, pero reconoce que la cong
 
 \section{Fundamentos de redes de computadoras}
 
-Imaginemos por un momento dos computadoras aisladas, cada una con información valiosa almacenada en su interior. Para que esos datos puedan ser aprovechados por el otro equipo, alguien debe copiarlos en un 
-dispositivo de almacenamiento externo, trasladarlos físicamente e introducirlos en la segunda máquina. Este procedimiento, aunque funcional, es lento, propenso a errores humanos y completamente inviable cuando 
-la cantidad de información crece o cuando quien la necesita se encuentra a cientos o miles de kilómetros de distancia. Precisamente para resolver esta limitación nacieron las redes de computadoras: sistemas que 
-conectan dos o más dispositivos de cómputo mediante algún medio de transmisión —cables de cobre, fibra óptica o el espectro electromagnético— con el propósito de intercambiar datos de manera rápida, 
-confiable y eficiente.
+Imaginemos por un momento dos computadoras aisladas, cada una con información valiosa almacenada en su interior. Para que esos datos puedan ser aprovechados por el otro equipo, alguien debe copiarlos en un dispositivo de 
+almacenamiento externo, trasladarlos físicamente e introducirlos en la segunda máquina. Este procedimiento, aunque funcional, es lento, propenso a errores humanos y completamente inviable cuando la cantidad de información 
+crece o cuando quien la necesita se encuentra a cientos o miles de kilómetros de distancia. Precisamente para resolver esta limitación nacieron las redes de computadoras: sistemas que conectan dos o más dispositivos de cómputo 
+mediante algún medio de transmisión —cables de cobre, fibra óptica o el espectro electromagnético— con el propósito de intercambiar datos de manera rápida, confiable y eficiente \cite{tanenbaum2011}.
 
-En esencia, una red de computadoras es un conjunto de nodos autónomos interconectados que cooperan para compartir recursos e información. El término “nodo” designa a cualquier dispositivo capaz de originar, 
-recibir o retransmitir datos: computadoras personales, servidores, teléfonos móviles, sensores, impresoras e incluso electrodomésticos inteligentes. Estos nodos se comunican a través de enlaces, que son los 
-caminos físicos o inalámbricos por los que viaja la información. A su vez, los enlaces se conectan entre sí por medio de dispositivos de interconexión como conmutadores y enrutadores, cuya misión es encaminar 
-los datos desde su origen hasta su destino, eligiendo la ruta más adecuada en cada momento y gestionando las colas de espera que se forman cuando varios flujos de tráfico coinciden en un mismo punto.
+En esencia, una red de computadoras es un conjunto de nodos autónomos interconectados que cooperan para compartir recursos e información. El término "nodo" designa a cualquier dispositivo capaz de originar, recibir o retransmitir 
+datos: computadoras personales, servidores, teléfonos móviles, sensores, impresoras e incluso electrodomésticos inteligentes. Estos nodos se comunican a través de enlaces, que son los caminos físicos o inalámbricos por los que 
+viaja la información. A su vez, los enlaces se conectan entre sí por medio de dispositivos de interconexión como conmutadores y enrutadores, cuya misión es encaminar los datos desde su origen hasta su destino, eligiendo la ruta 
+más adecuada en cada momento y gestionando las colas de espera que se forman cuando varios flujos de tráfico coinciden en un mismo punto. El comportamiento de estas colas de espera bajo condiciones de alta demanda es, como se 
+detallará en la sección \ref{sec:congestion}, el origen mismo del fenómeno de congestión.
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         node distance=4.5cm,
         computer/.style={
-            rectangle,
-            draw=black!70,
-            thick,
-            fill=gray!5,
-            minimum width=2.5cm,
-            minimum height=1.4cm,
-            align=center,
-            font=\sffamily\bfseries,
-            rounded corners=3pt
+            rectangle, draw=black!70, thick, fill=gray!5,
+            minimum width=2.5cm, minimum height=1.4cm, align=center,
+            font=\sffamily\bfseries, rounded corners=3pt
         },
-        cable/.style={
-            draw=black!80,
-            line width=2pt
-        },
-        flow/.style={
-            -{Latex[length=2mm, width=1.5mm]},
-            shorten >=3pt,
-            shorten <=3pt,
-            font=\sffamily\footnotesize
-        }
+        cable/.style={draw=black!80, line width=2pt},
+        flow/.style={-{Latex[length=2mm, width=1.5mm]}, shorten >=3pt, shorten <=3pt, font=\sffamily\footnotesize}
     ]
-
     \node[computer] (PC1) {Computadora A \\ \normalfont\small (Host)};
     \node[computer, right=of PC1] (PC2) {Computadora B \\ \normalfont\small (Destino)};
-
     \draw[cable] (PC1) -- (PC2) 
         node[midway, below=0.8cm, font=\sffamily\small\color{black!60}] {Medio Guiado (Cable Ethernet / Cobre)};
-
     \draw[flow, transform canvas={yshift=0.25cm}, blue!70!black] (PC1) -- node[above] {Tx (Datos Enviados)} (PC2);
     \draw[flow, transform canvas={yshift=-0.25cm}, green!50!black] (PC2) -- node[below] {Rx (Datos Recibidos)} (PC1);
-
     \end{tikzpicture}
     \caption{Representación de una red entre dos computadoras.}
     \label{fig:red_punto_a_punto}
 \end{figure}
 
-El funcionamiento de una red se organiza de manera jerárquica para domar la complejidad inherente a la comunicación digital. Esta organización se plasma en los llamados modelos de referencia, que dividen el 
-problema de transmitir información en varias capas superpuestas, cada una con responsabilidades claramente acotadas. Las capas inferiores se ocupan de los aspectos físicos: voltajes, pulsos de luz, ondas de 
-radio y el significado de los bits individuales. Las capas intermedias gestionan el direccionamiento y el enrutamiento, decidiendo por qué camino debe viajar cada paquete de datos. Las capas superiores se 
-preocupan por la integridad de la información, la sincronización de las conversaciones y, finalmente, por la interacción con las aplicaciones que el usuario ve en pantalla. Esta arquitectura en capas permite 
-que un fabricante mejore un componente sin necesidad de rediseñar toda la red, y que tecnologías muy dispares puedan interoperar siempre que respeten los protocolos definidos en cada nivel.
+El funcionamiento de una red se organiza de manera jerárquica para domar la complejidad inherente a la comunicación digital. Esta organización se plasma en los llamados modelos de referencia, que dividen el problema de transmitir 
+información en varias capas superpuestas, cada una con responsabilidades claramente acotadas: desde los aspectos puramente físicos de la transmisión (voltajes, pulsos de luz, ondas de radio) hasta la interacción con las aplicaciones 
+que el usuario ve en pantalla. Esta arquitectura en capas permite que un fabricante mejore un componente sin necesidad de rediseñar toda la red, y que tecnologías muy dispares puedan interoperar siempre que respeten los protocolos 
+definidos en cada nivel. El modelo de referencia más utilizado para describir esta organización, el modelo OSI, se desarrolla con mayor profundidad en la sección \ref{sec:osi}.
 
-Ahora bien, ¿cómo viajan realmente los datos a través de esta estructura? La respuesta depende del paradigma de conmutación que emplee la red. En las redes telefónicas tradicionales se usaba la conmutación de 
-circuitos: cuando dos personas iniciaban una llamada, la red reservaba un camino físico dedicado y exclusivo entre ellas durante toda la conversación. Este enfoque garantiza una calidad constante, pero es 
-terriblemente ineficiente: si los interlocutores hacen una pausa de diez segundos, el circuito permanece ocioso y nadie más puede aprovecharlo. Las redes de computadoras modernas, incluida Internet, optaron 
-por un modelo radicalmente distinto: la conmutación de paquetes. En este paradigma, los datos se fragmentan en pequeñas unidades llamadas paquetes o datagramas, y cada paquete viaja de nodo en nodo de manera 
-independiente, compartiendo los enlaces con paquetes de otras comunicaciones. Cuando un remitente hace una pausa, otros aprovechan inmediatamente el enlace, lo que multiplica la eficiencia global. Esta compartición 
-estadística de los recursos, sin embargo, tiene una contrapartida: si demasiados remitentes transmiten a la vez, los enlaces se saturan y aparece la congestión.
+Más allá de cómo se organizan las capas, existe una decisión de diseño fundamental que determina cómo viajan realmente los datos a través de una red: el paradigma de conmutación. En las redes telefónicas tradicionales se empleaba la 
+\textbf{conmutación de circuitos}: cuando dos personas iniciaban una llamada, la red reservaba un camino físico dedicado y exclusivo entre ambos extremos durante toda la conversación. Este enfoque garantiza una calidad de servicio constante 
+y predecible, pero resulta profundamente ineficiente desde el punto de vista de la utilización de recursos: si los interlocutores hacen una pausa de diez segundos, el circuito reservado permanece completamente ocioso y ningún otro usuario 
+puede aprovecharlo, incluso si la red entera está saturada de solicitudes en ese instante.
 
-Cada enlace en una red posee una capacidad máxima de transmisión, denominada ancho de banda, que se mide en bits por segundo (bps). Un enlace de fibra óptica típico puede ofrecer 1 Gbps, mientras que una 
-conexión inalámbrica doméstica quizás solo alcance 50 Mbps. El tráfico real que circula por el enlace en un momento dado se conoce como throughput o rendimiento efectivo, y su valor siempre es inferior o igual 
-al ancho de banda nominal. La fracción entre el throughput y el ancho de banda se denomina factor de utilización y constituye una de las métricas más reveladoras sobre el estado de un enlace. Mientras la 
-utilización se mantenga moderada —digamos, por debajo del 70\%—, la red opera con holgura. Conforme se aproxima al 100\%, comienzan a manifestarse los síntomas de la congestión.
+Las redes de computadoras modernas, incluida Internet, optaron por un modelo radicalmente distinto: la \textbf{conmutación de paquetes}. En este paradigma, los datos se fragmentan en pequeñas unidades llamadas paquetes o datagramas, cada una 
+encabezada por información de control (dirección de origen, destino, número de secuencia, entre otros campos). Cada paquete viaja de nodo en nodo de manera independiente y sin reservar recursos exclusivos, compartiendo dinámicamente los enlaces 
+con paquetes pertenecientes a otras comunicaciones completamente distintas. Cuando un remitente hace una pausa en su transmisión, otros flujos aprovechan inmediatamente el enlace liberado, lo que multiplica la eficiencia global del sistema comparado 
+con la conmutación de circuitos \cite{kurose2017}.
 
-Para entender por qué, hay que examinar qué ocurre dentro de un enrutador. Cada enrutador dispone de pequeñas memorias temporales llamadas buffers, donde almacena los paquetes que llegan mientras esperan ser 
-procesados y reenviados por el enlace de salida correspondiente. Si los paquetes llegan a una tasa inferior a la capacidad del enlace de salida, el buffer apenas se llena y los paquetes son despachados casi de 
-inmediato. Pero si, durante un cierto intervalo, la tasa de llegada supera la tasa de salida, la cola de espera dentro del buffer empieza a crecer. Este fenómeno es perfectamente análogo a lo que sucede en 
-una caseta de cobro de una autopista: mientras los coches lleguen a un ritmo menor del que la caseta puede atender, la fila es corta y el retraso mínimo. Si llegan más coches de los que pueden ser atendidos, 
-la fila se alarga y el tiempo de espera se dispara.
+Esta compartición estadística de los recursos es, precisamente, la razón por la que Internet puede ofrecer conectividad a miles de millones de dispositivos con una infraestructura física finita. Sin embargo, tiene una contrapartida inevitable: como ningún 
+flujo individual tiene garantizado un ancho de banda exclusivo, si demasiados remitentes transmiten de manera simultánea a través del mismo enlace, la demanda agregada puede superar la capacidad disponible. Es precisamente en este punto —cuando la suma de los 
+flujos que compiten por un recurso compartido excede lo que ese recurso puede entregar— donde se origina el fenómeno que esta tesis busca predecir: la congestión de red, que se define y caracteriza formalmente en la siguiente sección.
 
-Ese tiempo de espera adicional que un paquete experimenta desde que ingresa a la red hasta que llega a su destino se conoce como latencia o retardo extremo a extremo. La latencia tiene varios componentes: 
-el tiempo de propagación (lo que tarda la señal en viajar por el medio físico), el tiempo de transmisión (lo que tarda el emisor en poner todos los bits en el medio), el tiempo de procesamiento en cada nodo y, 
-crucialmente, el tiempo de encolado en los buffers. En condiciones normales, el tiempo de encolado es insignificante. Bajo congestión, en cambio, puede convertirse en el componente dominante de la latencia total. 
-Además, como la llegada de paquetes es irregular e impredecible, el tamaño de la cola fluctúa, por lo que la latencia no solo aumenta, sino que se vuelve variable. Esa variabilidad se denomina jitter y resulta 
-particularmente perjudicial para aplicaciones sensibles al tiempo, como las videollamadas o los juegos en línea.
+\subsection*{Capacidad del enlace: ancho de banda, throughput y utilización}
 
-Cuando la congestión se agrava, el buffer puede llenarse por completo. Llegado ese punto, el enrutador no tiene más opción que descartar los paquetes que no puede almacenar. Esa tasa de pérdida de paquetes 
-es otro indicador clave de la salud de la red. Una pérdida de paquetes ocasional puede ser tolerable, pero cuando se vuelve frecuente, los protocolos de transporte —especialmente TCP— interpretan esas pérdidas 
-como una señal de congestión y reducen drásticamente la velocidad de envío para aliviar la red. Aunque este mecanismo de control de congestión ha sido fundamental para la estabilidad de Internet, opera de 
-manera reactiva: solo se activa después de que la congestión ya ha producido pérdidas. Para entonces, la calidad del servicio ya se ha degradado y los usuarios han notado el problema.
+Para poder cuantificar cuándo un enlace se encuentra cerca de su límite, es necesario introducir tres métricas básicas que se emplearán a lo largo de toda la tesis. Cada enlace en una red posee una capacidad máxima teórica de transmisión, 
+denominada \textbf{ancho de banda} (\textit{bandwidth}), que se mide en bits por segundo (bps). Un enlace de fibra óptica típico puede ofrecer 1 Gbps, mientras que una conexión inalámbrica doméstica quizás solo alcance 50 Mbps. 
+Esta cifra representa el límite superior teórico del enlace, no la cantidad de datos que efectivamente circula por él en un momento dado.
 
-Además de la utilización, la latencia y la pérdida de paquetes, existe otro concepto fundamental para esta tesis: el cuello de botella. En cualquier ruta entre dos nodos, el enlace con menor capacidad determina 
-la velocidad máxima a la que pueden fluir los datos, del mismo modo que el tramo más estrecho de una tubería limita el caudal total de agua. Los cuellos de botella son los puntos donde la congestión se manifiesta 
-primero y con mayor intensidad, y por tanto son los candidatos naturales para aplicar técnicas de predicción y prevención.
+El tráfico real que atraviesa el enlace en un instante determinado se conoce como \textbf{throughput} o rendimiento efectivo, y su valor siempre es inferior o igual al ancho de banda nominal, ya que factores como la sobrecarga de los encabezados de protocolo, 
+las retransmisiones y el propio comportamiento del tráfico impiden alcanzar el máximo teórico de manera sostenida. La razón entre el throughput observado y el ancho de banda disponible se denomina \textbf{factor de utilización}, y constituye una de las métricas 
+más reveladoras sobre el estado de salud de un enlace:
 
-Todas estas ideas —conmutación de paquetes, buffers, utilización, latencia, jitter, pérdida de paquetes y cuellos de botella— constituyen el vocabulario básico sobre el que se edifican los capítulos siguientes. 
-Conocerlas permitirá al lector comprender con precisión qué significa exactamente la congestión de red (que se definirá formalmente en la siguiente sección), cómo se mide y, sobre todo, por qué vale la pena intentar 
-predecirla antes de que sus efectos se vuelvan irreversibles. En la presente tesis, la congestión se abordará desde una perspectiva predictiva que se apoya en el análisis de series temporales de utilización de enlace, 
-empleando modelos de aprendizaje automático capaces de detectar patrones precursores de saturación mucho antes de que los buffers se llenen y los paquetes comiencen a perderse.
+\begin{equation}
+    U = \frac{\text{Throughput observado}}{\text{Ancho de banda nominal}}
+    \label{eq:utilizacion}
+\end{equation}
+
+Mientras el factor de utilización se mantenga en niveles moderados, la red opera con holgura: existe margen suficiente para absorber ráfagas de tráfico sin que se produzcan retrasos perceptibles. Conforme $U$ se aproxima a $1$ (es decir, al 100\% de la capacidad), 
+comienzan a manifestarse los síntomas característicos de la congestión, los cuales se explican en detalle a continuación.
 
 \subsection{Modelo OSI y TCP/IP}
+\label{sec:osi}
 
-El Modelo de Interconexión de Sistemas Abiertos (OSI, \textit{Open Systems Interconnection}), estandarizado por la Organización Internacional de Normalización (ISO) en 1984, constituye un marco conceptual que divide 
-el proceso de comunicación en redes en siete capas funcionales independientes. Cada nivel abstrae un conjunto específico de responsabilidades, desde la transmisión física de bits hasta la interacción con las aplicaciones 
-del usuario. Esta estratificación facilita la interoperabilidad entre equipos de distintos fabricantes y permite analizar los fenómenos de red, como la congestión, dentro de una estructura bien definida. En particular, la gestión de la congestión incide directamente en las capas de transporte y red, donde se regulan el control de flujo, el enrutamiento y la asignación de recursos, aspectos que serán modelados en este trabajo a partir de métricas de utilización.
+El Modelo de Interconexión de Sistemas Abiertos (OSI, \textit{Open Systems Interconnection}), estandarizado por la Organización Internacional de Normalización (ISO) en 1984, constituye un marco conceptual que divide el proceso de comunicación en redes en siete 
+capas funcionales independientes \cite{tanenbaum2011}. Cada nivel abstrae un conjunto específico de responsabilidades, desde la transmisión física de bits hasta la interacción con las aplicaciones del usuario. Esta estratificación facilita la interoperabilidad 
+entre equipos de distintos fabricantes y permite analizar los fenómenos de red, como la congestión, dentro de una estructura bien definida. En particular, la gestión de la congestión incide directamente en las capas de transporte y red, donde se regulan el control 
+de flujo, el enrutamiento y la asignación de recursos, aspectos que serán modelados en este trabajo a partir de métricas de utilización.
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         layer/.style={
-            rectangle, 
-            draw=black!70, 
-            thick, 
-            text width=4cm, 
-            align=center, 
-            minimum height=.7cm, 
-            font=\sffamily\large\bfseries,
-            rounded corners=2pt
+            rectangle, draw=black!70, thick, text width=4cm, align=center,
+            minimum height=.7cm, font=\sffamily\large\bfseries, rounded corners=2pt
         }
     ]
     \node[layer, fill=black!10] (L7) {7. Aplicación};
@@ -349,40 +324,338 @@ del usuario. Esta estratificación facilita la interoperabilidad entre equipos d
 \end{figure}
 
 \subsection{Concepto de congestión}
+\label{sec:congestion}
 
-La congestión de red ocurre cuando la cantidad de datos que intenta atravesar un nodo o enlace supera su capacidad de procesamiento y transmisión. 
-Este fenómeno es común en redes de comunicación donde múltiples dispositivos compiten de manera simultánea por los mismos recursos de red, provocando 
-una degradación progresiva en el rendimiento general del sistema.
+Con las nociones de ancho de banda, throughput y utilización ya establecidas, es posible ahora caracterizar con precisión qué ocurre dentro de una red cuando la demanda de tráfico se aproxima o supera la capacidad disponible de un enlace. A este fenómeno se le 
+denomina \textbf{congestión de red}, y constituye el objeto central de estudio de esta tesis.
 
-Una forma sencilla de comprender este problema es imaginar el ancho de banda como una tubería por la que circula agua. Mientras el flujo se mantenga 
-dentro de la capacidad de la tubería, los datos pueden transmitirse de manera eficiente. Sin embargo, cuando la cantidad de paquetes excede un límite 
-crítico, los depósitos temporales de los routers, conocidos como \textit{buffers}, comienzan a llenarse rápidamente. Como consecuencia, los paquetes deben permanecer 
-más tiempo en espera antes de ser procesados y reenviados, lo que incrementa la latencia de la comunicación. Este retraso no crece de forma lineal, sino que puede 
-aumentar de manera acelerada y desproporcionada conforme se incrementa el tráfico de red.
+\subsubsection*{Qué ocurre dentro de un enrutador}
 
-Desde una perspectiva operativa, uno de los principales síntomas de la congestión es la pérdida de paquetes. Cuando la memoria intermedia del router 
-alcanza su capacidad máxima, el dispositivo se ve obligado a descartar los paquetes entrantes debido a la falta de espacio disponible. Esta situación provoca 
-retransmisiones por parte de los protocolos de comunicación, especialmente en TCP, lo que incrementa aún más la carga de tráfico y agrava el estado de congestión 
-de la red.
+Para entender el origen físico de la congestión es necesario examinar qué sucede dentro de un enrutador o conmutador cuando procesa tráfico. Cada dispositivo de interconexión dispone de pequeñas memorias temporales llamadas \textbf{buffers}, donde almacena los 
+paquetes que van llegando mientras esperan ser procesados y reenviados por el enlace de salida correspondiente. Si los paquetes llegan a una tasa inferior a la capacidad del enlace de salida, el buffer apenas se ocupa y los paquetes son despachados casi de 
+inmediato, sin apenas tiempo de espera.
 
-Además de la pérdida de paquetes, la congestión puede ocasionar otros efectos negativos, como aumento en el tiempo de respuesta, variaciones en el retardo, 
-disminución del rendimiento efectivo y una experiencia deficiente para aplicaciones sensibles al tiempo, como videollamadas, transmisión multimedia o servicios en 
-tiempo real.
+El problema surge cuando, durante un intervalo sostenido, la tasa de llegada de paquetes supera la tasa a la que el enlace de salida puede transmitirlos. En ese escenario, la cola de espera dentro del buffer comienza a crecer progresivamente. Este fenómeno es 
+análogo a lo que ocurre en una caseta de cobro de autopista: mientras los vehículos lleguen a un ritmo menor al que la caseta puede atender, la fila permanece corta y el retraso es mínimo; pero si llegan más vehículos de los que la caseta puede procesar, la fila 
+se alarga sin control y el tiempo de espera se dispara de forma no lineal. Es importante subrayar este último punto: el retraso generado por la congestión \textbf{no crece de manera proporcional} al exceso de tráfico, sino que tiende a dispararse de forma abrupta 
+una vez que se cruza cierto umbral de utilización, un comportamiento bien documentado en la teoría de colas aplicada a redes de datos \cite{kleinrock1976}.
 
-En esta tesis, la congestión de red se evalúa mediante el factor de utilización, el cual representa qué tan cerca se encuentra un enlace de alcanzar su capacidad 
-máxima de transmisión. Este parámetro permite analizar el comportamiento de la red bajo diferentes niveles de carga y determinar el punto en el que el rendimiento 
-comienza a degradarse significativamente, provocando inestabilidad en la comunicación y reducción en la calidad del servicio.
+\subsubsection*{Latencia y sus componentes}
 
+El tiempo total que un paquete tarda en viajar desde que ingresa a la red hasta que llega a su destino se conoce como \textbf{latencia} o retardo extremo a extremo, y se compone de cuatro elementos:
+
+\begin{itemize}
+    \item \textbf{Tiempo de propagación}: lo que tarda la señal física en recorrer el medio de transmisión (cable, fibra, aire), determinado por la distancia y la velocidad de propagación de la señal.
+    \item \textbf{Tiempo de transmisión}: lo que tarda el nodo emisor en colocar todos los bits del paquete sobre el medio físico, el cual depende del tamaño del paquete y del ancho de banda del enlace.
+    \item \textbf{Tiempo de procesamiento}: el que cada nodo intermedio invierte en examinar el encabezado del paquete y decidir hacia dónde reenviarlo.
+    \item \textbf{Tiempo de encolado}: el tiempo que el paquete permanece esperando dentro del buffer de un enrutador antes de ser transmitido.
+\end{itemize}
+
+En condiciones normales de operación, el tiempo de encolado es prácticamente insignificante frente a los otros tres componentes. Sin embargo, bajo congestión, este componente puede convertirse —y de hecho suele convertirse— en el factor dominante de la latencia total, 
+siendo responsable de la gran mayoría del retraso que experimenta el usuario final.
+
+\subsubsection*{Jitter: la variabilidad del retraso}
+
+Dado que la llegada de paquetes a un enrutador es irregular e impredecible por naturaleza, el tamaño de la cola de espera fluctúa constantemente a lo largo del tiempo. Como consecuencia, la latencia experimentada por paquetes consecutivos de un mismo flujo no es constante, 
+sino que varía de un paquete a otro. Esta variabilidad en el retardo se denomina \textbf{jitter}, y resulta particularmente perjudicial para aplicaciones sensibles al tiempo que requieren una entrega de datos a ritmo constante, como las videollamadas, los juegos en línea o 
+la transmisión de audio y video en tiempo real, donde un jitter elevado se traduce en cortes, distorsión o congelamiento de la imagen incluso cuando la latencia promedio parece aceptable.
+
+\subsubsection*{Pérdida de paquetes y la respuesta reactiva de TCP}
+
+Cuando la congestión se agrava lo suficiente, el buffer de un enrutador puede llegar a llenarse por completo. Llegado ese punto, el dispositivo no tiene más opción que descartar los paquetes entrantes que ya no caben en la memoria disponible, un evento conocido como 
+\textbf{pérdida de paquetes}. Una tasa de pérdida ocasional puede ser tolerable e incluso pasar desapercibida para el usuario, pero cuando se vuelve frecuente, degrada severamente la calidad de la comunicación.
+
+Es en este punto donde interviene el comportamiento de los protocolos de transporte, particularmente TCP. Este protocolo interpreta la pérdida de paquetes como una señal indirecta de que la red está congestionada, y en respuesta reduce drásticamente su tasa de envío mediante 
+mecanismos de control de congestión \cite{jacobson1988}, para posteriormente incrementarla de manera gradual mientras no detecte nuevas pérdidas. Este mecanismo, formalizado en estándares como el RFC 2914 \cite{rfc2914}, ha sido fundamental para preservar la estabilidad de Internet 
+durante décadas. No obstante, es crucial notar su naturaleza intrínsecamente \textbf{reactiva}: el mecanismo solo se activa \textit{después} de que la congestión ya ha provocado pérdidas reales, momento en el cual la calidad del servicio ya se ha degradado y el usuario final ya ha percibido 
+el problema. Esta limitación reactiva es, precisamente, la motivación central que da origen al enfoque predictivo propuesto en esta tesis.
+
+\subsubsection*{El cuello de botella}
+
+En cualquier ruta que conecte dos nodos de una red, típicamente a través de múltiples enlaces intermedios, existe un concepto adicional relevante: el \textbf{cuello de botella} (\textit{bottleneck}). Se trata del enlace con menor capacidad disponible a lo largo de toda la ruta, y 
+es este el que determina la velocidad máxima a la que pueden fluir los datos de extremo a extremo, de manera análoga a como el tramo más estrecho de una tubería limita el caudal total de agua que puede circular por ella, sin importar qué tan anchos sean los demás tramos. Los cuellos de botella 
+son, por definición, los puntos donde la congestión se manifiesta primero y con mayor intensidad dentro de una red, y por lo tanto son los candidatos naturales sobre los cuales aplicar técnicas de predicción y prevención, como la que se propone en este trabajo.
+
+\subsubsection*{Definición operativa de congestión para esta tesis}
+
+A partir de los elementos anteriores —utilización, buffers, latencia, jitter, pérdida de paquetes y cuellos de botella— es posible ahora formular una definición precisa y, sobre todo, \textit{medible} de congestión, que es la que se adoptará de manera consistente a lo largo de todo el desarrollo 
+metodológico y experimental de esta tesis.
+
+Se dice que un enlace se encuentra en estado de \textbf{congestión} cuando su factor de utilización $U$ (Ecuación \ref{eq:utilizacion}) supera un umbral crítico $U_{th}$ durante un intervalo de tiempo sostenido, más allá del cual el comportamiento del sistema deja de ser lineal y comienzan a 
+manifestarse de forma perceptible los síntomas descritos anteriormente: crecimiento acelerado del tiempo de encolado, incremento del jitter y, en los casos más severos, pérdida de paquetes. Formalmente:
+
+\begin{equation}
+    \text{Congestión} \iff U(t) \geq U_{th} \quad \text{durante un intervalo } [t, t+\Delta t]
+    \label{eq:congestion_def}
+\end{equation}
+
+%%% AQUÍ decidir y justificar U_th (ej. 0.80, 0.85, 0.90) según literatura o análisis empírico del dataset,
+%%% y definir Delta t (ej. ventanas de 1 minuto, 5 minutos, según la granularidad de los datos)
+
+Esta definición operativa presenta dos ventajas fundamentales para los fines de esta investigación. En primer lugar, se apoya en una métrica directamente observable y de fácil recolección de forma pasiva —el factor de utilización—, a diferencia de otras métricas como el jitter o la pérdida de 
+paquetes, que requieren instrumentación más invasiva o cálculos derivados más complejos. En segundo lugar, al tratarse de un umbral cuantitativo y no de una apreciación cualitativa, permite convertir el problema de "predecir congestión" en un problema bien definido de aprendizaje automático: 
+ya sea como una tarea de \textbf{regresión} (predecir el valor futuro de $U(t)$) o como una tarea de \textbf{clasificación binaria} (predecir si $U(t)$ superará o no el umbral $U_{th}$ en un horizonte temporal determinado), ambos enfoques que se explorarán y compararán en los capítulos metodológico 
+y experimental de este trabajo.
+
+Es importante reconocer, sin embargo, que esta definición constituye una simplificación deliberada de un fenómeno inherentemente multifactorial. Como se mencionó en la sección de alcances y limitaciones, otras dimensiones de la congestión —como el jitter o la tasa de pérdida de paquetes— no son
+modeladas de forma directa por el prototipo desarrollado en esta tesis, aunque su comprensión teórica, expuesta en esta sección, resulta indispensable para justificar por qué la utilización constituye un proxy razonable y suficientemente informativo del estado de congestión de un enlace.
 \subsection{Métricas de rendimiento}
+\label{sec:metricas}
+
+En la sección anterior se explicó \textit{qué} son la utilización, la latencia, el jitter y la pérdida de paquetes, y \textit{por qué} aparecen como consecuencia de la congestión. Corresponde ahora precisar \textit{cómo} se cuantifica formalmente cada una de estas métricas, qué unidades 
+emplean y mediante qué mecanismos se obtienen en la práctica, ya que estas definiciones son las que se emplearán posteriormente para construir el conjunto de variables (\textit{features}) que alimentarán los modelos de Machine Learning propuestos en esta tesis.
+
+\subsubsection*{Utilización del enlace}
+
+Como se estableció en la Ecuación \ref{eq:utilizacion}, la utilización $U$ es la razón entre el throughput observado y el ancho de banda nominal del enlace. En términos de instrumentación, esta métrica se obtiene típicamente mediante el protocolo SNMP (\textit{Simple Network Management Protocol}), 
+consultando periódicamente los contadores de octetos entrantes y salientes de una interfaz de red (\texttt{ifInOctets} e \texttt{ifOutOctets} de la MIB-II) \cite{tanenbaum2011}. Dado que estos contadores son acumulativos, el throughput en un intervalo $[t_1, t_2]$ se calcula como la diferencia entre 
+lecturas consecutivas dividida entre el tiempo transcurrido:
+
+\begin{equation}
+    \text{Throughput}(t_1, t_2) = \frac{8 \times \left(\text{Octetos}(t_2) - \text{Octetos}(t_1)\right)}{t_2 - t_1}
+    \label{eq:throughput}
+\end{equation}
+
+donde el factor 8 convierte de bytes a bits, ya que el ancho de banda se expresa convencionalmente en bits por segundo. La granularidad del muestreo (por ejemplo, cada 30 segundos, 1 minuto o 5 minutos) determina la resolución temporal con la que posteriormente se podrá detectar y predecir la 
+congestión, y constituye una decisión metodológica que se abordará en el Capítulo 4.
+
+\subsubsection*{Latencia (RTT)}
+
+La latencia de ida y vuelta, o \textit{Round-Trip Time} (RTT), es el tiempo que transcurre entre el envío de un paquete y la recepción de su respuesta. Se mide de forma activa mediante herramientas como \texttt{ping} (que emplea paquetes ICMP \textit{Echo Request/Reply}) o mediante el 
+análisis de las marcas de tiempo (\textit{timestamps}) del protocolo TCP durante el establecimiento de una conexión (\textit{three-way handshake}) \cite{kurose2017}. Formalmente:
+
+\begin{equation}
+    \text{RTT} = t_{\text{recepción}} - t_{\text{envío}}
+    \label{eq:rtt}
+\end{equation}
+
+En la práctica no se trabaja con una sola medición de RTT, sino con una serie de mediciones sucesivas, ya que es precisamente la variabilidad entre estas mediciones consecutivas la que da origen al jitter, descrito a continuación.
+
+\subsubsection*{Jitter}
+
+A diferencia de la explicación conceptual ofrecida en la sección anterior, aquí se presenta la definición formal adoptada por el estándar RFC 3550, que especifica el protocolo RTP (\textit{Real-time Transport Protocol}) utilizado ampliamente en aplicaciones de voz y video sobre IP \cite{rfc3550}. 
+Dicho estándar define el jitter como la variación estadística en el tiempo de llegada entre paquetes consecutivos, y propone un estimador de primer orden que se actualiza de forma incremental con cada nuevo paquete recibido:
+
+\begin{equation}
+    J(i) = J(i-1) + \frac{\left| D(i-1, i) \right| - J(i-1)}{16}
+    \label{eq:jitter}
+\end{equation}
+
+donde $D(i-1, i)$ representa la diferencia en los tiempos de tránsito relativos entre dos paquetes consecutivos $i-1$ e $i$, calculada como:
+
+\begin{equation}
+    D(i-1, i) = \left( R_i - R_{i-1} \right) - \left( S_i - S_{i-1} \right)
+    \label{eq:jitter_d}
+\end{equation}
+
+siendo $R_i$ el instante de llegada del paquete $i$ en el receptor y $S_i$ la marca de tiempo con la que dicho paquete fue enviado por el emisor. El factor $1/16$ actúa como una ganancia de suavizado que da lugar a un estimador con buen equilibrio entre estabilidad 
+estadística y capacidad de reacción ante cambios súbitos, evitando que picos aislados distorsionen la medición general \cite{rfc3550}. Esta es la definición de jitter que se adoptará como referencia en esta tesis en caso de emplearse como variable adicional de análisis.
+
+\subsubsection*{Pérdida de paquetes}
+
+La tasa de pérdida de paquetes (\textit{packet loss rate}) se expresa como el porcentaje de paquetes enviados que nunca llegan a su destino, respecto del total de paquetes transmitidos en un intervalo de observación:
+
+\begin{equation}
+    P_{\text{loss}} = \frac{\text{Paquetes enviados} - \text{Paquetes recibidos}}{\text{Paquetes enviados}} \times 100\%
+    \label{eq:packet_loss}
+\end{equation}
+
+Esta métrica puede obtenerse de dos maneras. La primera es de forma \textbf{activa}, inyectando tráfico de prueba (por ejemplo, mediante herramientas como \texttt{iperf} o series de solicitudes ICMP) y contabilizando cuántas respuestas se reciben de vuelta. La segunda es de forma \textbf{pasiva}, 
+consultando directamente los contadores de descarte que los propios dispositivos de red exponen a través de SNMP (como \texttt{ifInDiscards} o \texttt{ifOutDiscards}), sin necesidad de generar tráfico adicional que pudiera, irónicamente, contribuir a la propia congestión que se busca medir \cite{tanenbaum2011}. 
+Esta segunda aproximación resulta preferible en el contexto de esta tesis, dado que el planteamiento del problema exige una recolección de datos estrictamente pasiva.
+
+\subsubsection*{Throughput vs. Goodput}
+
+Conviene distinguir con precisión entre dos términos que suelen confundirse. El \textbf{throughput}, definido en la Ecuación \ref{eq:throughput}, contabiliza la totalidad de los bits que atraviesan el enlace en un intervalo de tiempo, incluyendo los encabezados de los distintos protocolos (Ethernet, IP, TCP/UDP) 
+y cualquier paquete retransmitido debido a pérdidas previas. El \textbf{goodput}, en cambio, contabiliza únicamente los bits de datos útiles a nivel de aplicación que fueron entregados exitosamente, excluyendo dicho overhead de protocolo:
+
+\begin{equation}
+    \text{Goodput} = \frac{\text{Bits útiles entregados a la capa de aplicación}}{\text{Tiempo total de transmisión}}
+    \label{eq:goodput}
+\end{equation}
+
+Bajo condiciones de congestión severa, es posible observar un throughput aparentemente estable mientras el goodput cae drásticamente, ya que una proporción creciente del tráfico corresponde a retransmisiones de paquetes perdidos en lugar de datos nuevos. Esta distinción resulta relevante para esta tesis porque 
+un modelo que solo observe throughput podría no detectar que la red ya se encuentra operando de manera ineficiente por efecto de la congestión.
+
+\subsubsection*{Disponibilidad}
+
+Finalmente, la \textbf{disponibilidad} (\textit{availability}) de un enlace o servicio de red se define como la proporción de tiempo durante la cual dicho recurso se encuentra operativo y accesible, respecto del tiempo total de observación:
+
+\begin{equation}
+    \text{Disponibilidad} = \frac{\text{Tiempo operativo}}{\text{Tiempo operativo} + \text{Tiempo de inactividad}} \times 100\%
+    \label{eq:disponibilidad}
+\end{equation}
+
+Si bien la disponibilidad se asocia tradicionalmente con fallos de hardware o interrupciones del servicio más que con la congestión en sí misma, ambos fenómenos están relacionados: una congestión suficientemente severa y sostenida puede degradar la calidad del servicio hasta un punto en que, desde la perspectiva 
+del usuario final, resulta indistinguible de una interrupción total. Por esta razón, y dado que fue contemplada explícitamente entre los objetivos específicos de este trabajo, la disponibilidad se incorpora como una métrica complementaria dentro del conjunto de datos de operación a recopilar.
+
+\subsubsection*{Síntesis de métricas}
+
+La Tabla \ref{tab:metricas_resumen} sintetiza las métricas descritas en esta sección, sus unidades y su método de obtención, y constituye la base sobre la cual se construirá el conjunto de variables de entrada (\textit{features}) del sistema de predicción propuesto en el Capítulo 4.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|l|}
+        \hline
+        \textbf{Métrica} & \textbf{Unidad} & \textbf{Ecuación} & \textbf{Método de obtención} \\
+        \hline
+        Utilización & Adimensional (\%) & \ref{eq:utilizacion} & SNMP (pasivo) \\
+        Throughput & bits/s & \ref{eq:throughput} & SNMP (pasivo) \\
+        Latencia (RTT) & ms & \ref{eq:rtt} & ICMP / TCP timestamps (activo) \\
+        Jitter & ms & \ref{eq:jitter} & RTCP / estimación RFC 3550 \\
+        Pérdida de paquetes & \% & \ref{eq:packet_loss} & SNMP (pasivo) / probes (activo) \\
+        Goodput & bits/s & \ref{eq:goodput} & Derivado de throughput \\
+        Disponibilidad & \% & \ref{eq:disponibilidad} & Monitoreo continuo \\
+        \hline
+    \end{tabular}
+    \caption{Resumen de métricas de rendimiento de red utilizadas en esta tesis.}
+    \label{tab:metricas_resumen}
+\end{table}
 
 \section{Técnicas de Machine Learning aplicables}
+
+Una vez establecidos los fundamentos de redes de computadoras y caracterizado formalmente el fenómeno de la congestión, corresponde ahora presentar el conjunto de herramientas metodológicas que esta tesis emplea para abordar el problema de predicción planteado: las técnicas de Machine Learning (ML). Esta sección no pretende ser un tratado exhaustivo de aprendizaje automático, sino una revisión dirigida y suficiente de los conceptos, paradigmas y modelos específicos que resultan pertinentes para la tarea de predecir series temporales de utilización de red, y que serán empleados e implementados en los capítulos de Metodología (Capítulo 4) y Desarrollo (Capítulo 5).
+
 \subsection{Aprendizaje supervisado: regresión vs clasificación}
+
+El aprendizaje automático se organiza tradicionalmente en tres grandes paradigmas: el aprendizaje supervisado, en el que el modelo aprende a partir de ejemplos previamente etiquetados con la respuesta correcta; el aprendizaje no supervisado, en el que el modelo busca patrones o estructuras ocultas en datos sin etiquetar; y el aprendizaje por refuerzo, en el que un agente aprende a partir de la interacción con un entorno y de las recompensas obtenidas. El problema de predicción de congestión planteado en esta tesis se enmarca de manera natural dentro del \textbf{aprendizaje supervisado}, ya que se dispone de datos históricos de operación de red (las variables de entrada o \textit{features}, como utilización, latencia o pérdida de paquetes en instantes pasados) junto con el valor real observado que se desea predecir (la utilización futura del enlace).
+
+Dentro del aprendizaje supervisado, y de acuerdo con la naturaleza de la variable que se busca predecir, es posible distinguir dos tareas fundamentales:
+
+\begin{itemize}
+    \item \textbf{Regresión}: la variable objetivo es continua. En el contexto de esta tesis, esto correspondería a predecir directamente el valor futuro del factor de utilización $U(t + h)$ para un horizonte de predicción $h$, expresado como un número real entre 0 y 1.
+    \item \textbf{Clasificación}: la variable objetivo es discreta o categórica. En este caso, correspondería a predecir si el enlace se encontrará o no en estado de congestión en el horizonte $h$, de acuerdo con la definición operativa formulada en la Ecuación \ref{eq:congestion_def} —es decir, si $U(t+h) \geq U_{th}$—, reduciendo el problema a una clasificación binaria (congestión / no congestión).
+\end{itemize}
+
+Ambos enfoques no son mutuamente excluyentes, sino complementarios: un modelo de regresión ofrece información más rica (el valor exacto esperado de utilización), mientras que uno de clasificación ofrece una respuesta más directamente accionable para un sistema de alertas (sí/no hay riesgo de congestión). Por esta razón, en esta tesis se explorará la formulación del problema bajo ambos enfoques según el modelo empleado, tal como se detalla en las siguientes subsecciones.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\sffamily\small},
+        level 1/.style={sibling distance=6.5cm, level distance=1.8cm},
+        level 2/.style={sibling distance=3.6cm, level distance=1.8cm},
+        box/.style={rectangle, draw=black!70, thick, rounded corners=3pt, align=center, minimum height=1cm, fill=gray!5, text width=3.4cm},
+        rootbox/.style={box, fill=black!10, text width=4cm}
+    ]
+    \node[rootbox] {Aprendizaje\\ Automático (ML)}
+        child { node[box] {Aprendizaje\\ No Supervisado}
+            child[missing] {}
+        }
+        child { node[box, fill=black!15] {Aprendizaje\\ Supervisado}
+            child { node[box] {Regresión\\ \footnotesize (predice $U(t+h)$)} }
+            child { node[box] {Clasificación\\ \footnotesize (predice congestión: sí/no)} }
+        }
+        child { node[box] {Aprendizaje\\ por Refuerzo}
+            child[missing] {}
+        };
+    \end{tikzpicture}
+    \caption{Ubicación del problema de predicción de congestión dentro de los paradigmas de Machine Learning.}
+    \label{fig:paradigmas_ml}
+\end{figure}
+
 \subsection{Modelos de series temporales (ARIMA)}
+
+El modelo \textbf{ARIMA} (\textit{AutoRegressive Integrated Moving Average}), desarrollado dentro del marco metodológico propuesto por Box y Jenkins, constituye uno de los enfoques estadísticos más consolidados para el análisis y predicción de series temporales \cite{boxjenkins2015}. Su nombre resume sus tres componentes constitutivos:
+
+\begin{itemize}
+    \item \textbf{AR (AutoRegresivo)}: el valor de la serie en un instante dado se modela como una combinación lineal de sus propios valores pasados, con un orden $p$ que indica cuántos rezagos (\textit{lags}) se consideran.
+    \item \textbf{I (Integrado)}: aplica un proceso de diferenciación de orden $d$ a la serie original para eliminar tendencias y volverla estacionaria, requisito necesario para que el modelo funcione correctamente.
+    \item \textbf{MA (Media Móvil)}: el valor de la serie se modela también en función de los errores de predicción pasados, con un orden $q$.
+\end{itemize}
+
+Un modelo ARIMA se denota comúnmente como $ARIMA(p,d,q)$, y se expresa formalmente como:
+
+\begin{equation}
+    \left(1 - \sum_{i=1}^{p}\phi_i L^i\right)(1-L)^d X_t = \left(1 + \sum_{i=1}^{q}\theta_i L^i\right)\varepsilon_t
+    \label{eq:arima}
+\end{equation}
+
+donde $X_t$ es la serie temporal de interés (en este caso, la utilización del enlace en el instante $t$), $L$ es el operador de rezago, $\phi_i$ y $\theta_i$ son los coeficientes autorregresivos y de media móvil respectivamente, y $\varepsilon_t$ representa el término de error o ruido blanco. Este modelo resulta especialmente útil como \textbf{línea base} (\textit{baseline}) dentro de esta tesis: al tratarse de un método estadístico clásico, bien establecido y computacionalmente económico, permite establecer un punto de referencia mínimo de desempeño contra el cual comparar la capacidad predictiva de los modelos de aprendizaje automático más sofisticados que se presentan a continuación.
+
 \subsection{Modelos de aprendizaje automático (Random Forest, SVR)}
+
+A diferencia de ARIMA, que asume relaciones lineales explícitas entre los valores pasados y futuros de la serie, los modelos de aprendizaje automático clásico son capaces de capturar relaciones no lineales entre múltiples variables de entrada simultáneamente, lo cual resulta particularmente valioso cuando se dispone de varias métricas de red (utilización, latencia, pérdida de paquetes, hora del día, día de la semana, entre otras) como posibles predictores.
+
+\textbf{Random Forest} es un método de aprendizaje por conjunto (\textit{ensemble}) que construye una multitud de árboles de decisión durante el entrenamiento, cada uno entrenado sobre una muestra aleatoria de los datos y considerando un subconjunto aleatorio de variables en cada división del árbol \cite{breiman2001}. Para tareas de regresión, la predicción final del bosque se obtiene promediando las predicciones individuales de todos los árboles que lo componen:
+
+\begin{equation}
+    \hat{y} = \frac{1}{T}\sum_{i=1}^{T} h_i(x)
+    \label{eq:random_forest}
+\end{equation}
+
+donde $T$ es el número total de árboles y $h_i(x)$ es la predicción del árbol $i$-ésimo para la entrada $x$. Esta estrategia de combinar múltiples predictores "débiles" en un predictor colectivo robusto reduce significativamente el riesgo de sobreajuste (\textit{overfitting}) comparado con un único árbol de decisión, y ofrece además una ventaja adicional relevante para esta tesis: la posibilidad de calcular la \textbf{importancia relativa} de cada variable de entrada, lo cual permite identificar qué métricas de red resultan más informativas para predecir la congestión.
+
+Por su parte, \textbf{SVR} (\textit{Support Vector Regression}) es la adaptación al problema de regresión de las Máquinas de Vectores de Soporte (SVM), y busca encontrar una función que se ajuste a los datos permitiendo un margen de tolerancia $\varepsilon$, penalizando únicamente aquellas predicciones cuyo error exceda dicho margen. Su capacidad para emplear funciones de \textit{kernel} (lineales, polinomiales o de base radial) le permite modelar relaciones no lineales complejas entre las variables de red y la utilización futura del enlace, constituyendo una alternativa adicional dentro de la familia de modelos de aprendizaje automático clásico a evaluar en esta tesis.
+
 \subsection{Modelos de Deep Learning (LSTM, GRU)}
+
+Las redes neuronales recurrentes (RNN) fueron diseñadas específicamente para procesar datos secuenciales, manteniendo una suerte de "memoria" interna que se actualiza en cada paso temporal. Sin embargo, las RNN convencionales sufren de un problema conocido como el desvanecimiento del gradiente (\textit{vanishing gradient}), que les impide aprender de manera efectiva dependencias que abarcan largos periodos de tiempo —una limitación especialmente relevante para el tráfico de red, donde los patrones de congestión pueden depender de comportamientos observados varios minutos u horas atrás.
+
+Las \textbf{LSTM} (\textit{Long Short-Term Memory}) fueron propuestas precisamente para resolver esta limitación, mediante la introducción de una estructura interna de \textit{compuertas} (\textit{gates}) que regulan de manera explícita qué información se conserva, se actualiza o se descarta a lo largo del tiempo \cite{hochreiter1997}. Cada unidad LSTM mantiene un estado de celda $c_t$ que actúa como memoria de largo plazo, y tres compuertas —de olvido, de entrada y de salida— que controlan el flujo de información:
+
+\begin{align}
+    f_t &= \sigma(W_f \cdot [h_{t-1}, x_t] + b_f) \quad \text{(compuerta de olvido)} \\
+    i_t &= \sigma(W_i \cdot [h_{t-1}, x_t] + b_i) \quad \text{(compuerta de entrada)} \\
+    o_t &= \sigma(W_o \cdot [h_{t-1}, x_t] + b_o) \quad \text{(compuerta de salida)}
+    \label{eq:lstm_gates}
+\end{align}
+
+donde $\sigma$ es la función de activación sigmoide, $x_t$ es la entrada en el instante $t$, $h_{t-1}$ es el estado oculto anterior, y $W$ y $b$ son los pesos y sesgos aprendidos durante el entrenamiento. Esta arquitectura permite a la red aprender de forma selectiva qué eventos pasados —por ejemplo, una ráfaga de sincronización de Nextcloud ocurrida varios minutos atrás— siguen siendo relevantes para predecir el estado de la red en el presente.
+
+Las \textbf{GRU} (\textit{Gated Recurrent Units}) constituyen una variante simplificada de las LSTM, propuesta posteriormente con el objetivo de reducir la complejidad computacional del modelo sin sacrificar significativamente su capacidad de capturar dependencias temporales de largo plazo \cite{cho2014}. Las GRU combinan las compuertas de olvido y entrada en una única \textit{compuerta de actualización}, y prescinden del estado de celda independiente que caracteriza a las LSTM, resultando en un modelo con menos parámetros entrenables y, por tanto, potencialmente más eficiente de entrenar sobre conjuntos de datos de tamaño moderado como los descritos en la Sección \ref{sec:fuente_datos}. La comparación entre LSTM y GRU en cuanto a precisión y costo computacional se abordará empíricamente en el Capítulo 6 de esta tesis.
+
 \subsection{Métricas de evaluación (RMSE, MAE, MAPE)}
 
+Para poder comparar de manera objetiva el desempeño de los distintos modelos presentados en esta sección —ARIMA, Random Forest, SVR, LSTM y GRU— es necesario definir métricas cuantitativas de error, aplicables tanto a la fase de validación como a la comparación final de resultados en el Capítulo 6. Sea $y_i$ el valor real observado, $\hat{y}_i$ el valor predicho por el modelo, y $n$ el número total de observaciones evaluadas.
+
+\textbf{RMSE} (\textit{Root Mean Squared Error}, raíz del error cuadrático medio):
+
+\begin{equation}
+    \text{RMSE} = \sqrt{\frac{1}{n}\sum_{i=1}^{n}(y_i - \hat{y}_i)^2}
+    \label{eq:rmse}
+\end{equation}
+
+Al elevar al cuadrado cada error antes de promediar, el RMSE penaliza de manera desproporcionada los errores grandes, lo cual resulta conveniente en el contexto de esta tesis: un modelo que falle de forma drástica en predecir un evento de congestión severa es considerablemente más problemático que uno con pequeños errores distribuidos de manera uniforme.
+
+\textbf{MAE} (\textit{Mean Absolute Error}, error absoluto medio):
+
+\begin{equation}
+    \text{MAE} = \frac{1}{n}\sum_{i=1}^{n}\left|y_i - \hat{y}_i\right|
+    \label{eq:mae}
+\end{equation}
+
+A diferencia del RMSE, el MAE pondera todos los errores de manera lineal e igualitaria, por lo que resulta menos sensible a valores atípicos (\textit{outliers}) y ofrece una interpretación más directa: representa, en promedio, cuánto se equivoca el modelo en las mismas unidades que la variable original (en este caso, puntos porcentuales de utilización).
+
+\textbf{MAPE} (\textit{Mean Absolute Percentage Error}, error porcentual absoluto medio):
+
+\begin{equation}
+    \text{MAPE} = \frac{100\%}{n}\sum_{i=1}^{n}\left|\frac{y_i - \hat{y}_i}{y_i}\right|
+    \label{eq:mape}
+\end{equation}
+
+El MAPE expresa el error como un porcentaje relativo al valor real, lo que facilita su interpretación independientemente de la escala de la variable y permite comparar el desempeño de un mismo modelo entre el dataset primario y el dataset de validación externa (MAWI), a pesar de que ambos operan a escalas de tráfico sustancialmente distintas, tal como se estableció en la Sección \ref{sec:fuente_datos}. Como limitación, esta métrica no está definida cuando $y_i = 0$, situación que deberá considerarse durante su implementación si la utilización del enlace llegara a registrar valores nulos en algún intervalo.
+
+La Tabla \ref{tab:resumen_modelos} sintetiza los cinco modelos presentados en esta sección, contrastando su naturaleza, complejidad y tipo de relación que son capaces de capturar, como punto de partida para la justificación metodológica que se desarrollará en el Capítulo 4.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|l|}
+        \hline
+        \textbf{Modelo} & \textbf{Paradigma} & \textbf{Relaciones} & \textbf{Complejidad} \\
+        \hline
+        ARIMA & Estadístico clásico & Lineales & Baja \\
+        Random Forest & ML clásico (ensemble) & No lineales & Media \\
+        SVR & ML clásico (kernel) & No lineales & Media \\
+        LSTM & Deep Learning (RNN) & No lineales, largo plazo & Alta \\
+        GRU & Deep Learning (RNN) & No lineales, largo plazo & Media-Alta \\
+        \hline
+    \end{tabular}
+    \caption{Resumen comparativo de los modelos de predicción considerados en esta tesis.}
+    \label{tab:resumen_modelos}
+\end{table}
 \clearpage
+
 \chapter{Estado del Arte}
 
 \section{Revisión de trabajos sobre predicción de tráfico con métodos estadísticos}
@@ -404,6 +677,31 @@ comienza a degradarse significativamente, provocando inestabilidad en la comunic
 \section{Descripción de las métricas a utilizar}
 
 \section{Fuente de datos}
+\label{sec:fuente_datos}
+
+Para el desarrollo de esta tesis se adoptó una estrategia híbrida de recolección de datos, combinando una fuente primaria de tráfico real capturado de forma pasiva en una red administrada directamente por el autor, con una fuente secundaria de validación externa proveniente de un archivo académico de tráfico de Internet ampliamente reconocido. Esta combinación busca equilibrar dos necesidades que, de manera aislada, ningún dataset por sí solo podría satisfacer plenamente: por un lado, la posibilidad de definir con precisión el proceso de recolección, las métricas capturadas y el contexto operativo del enlace bajo estudio; y por otro, la necesidad de validar que los modelos desarrollados no se sobreajustan a las particularidades de un único escenario, sino que son capaces de generalizar su capacidad predictiva a condiciones de tráfico distintas en naturaleza y escala.
+
+\subsection*{Dataset primario: red administrada del cliente}
+
+La fuente primaria de datos proviene de una red privada residencial/PYME sobre la cual el autor tiene acceso administrativo completo, en el contexto de un proyecto de despliegue de infraestructura previamente desarrollado. Dicha red opera bajo un enrutador MikroTik que concentra y gestiona simultáneamente múltiples servicios que compiten por el mismo enlace de salida a Internet: un sistema de videovigilancia con grabación continua (NVR), tráfico residencial de uso cotidiano, la interconexión hacia el proveedor de servicios de Internet (ISP) a través de una red óptica pasiva (OLT), y, más recientemente, un servicio de almacenamiento en la nube autoalojado (Nextcloud) accesible de forma remota mediante una VPN SSTP. Esta coexistencia de servicios con patrones de tráfico heterogéneos —tráfico constante y de bajo volumen por parte de las cámaras, ráfagas esporádicas de alto volumen durante sincronizaciones de archivos en la nube, y patrones de uso residencial con picos previsibles en determinadas franjas horarias— constituye un escenario particularmente propicio para el estudio de la congestión, ya que no se trata de tráfico artificial o simulado, sino de la operación real y cotidiana de una red con múltiples fuentes de demanda concurrente.
+
+La recolección de datos sobre esta red se realizará de manera estrictamente pasiva, evitando en todo momento la captura o inspección del contenido (\textit{payload}) de las comunicaciones, y limitándose exclusivamente a metadatos de tráfico agregados: utilización del enlace, obtenida mediante consultas periódicas al protocolo SNMP sobre los contadores de la interfaz WAN del enrutador; y latencia y pérdida de paquetes, obtenidas mediante mediciones activas complementarias hacia un destino externo estable, conforme a las definiciones formales establecidas en la Sección \ref{sec:metricas}. El periodo de recolección planificado abarca dos meses continuos de operación, con una granularidad de muestreo de un minuto, lo cual permite capturar tanto los patrones cíclicos de uso diario y semanal como los eventos de saturación puntual que resultan de interés central para esta investigación.
+
+Es importante señalar que, dado que los datos provienen de la infraestructura de un tercero, se obtuvo la autorización explícita del propietario de la red para realizar el monitoreo pasivo de metadatos de tráfico con fines exclusivamente académicos, en línea con buenas prácticas de investigación en redes de computadoras que involucran datos de operación reales %\cite{boukerche2021}
+.
+
+\subsection*{Dataset secundario: MAWI Working Group Traffic Archive}
+
+Como fuente de validación externa se empleará el \textbf{MAWI Working Group Traffic Archive}, un repositorio de trazas de tráfico mantenido de forma continua desde 2006 por el proyecto WIDE, que captura de manera diaria el tráfico del enlace de tránsito entre la red académica WIDE y su proveedor ascendente en Tokio, Japón \cite{mawi}. A diferencia del dataset primario, que corresponde a una red de escala reducida con un puñado de servicios concurrentes, las trazas de MAWI capturan tráfico agregado de un enlace de tránsito de gran escala (entre 1 y 10 Gbps), compuesto por miles de flujos simultáneos provenientes de múltiples organizaciones y aplicaciones. Las direcciones IP contenidas en estas trazas se encuentran anonimizadas mediante un esquema que preserva la estructura de prefijos de red (\textit{prefix-preserving anonymization}, mediante el algoritmo Crypto-PAn), lo cual elimina cualquier posibilidad de identificar usuarios individuales sin comprometer la utilidad analítica de los datos para el estudio de patrones agregados de tráfico.
+
+La incorporación de este segundo dataset responde a una limitación reconocida en la literatura sobre predicción de tráfico de red: los modelos entrenados y evaluados sobre una única fuente de datos tienden a mostrar un desempeño optimista que no necesariamente se sostiene cuando se exponen a condiciones de tráfico distintas a las observadas durante el entrenamiento %\cite{zhang2020}
+. Al validar los modelos desarrollados en esta tesis sobre las trazas de MAWI —de una naturaleza y escala sustancialmente distinta a la del dataset primario—, es posible obtener evidencia más robusta sobre la capacidad de generalización de los enfoques de Machine Learning propuestos, más allá de las particularidades de un único escenario de red.
+
+Dado que las trazas de MAWI se distribuyen en formato de captura de paquetes (\texttt{.pcap}) y no como series temporales de utilización previamente agregadas, fue necesario un procesamiento adicional para derivar de ellas las mismas métricas empleadas en el dataset primario. Este procesamiento se describe con mayor detalle en la Sección \ref{sec:preprocesamiento} (Preprocesamiento de datos).
+
+\subsection*{Consideraciones éticas y de privacidad}
+
+En ambos casos, la recolección y el procesamiento de los datos se rigen por un principio de minimización: se capturan y almacenan únicamente los metadatos estrictamente necesarios para el análisis de utilización, latencia y pérdida de paquetes, sin acceder en ningún momento al contenido de las comunicaciones transportadas. En el caso del dataset primario, se cuenta con la autorización expresa del propietario de la infraestructura; en el caso de MAWI, el uso de los datos se limita a fines de investigación, en cumplimiento con los términos de uso establecidos por el propio archivo, los cuales explícitamente restringen su empleo a propósitos académicos y prohíben cualquier acción que comprometa la privacidad de los usuarios cuyo tráfico fue originalmente capturado.
 
 \section{Preprocesamiento de datos}
 
