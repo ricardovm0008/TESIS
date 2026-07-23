@@ -133,7 +133,7 @@ inteligencia artificial, permite a las máquinas aprender patrones a partir de d
 que lo convierte en una herramienta natural para atacar el problema de anticipación recién descrito.
 
 El presente trabajo de tesis se sitúa justo en esta intersección entre las redes de computadoras y la inteligencia artificial. El objetivo central es desarrollar un sistema
-basado en técnicas de Machine Learning que sea capaz de predecir la congestión en un enlace de red a partir del análisis de métricas de tráfico obtenidas de forma pasiva. En 
+basado en técnicas de Machine Learning que sea capaz de predecir la congestión en un enlace de red a partir del análisis de métricas de tráfico obtenidas de forma hibrida activa/pasiva. En 
 lugar de limitarnos a reaccionar cuando la utilización ya está en niveles críticos, busco construir un modelo que pueda alertar con varios minutos de antelación: ``Atención: 
 este enlace alcanzará el 85\% de su capacidad; toma medidas ahora''.
 
@@ -214,10 +214,10 @@ sido previamente recolectados y preprocesados. Por tanto, no se han implementado
 resultarían necesarios para una eventual transición a un sistema de alerta temprana en producción. Esta limitación es congruente con la elección de priorizar la comparación de modelos bajo condiciones controladas 
 \cite{zhang2020}.
 
-Finalmente, la evaluación de la congestión se efectúa exclusivamente sobre el factor de utilización del enlace. Otras métricas que pueden incidir en la percepción de congestión, como la variación del retardo (jitter) o 
-la tasa de pérdida de paquetes, no son modeladas de manera directa por el prototipo, aunque se mencionan en la fundamentación teórica. Esta delimitación conceptual simplifica el problema de predicción y permite 
-concentrar los esfuerzos en la metodología propuesta, pero reconoce que la congestión es un fenómeno multifactorial que podría beneficiarse de un análisis más holístico en el futuro.
-
+Finalmente, es imperativo distinguir entre la variable objetivo del sistema y sus variables predictoras. Para fines de etiquetado y evaluación, el estado de congestión se define y cuantifica exclusivamente a partir 
+del factor de utilización del enlace (variable objetivo). Sin embargo, el prototipo predictivo sí incorpora métricas de red complementarias —como estimaciones de rendimiento y disponibilidad obtenidas de forma pasiva— 
+como variables de entrada (\textit{features}) para el entrenamiento de los algoritmos. Esta delimitación conceptual permite definir un umbral matemático claro para la congestión, reconociendo simultáneamente que el 
+modelo requiere de una perspectiva multivariable para capturar los patrones complejos que preceden a la saturación del enlace.
 \clearpage
 
 \chapter{Marco Teórico}
@@ -257,6 +257,7 @@ detallará en la sección \ref{sec:congestion}, el origen mismo del fenómeno de
     \caption{Representación de una red entre dos computadoras.}
     \label{fig:red_punto_a_punto}
 \end{figure}
+\newpage
 
 El funcionamiento de una red se organiza de manera jerárquica para domar la complejidad inherente a la comunicación digital. Esta organización se plasma en los llamados modelos de referencia, que dividen el problema de transmitir 
 información en varias capas superpuestas, cada una con responsabilidades claramente acotadas: desde los aspectos puramente físicos de la transmisión (voltajes, pulsos de luz, ondas de radio) hasta la interacción con las aplicaciones 
@@ -389,11 +390,12 @@ manifestarse de forma perceptible los síntomas descritos anteriormente: crecimi
     \label{eq:congestion_def}
 \end{equation}
 
-%%% AQUÍ decidir y justificar U_th (ej. 0.80, 0.85, 0.90) según literatura o análisis empírico del dataset,
-%%% y definir Delta t (ej. ventanas de 1 minuto, 5 minutos, según la granularidad de los datos)
+La determinación del umbral crítico $U_{th}$ y la ventana de observación $\Delta t$ no se establecerá de manera arbitraria. Para garantizar el rigor del etiquetado, el valor de $U_{th}$ se derivará empíricamente en el Capítulo 4 a partir de un análisis estadístico sobre el conjunto de datos de 
+operación histórica. Específicamente, se buscará identificar el punto de inflexión en la distribución de los datos (por ejemplo, mediante el percentil 85 o 90) donde la métrica de utilización comienza a correlacionarse con un incremento exponencial en los retardos o fluctuaciones de la red. 
+De igual forma, el intervalo $\Delta t$ estará dictado por la granularidad de muestreo soportada por las herramientas de instrumentación pasiva empleadas durante la recolección de las trazas.
 
 Esta definición operativa presenta dos ventajas fundamentales para los fines de esta investigación. En primer lugar, se apoya en una métrica directamente observable y de fácil recolección de forma pasiva —el factor de utilización—, a diferencia de otras métricas como el jitter o la pérdida de 
-paquetes, que requieren instrumentación más invasiva o cálculos derivados más complejos. En segundo lugar, al tratarse de un umbral cuantitativo y no de una apreciación cualitativa, permite convertir el problema de "predecir congestión" en un problema bien definido de aprendizaje automático: 
+paquetes, que requieren instrumentación más invasiva o cálculos derivados más complejos. En segundo lugar, al tratarse de un umbral cuantitativo y no de una apreciación cualitativa, permite convertir el problema de predecir congestión en un problema bien definido de aprendizaje automático: 
 ya sea como una tarea de \textbf{regresión} (predecir el valor futuro de $U(t)$) o como una tarea de \textbf{clasificación binaria} (predecir si $U(t)$ superará o no el umbral $U_{th}$ en un horizonte temporal determinado), ambos enfoques que se explorarán y compararán en los capítulos metodológico 
 y experimental de este trabajo.
 
@@ -514,20 +516,26 @@ La Tabla \ref{tab:metricas_resumen} sintetiza las métricas descritas en esta se
 
 \section{Técnicas de Machine Learning aplicables}
 
-Una vez establecidos los fundamentos de redes de computadoras y caracterizado formalmente el fenómeno de la congestión, corresponde ahora presentar el conjunto de herramientas metodológicas que esta tesis emplea para abordar el problema de predicción planteado: las técnicas de Machine Learning (ML). Esta sección no pretende ser un tratado exhaustivo de aprendizaje automático, sino una revisión dirigida y suficiente de los conceptos, paradigmas y modelos específicos que resultan pertinentes para la tarea de predecir series temporales de utilización de red, y que serán empleados e implementados en los capítulos de Metodología (Capítulo 4) y Desarrollo (Capítulo 5).
+Una vez establecidos los fundamentos de redes de computadoras y caracterizado formalmente el fenómeno de la congestión, corresponde ahora presentar el conjunto de herramientas metodológicas que esta tesis emplea para abordar el problema de predicción planteado: las técnicas de Machine 
+Learning (ML). Esta sección no pretende ser un tratado exhaustivo de aprendizaje automático, sino una revisión dirigida y suficiente de los conceptos, paradigmas y modelos específicos que resultan pertinentes para la tarea de predecir series temporales de utilización de red, y que serán 
+empleados e implementados en los capítulos de Metodología (Capítulo 4) y Desarrollo (Capítulo 5).
 
 \subsection{Aprendizaje supervisado: regresión vs clasificación}
 
-El aprendizaje automático se organiza tradicionalmente en tres grandes paradigmas: el aprendizaje supervisado, en el que el modelo aprende a partir de ejemplos previamente etiquetados con la respuesta correcta; el aprendizaje no supervisado, en el que el modelo busca patrones o estructuras ocultas en datos sin etiquetar; y el aprendizaje por refuerzo, en el que un agente aprende a partir de la interacción con un entorno y de las recompensas obtenidas. El problema de predicción de congestión planteado en esta tesis se enmarca de manera natural dentro del \textbf{aprendizaje supervisado}, ya que se dispone de datos históricos de operación de red (las variables de entrada o \textit{features}, como utilización, latencia o pérdida de paquetes en instantes pasados) junto con el valor real observado que se desea predecir (la utilización futura del enlace).
+El aprendizaje automático se organiza tradicionalmente en tres grandes paradigmas: el aprendizaje supervisado, en el que el modelo aprende a partir de ejemplos previamente etiquetados con la respuesta correcta; el aprendizaje no supervisado, en el que el modelo busca patrones o estructuras 
+ocultas en datos sin etiquetar; y el aprendizaje por refuerzo, en el que un agente aprende a partir de la interacción con un entorno y de las recompensas obtenidas. El problema de predicción de congestión planteado en esta tesis se enmarca de manera natural dentro del 
+\textbf{aprendizaje supervisado}, ya que se dispone de datos históricos de operación de red (las variables de entrada o \textit{features}, como utilización, latencia o pérdida de paquetes en instantes pasados) junto con el valor real observado que se desea predecir (la utilización futura del enlace).
 
 Dentro del aprendizaje supervisado, y de acuerdo con la naturaleza de la variable que se busca predecir, es posible distinguir dos tareas fundamentales:
 
 \begin{itemize}
     \item \textbf{Regresión}: la variable objetivo es continua. En el contexto de esta tesis, esto correspondería a predecir directamente el valor futuro del factor de utilización $U(t + h)$ para un horizonte de predicción $h$, expresado como un número real entre 0 y 1.
-    \item \textbf{Clasificación}: la variable objetivo es discreta o categórica. En este caso, correspondería a predecir si el enlace se encontrará o no en estado de congestión en el horizonte $h$, de acuerdo con la definición operativa formulada en la Ecuación \ref{eq:congestion_def} —es decir, si $U(t+h) \geq U_{th}$—, reduciendo el problema a una clasificación binaria (congestión / no congestión).
+    \item \textbf{Clasificación}: la variable objetivo es discreta o categórica. En este caso, correspondería a predecir si el enlace se encontrará o no en estado de congestión en el horizonte $h$, de acuerdo con la definición operativa formulada en la Ecuación 
+    \ref{eq:congestion_def} —es decir, si $U(t+h) \geq U_{th}$—, reduciendo el problema a una clasificación binaria (congestión / no congestión).
 \end{itemize}
 
-Ambos enfoques no son mutuamente excluyentes, sino complementarios: un modelo de regresión ofrece información más rica (el valor exacto esperado de utilización), mientras que uno de clasificación ofrece una respuesta más directamente accionable para un sistema de alertas (sí/no hay riesgo de congestión). Por esta razón, en esta tesis se explorará la formulación del problema bajo ambos enfoques según el modelo empleado, tal como se detalla en las siguientes subsecciones.
+Ambos enfoques no son mutuamente excluyentes, sino complementarios: un modelo de regresión ofrece información más rica (el valor exacto esperado de utilización), mientras que uno de clasificación ofrece una respuesta más directamente accionable para un sistema de alertas (sí/no hay riesgo de congestión). 
+Por esta razón, en esta tesis se explorará la formulación del problema bajo ambos enfoques según el modelo empleado, tal como se detalla en las siguientes subsecciones.
 
 \begin{figure}[H]
     \centering
@@ -556,7 +564,8 @@ Ambos enfoques no son mutuamente excluyentes, sino complementarios: un modelo de
 
 \subsection{Modelos de series temporales (ARIMA)}
 
-El modelo \textbf{ARIMA} (\textit{AutoRegressive Integrated Moving Average}), desarrollado dentro del marco metodológico propuesto por Box y Jenkins, constituye uno de los enfoques estadísticos más consolidados para el análisis y predicción de series temporales \cite{boxjenkins2015}. Su nombre resume sus tres componentes constitutivos:
+El modelo \textbf{ARIMA} (\textit{AutoRegressive Integrated Moving Average}), desarrollado dentro del marco metodológico propuesto por Box y Jenkins, constituye uno de los enfoques estadísticos más consolidados para el análisis y predicción de series temporales 
+\cite{boxjenkins2015}. Su nombre resume sus tres componentes constitutivos:
 
 \begin{itemize}
     \item \textbf{AR (AutoRegresivo)}: el valor de la serie en un instante dado se modela como una combinación lineal de sus propios valores pasados, con un orden $p$ que indica cuántos rezagos (\textit{lags}) se consideran.
@@ -571,28 +580,45 @@ Un modelo ARIMA se denota comúnmente como $ARIMA(p,d,q)$, y se expresa formalme
     \label{eq:arima}
 \end{equation}
 
-donde $X_t$ es la serie temporal de interés (en este caso, la utilización del enlace en el instante $t$), $L$ es el operador de rezago, $\phi_i$ y $\theta_i$ son los coeficientes autorregresivos y de media móvil respectivamente, y $\varepsilon_t$ representa el término de error o ruido blanco. Este modelo resulta especialmente útil como \textbf{línea base} (\textit{baseline}) dentro de esta tesis: al tratarse de un método estadístico clásico, bien establecido y computacionalmente económico, permite establecer un punto de referencia mínimo de desempeño contra el cual comparar la capacidad predictiva de los modelos de aprendizaje automático más sofisticados que se presentan a continuación.
+donde $X_t$ es la serie temporal de interés (en este caso, la utilización del enlace en el instante $t$), $L$ es el operador de rezago, $\phi_i$ y $\theta_i$ son los coeficientes autorregresivos y de media móvil respectivamente, y $\varepsilon_t$ representa el 
+término de error o ruido blanco. Este modelo resulta especialmente útil como \textbf{línea base} (\textit{baseline}) dentro de esta tesis: al tratarse de un método estadístico clásico, bien establecido y computacionalmente económico, permite establecer un 
+punto de referencia mínimo de desempeño contra el cual comparar la capacidad predictiva de los modelos de aprendizaje automático más sofisticados que se presentan a continuación.
 
 \subsection{Modelos de aprendizaje automático (Random Forest, SVR)}
 
-A diferencia de ARIMA, que asume relaciones lineales explícitas entre los valores pasados y futuros de la serie, los modelos de aprendizaje automático clásico son capaces de capturar relaciones no lineales entre múltiples variables de entrada simultáneamente, lo cual resulta particularmente valioso cuando se dispone de varias métricas de red (utilización, latencia, pérdida de paquetes, hora del día, día de la semana, entre otras) como posibles predictores.
+A diferencia de ARIMA, que asume relaciones lineales explícitas entre los valores pasados y futuros de la serie, los modelos de aprendizaje automático clásico son capaces de capturar relaciones no lineales entre múltiples variables de entrada simultáneamente, 
+lo cual resulta particularmente valioso cuando se dispone de varias métricas de red (utilización, latencia, pérdida de paquetes, hora del día, día de la semana, entre otras) como posibles predictores.
 
-\textbf{Random Forest} es un método de aprendizaje por conjunto (\textit{ensemble}) que construye una multitud de árboles de decisión durante el entrenamiento, cada uno entrenado sobre una muestra aleatoria de los datos y considerando un subconjunto aleatorio de variables en cada división del árbol \cite{breiman2001}. Para tareas de regresión, la predicción final del bosque se obtiene promediando las predicciones individuales de todos los árboles que lo componen:
+\textbf{Random Forest} es un método de aprendizaje por conjunto (\textit{ensemble}) que construye una multitud de árboles de decisión durante el entrenamiento, cada uno entrenado sobre una muestra aleatoria de los datos y considerando un subconjunto aleatorio de variables en cada división del 
+árbol \cite{breiman2001}. Para tareas de regresión, la predicción final del bosque se obtiene promediando las predicciones individuales de todos los árboles que lo componen:
 
 \begin{equation}
     \hat{y} = \frac{1}{T}\sum_{i=1}^{T} h_i(x)
     \label{eq:random_forest}
 \end{equation}
 
-donde $T$ es el número total de árboles y $h_i(x)$ es la predicción del árbol $i$-ésimo para la entrada $x$. Esta estrategia de combinar múltiples predictores "débiles" en un predictor colectivo robusto reduce significativamente el riesgo de sobreajuste (\textit{overfitting}) comparado con un único árbol de decisión, y ofrece además una ventaja adicional relevante para esta tesis: la posibilidad de calcular la \textbf{importancia relativa} de cada variable de entrada, lo cual permite identificar qué métricas de red resultan más informativas para predecir la congestión.
+donde $T$ es el número total de árboles y $h_i(x)$ es la predicción del árbol $i$-ésimo para la entrada $x$. Esta estrategia de combinar múltiples predictores "débiles" en un predictor colectivo robusto reduce significativamente el riesgo de sobreajuste (\textit{overfitting}) comparado 
+con un único árbol de decisión, y ofrece además una ventaja adicional relevante para esta tesis: la posibilidad de calcular la \textbf{importancia relativa} de cada variable de entrada, lo cual permite identificar qué métricas de red resultan más informativas para predecir la congestión.
 
-Por su parte, \textbf{SVR} (\textit{Support Vector Regression}) es la adaptación al problema de regresión de las Máquinas de Vectores de Soporte (SVM), y busca encontrar una función que se ajuste a los datos permitiendo un margen de tolerancia $\varepsilon$, penalizando únicamente aquellas predicciones cuyo error exceda dicho margen. Su capacidad para emplear funciones de \textit{kernel} (lineales, polinomiales o de base radial) le permite modelar relaciones no lineales complejas entre las variables de red y la utilización futura del enlace, constituyendo una alternativa adicional dentro de la familia de modelos de aprendizaje automático clásico a evaluar en esta tesis.
+Por su parte, \textbf{SVR} (\textit{Support Vector Regression}) es la adaptación al problema de regresión de las Máquinas de Vectores de Soporte (SVM), y busca encontrar una función que se ajuste a los datos permitiendo un margen de tolerancia $\varepsilon$, penalizando únicamente aquellas 
+predicciones cuyo error exceda dicho margen. Su capacidad para emplear funciones de \textit{kernel} (lineales, polinomiales o de base radial) le permite modelar relaciones no lineales complejas entre las variables de red y la utilización futura del enlace, constituyendo una alternativa 
+adicional dentro de la familia de modelos de aprendizaje automático clásico a evaluar en esta tesis.
+
+Es imperativo señalar que, a diferencia de los modelos autorregresivos (ARIMA) o las redes neuronales recurrentes (LSTM/GRU), los algoritmos de aprendizaje automático clásico como Random Forest y SVR carecen de una representación interna del tiempo; es decir, tratan cada observación 
+como un evento estático e independiente. Para aplicar estos algoritmos a un problema de predicción de series temporales, es necesario transformar el conjunto de datos mediante una técnica conocida como \textbf{ventanas deslizantes} (\textit{sliding windows}) o método de rezagos (\textit{lags}). 
+
+Bajo este enfoque, el estado futuro de la red $X_{t+h}$ se predice no solo a partir de las métricas en el instante $t$, sino construyendo un vector de características que concatena un histórico de tamaño $k$. Formalmente, la entrada al modelo se transforma en una tupla de la forma 
+$[X_t, X_{t-1}, X_{t-2}, \dots, X_{t-k}]$, convirtiendo la dependencia temporal en una dependencia espacial tabular que los algoritmos clásicos pueden procesar. La determinación empírica del tamaño óptimo de esta ventana $k$ constituirá uno de los hiperparámetros a ajustar durante la fase 
+experimental de este trabajo.
 
 \subsection{Modelos de Deep Learning (LSTM, GRU)}
 
-Las redes neuronales recurrentes (RNN) fueron diseñadas específicamente para procesar datos secuenciales, manteniendo una suerte de "memoria" interna que se actualiza en cada paso temporal. Sin embargo, las RNN convencionales sufren de un problema conocido como el desvanecimiento del gradiente (\textit{vanishing gradient}), que les impide aprender de manera efectiva dependencias que abarcan largos periodos de tiempo —una limitación especialmente relevante para el tráfico de red, donde los patrones de congestión pueden depender de comportamientos observados varios minutos u horas atrás.
+Las redes neuronales recurrentes (RNN) fueron diseñadas específicamente para procesar datos secuenciales, manteniendo una suerte de "memoria" interna que se actualiza en cada paso temporal. Sin embargo, las RNN convencionales sufren de un problema conocido como el desvanecimiento del 
+gradiente (\textit{vanishing gradient}), que les impide aprender de manera efectiva dependencias que abarcan largos periodos de tiempo —una limitación especialmente relevante para el tráfico de red, donde los patrones de congestión pueden depender de comportamientos observados varios 
+minutos u horas atrás.
 
-Las \textbf{LSTM} (\textit{Long Short-Term Memory}) fueron propuestas precisamente para resolver esta limitación, mediante la introducción de una estructura interna de \textit{compuertas} (\textit{gates}) que regulan de manera explícita qué información se conserva, se actualiza o se descarta a lo largo del tiempo \cite{hochreiter1997}. Cada unidad LSTM mantiene un estado de celda $c_t$ que actúa como memoria de largo plazo, y tres compuertas —de olvido, de entrada y de salida— que controlan el flujo de información:
+Las \textbf{LSTM} (\textit{Long Short-Term Memory}) fueron propuestas precisamente para resolver esta limitación, mediante la introducción de una estructura interna de \textit{compuertas} (\textit{gates}) que regulan de manera explícita qué información se conserva, se actualiza o se 
+descarta a lo largo del tiempo \cite{hochreiter1997}. Cada unidad LSTM mantiene un estado de celda $c_t$ que actúa como memoria de largo plazo, y tres compuertas —de olvido, de entrada y de salida— que controlan el flujo de información:
 
 \begin{align}
     f_t &= \sigma(W_f \cdot [h_{t-1}, x_t] + b_f) \quad \text{(compuerta de olvido)} \\
@@ -601,13 +627,17 @@ Las \textbf{LSTM} (\textit{Long Short-Term Memory}) fueron propuestas precisamen
     \label{eq:lstm_gates}
 \end{align}
 
-donde $\sigma$ es la función de activación sigmoide, $x_t$ es la entrada en el instante $t$, $h_{t-1}$ es el estado oculto anterior, y $W$ y $b$ son los pesos y sesgos aprendidos durante el entrenamiento. Esta arquitectura permite a la red aprender de forma selectiva qué eventos pasados —por ejemplo, una ráfaga de sincronización de Nextcloud ocurrida varios minutos atrás— siguen siendo relevantes para predecir el estado de la red en el presente.
+donde $\sigma$ es la función de activación sigmoide, $x_t$ es la entrada en el instante $t$, $h_{t-1}$ es el estado oculto anterior, y $W$ y $b$ son los pesos y sesgos aprendidos durante el entrenamiento. Esta arquitectura permite a la red aprender de forma selectiva qué eventos 
+pasados —por ejemplo, una ráfaga de sincronización de Nextcloud ocurrida varios minutos atrás— siguen siendo relevantes para predecir el estado de la red en el presente.
 
-Las \textbf{GRU} (\textit{Gated Recurrent Units}) constituyen una variante simplificada de las LSTM, propuesta posteriormente con el objetivo de reducir la complejidad computacional del modelo sin sacrificar significativamente su capacidad de capturar dependencias temporales de largo plazo \cite{cho2014}. Las GRU combinan las compuertas de olvido y entrada en una única \textit{compuerta de actualización}, y prescinden del estado de celda independiente que caracteriza a las LSTM, resultando en un modelo con menos parámetros entrenables y, por tanto, potencialmente más eficiente de entrenar sobre conjuntos de datos de tamaño moderado como los descritos en la Sección \ref{sec:fuente_datos}. La comparación entre LSTM y GRU en cuanto a precisión y costo computacional se abordará empíricamente en el Capítulo 6 de esta tesis.
+Las \textbf{GRU} (\textit{Gated Recurrent Units}) constituyen una variante simplificada de las LSTM, propuesta posteriormente con el objetivo de reducir la complejidad computacional del modelo sin sacrificar significativamente su capacidad de capturar dependencias temporales de largo 
+plazo \cite{cho2014}. Las GRU combinan las compuertas de olvido y entrada en una única \textit{compuerta de actualización}, y prescinden del estado de celda independiente que caracteriza a las LSTM, resultando en un modelo con menos parámetros entrenables y, por tanto, potencialmente 
+más eficiente de entrenar sobre conjuntos de datos de tamaño moderado como los descritos en la Sección \ref{sec:fuente_datos}. La comparación entre LSTM y GRU en cuanto a precisión y costo computacional se abordará empíricamente en el Capítulo 6 de esta tesis.
 
-\subsection{Métricas de evaluación (RMSE, MAE, MAPE)}
+\subsection{Métricas de evaluación}
 
-Para poder comparar de manera objetiva el desempeño de los distintos modelos presentados en esta sección —ARIMA, Random Forest, SVR, LSTM y GRU— es necesario definir métricas cuantitativas de error, aplicables tanto a la fase de validación como a la comparación final de resultados en el Capítulo 6. Sea $y_i$ el valor real observado, $\hat{y}_i$ el valor predicho por el modelo, y $n$ el número total de observaciones evaluadas.
+Para poder comparar de manera objetiva el desempeño de los distintos modelos presentados en esta sección —ARIMA, Random Forest, SVR, LSTM y GRU— es necesario definir métricas cuantitativas de error, aplicables tanto a la fase de validación como a la comparación final de resultados en 
+el Capítulo 6. Sea $y_i$ el valor real observado, $\hat{y}_i$ el valor predicho por el modelo, y $n$ el número total de observaciones evaluadas.
 
 \textbf{RMSE} (\textit{Root Mean Squared Error}, raíz del error cuadrático medio):
 
@@ -616,7 +646,8 @@ Para poder comparar de manera objetiva el desempeño de los distintos modelos pr
     \label{eq:rmse}
 \end{equation}
 
-Al elevar al cuadrado cada error antes de promediar, el RMSE penaliza de manera desproporcionada los errores grandes, lo cual resulta conveniente en el contexto de esta tesis: un modelo que falle de forma drástica en predecir un evento de congestión severa es considerablemente más problemático que uno con pequeños errores distribuidos de manera uniforme.
+Al elevar al cuadrado cada error antes de promediar, el RMSE penaliza de manera desproporcionada los errores grandes, lo cual resulta conveniente en el contexto de esta tesis: un modelo que falle de forma drástica en predecir un evento de congestión severa es considerablemente más 
+problemático que uno con pequeños errores distribuidos de manera uniforme.
 
 \textbf{MAE} (\textit{Mean Absolute Error}, error absoluto medio):
 
@@ -625,7 +656,8 @@ Al elevar al cuadrado cada error antes de promediar, el RMSE penaliza de manera 
     \label{eq:mae}
 \end{equation}
 
-A diferencia del RMSE, el MAE pondera todos los errores de manera lineal e igualitaria, por lo que resulta menos sensible a valores atípicos (\textit{outliers}) y ofrece una interpretación más directa: representa, en promedio, cuánto se equivoca el modelo en las mismas unidades que la variable original (en este caso, puntos porcentuales de utilización).
+A diferencia del RMSE, el MAE pondera todos los errores de manera lineal e igualitaria, por lo que resulta menos sensible a valores atípicos (\textit{outliers}) y ofrece una interpretación más directa: representa, en promedio, cuánto se equivoca el modelo en las mismas unidades que 
+la variable original (en este caso, puntos porcentuales de utilización).
 
 \textbf{MAPE} (\textit{Mean Absolute Percentage Error}, error porcentual absoluto medio):
 
@@ -634,7 +666,40 @@ A diferencia del RMSE, el MAE pondera todos los errores de manera lineal e igual
     \label{eq:mape}
 \end{equation}
 
-El MAPE expresa el error como un porcentaje relativo al valor real, lo que facilita su interpretación independientemente de la escala de la variable y permite comparar el desempeño de un mismo modelo entre el dataset primario y el dataset de validación externa (MAWI), a pesar de que ambos operan a escalas de tráfico sustancialmente distintas, tal como se estableció en la Sección \ref{sec:fuente_datos}. Como limitación, esta métrica no está definida cuando $y_i = 0$, situación que deberá considerarse durante su implementación si la utilización del enlace llegara a registrar valores nulos en algún intervalo.
+El MAPE expresa el error como un porcentaje relativo al valor real, lo que facilita su interpretación independientemente de la escala de la variable y permite comparar el desempeño de un mismo modelo entre el dataset primario y el dataset de validación externa (MAWI), a pesar 
+de que ambos operan a escalas de tráfico sustancialmente distintas, tal como se estableció en la Sección \ref{sec:fuente_datos}. Como limitación, esta métrica no está definida cuando $y_i = 0$, situación que deberá considerarse durante su implementación si la utilización del 
+enlace llegara a registrar valores nulos en algún intervalo.
+
+Como se estableció en la Sección 2.4, el problema predictivo se abordará tanto desde una perspectiva de regresión como de clasificación. Mientras que las métricas anteriores (RMSE, MAE, MAPE) permiten cuantificar el error en la predicción del valor continuo de utilización, 
+resulta imperativo introducir un conjunto complementario de métricas para evaluar el enfoque de clasificación binaria (congestión vs. operación normal).
+
+Dado que la congestión de red constituye un evento anómalo —es decir, el enlace opera por debajo del umbral $U_{th}$ la mayor parte del tiempo—, el conjunto de datos de operación se encuentra inherentemente desbalanceado. En estos escenarios, utilizar la exactitud global 
+(\textit{accuracy}) resulta metodológicamente engañoso, ya que un modelo que siempre prediga operación normal obtendría un puntaje artificialmente alto sin haber aprendido a detectar la congestión. En su lugar, el desempeño del clasificador se evaluará a partir de la matriz 
+de confusión, empleando las siguientes métricas basadas en los Verdaderos Positivos ($VP$), Verdaderos Negativos ($VN$), Falsos Positivos ($FP$) y Falsos Negativos ($FN$):
+
+\textbf{Precisión} (\textit{Precision}):
+Cuantifica la proporción de predicciones positivas que resultaron correctas. En el contexto de esta tesis, indica qué porcentaje de las advertencias de congestión emitidas por el modelo correspondieron a eventos reales. Una alta precisión es crucial para minimizar las falsas 
+alarmas, las cuales podrían inducir al administrador o al sistema autónomo a redirigir tráfico o escalar recursos de manera innecesaria.
+\begin{equation}
+    \text{Precisión} = \frac{VP}{VP + FP}
+    \label{eq:precision}
+\end{equation}
+
+\textbf{Exhaustividad} (\textit{Recall} o Tasa de Verdaderos Positivos):
+Mide la proporción de eventos positivos reales que fueron identificados correctamente por el algoritmo. Representa la capacidad del sistema para detectar exitosamente los incidentes de congestión, evitando que estos pasen desapercibidos (falsos negativos) y terminen degradando 
+la calidad del servicio al usuario final.
+\begin{equation}
+    \text{Exhaustividad} = \frac{VP}{VP + FN}
+    \label{eq:recall}
+\end{equation}
+
+\textbf{F1-Score}:
+Se define como la media armónica entre la precisión y la exhaustividad. Esta métrica es la herramienta de evaluación primaria en conjuntos de datos desbalanceados, ya que castiga severamente a los modelos que sobreoptimizan una métrica a expensas de la otra (por ejemplo, emitir alertas 
+constantemente para maximizar la exhaustividad, arruinando la precisión). El F1-Score proporciona un único valor escalar que refleja la robustez y el equilibrio general del modelo para distinguir el estado real del enlace.
+\begin{equation}
+    \text{F1-Score} = 2 \times \frac{\text{Precisión} \times \text{Exhaustividad}}{\text{Precisión} + \text{Exhaustividad}}
+    \label{eq:f1_score}
+\end{equation}
 
 La Tabla \ref{tab:resumen_modelos} sintetiza los cinco modelos presentados en esta sección, contrastando su naturaleza, complejidad y tipo de relación que son capaces de capturar, como punto de partida para la justificación metodológica que se desarrollará en el Capítulo 4.
 
@@ -658,19 +723,423 @@ La Tabla \ref{tab:resumen_modelos} sintetiza los cinco modelos presentados en es
 
 \chapter{Estado del Arte}
 
+El presente capítulo tiene como propósito situar esta tesis dentro del cuerpo de conocimiento existente sobre predicción de tráfico y congestión en redes de computadoras, identificando qué se ha hecho, con qué herramientas, bajo qué condiciones y con qué resultados, para de 
+esa manera justificar con evidencia —y no solo con intuición— las decisiones metodológicas que se tomarán en el Capítulo 4.
+
+La revisión se organiza siguiendo la evolución cronológica y metodológica que ha caracterizado a este campo de estudio: se inicia con los trabajos fundamentados en métodos estadísticos clásicos (Sección 3.1), que dominaron la literatura durante las décadas de 1990 y 2000; 
+se continúa con la incorporación de técnicas de Machine Learning clásico (Sección 3.2), que ganaron protagonismo conforme creció la disponibilidad de datos y de poder de cómputo; se revisan después los enfoques basados en Deep Learning (Sección 3.3), que representan el 
+estado actual de mayor sofisticación técnica; se examinan las herramientas de monitoreo y los conjuntos de datos que la comunidad académica ha empleado para validar estos enfoques (Sección 3.4); y finalmente se sintetiza esta revisión identificando la brecha específica 
+que esta tesis busca cubrir (Sección 3.5).
+
+Para cada trabajo revisado se prestará atención particular a cuatro aspectos: (1) el enfoque metodológico empleado y sus fundamentos teóricos; (2) la naturaleza y origen de los datos utilizados para entrenar y validar el modelo; (3) las métricas de evaluación reportadas y 
+los resultados obtenidos; y (4) las limitaciones reconocidas por los propios autores o identificables desde una lectura crítica, que resultan relevantes para el diseño de esta investigación. Este último punto merece una precisión importante: el objetivo de señalar 
+limitaciones no es desacreditar el trabajo de otros investigadores, sino identificar con precisión los aspectos que aún no han sido resueltos de manera satisfactoria por la literatura existente, y que constituyen la motivación concreta para el aporte de esta tesis.
+
+Es importante advertir, además, que la mayoría de los trabajos revisados no abordan la predicción de \textit{congestión} como un evento discreto y accionable —tal como se definió formalmente en la Sección \ref{sec:congestion} de esta tesis (Ecuación \ref{eq:congestion_def})—, 
+sino que se concentran en la predicción general del \textit{volumen de tráfico} como una serie temporal continua. Esta distinción, aparentemente sutil, resulta central para posicionar la contribución de este trabajo, y se retomará con mayor detalle en la síntesis del estado 
+del arte (Sección 3.5).
+
+
 \section{Revisión de trabajos sobre predicción de tráfico con métodos estadísticos}
+
+Los métodos estadísticos clásicos, y en particular la familia de modelos ARIMA presentada en la Sección 2.2.2, constituyeron durante largo tiempo la herramienta predominante para el análisis y predicción de tráfico de red, debido a su fundamento matemático bien establecido y 
+a su relativa simplicidad de implementación frente a los enfoques de aprendizaje automático que se popularizarían posteriormente.
+
+Uno de los trabajos pioneros en esta línea es el de Moayedi y Masnadi-Shirazi \cite{moayedi2008}, quienes propusieron el empleo de un modelo ARIMA básico no solo con fines de predicción, sino también de detección de anomalías en el tráfico de red. Su aporte central consistió en 
+descomponer la señal de tráfico observada en dos componentes: una parte de variación normal, que sigue un patrón predecible y puede ser capturada adecuadamente por el modelo ARIMA, y una parte anómala, correspondiente a cambios súbitos e impredecibles que el modelo no logra anticipar. 
+Bajo esta lógica, los autores plantean que las desviaciones significativas entre el valor predicho por ARIMA y el valor real observado pueden emplearse como un indicador de eventos anómalos, entre los cuales se encontrarían episodios de saturación o congestión no habitual. 
+Para los fines de esta tesis, este trabajo resulta relevante porque ilustra una limitación estructural de los modelos puramente estadísticos: su capacidad predictiva depende críticamente de que el tráfico se comporte de manera similar a su historia reciente, una condición que 
+—como se discutió en la Sección \ref{sec:congestion}— no necesariamente se cumple durante los episodios de congestión más severos, que suelen originarse precisamente por comportamientos atípicos del tráfico.
+
+Una línea de trabajo posterior buscó superar esta limitación combinando ARIMA con técnicas complementarias capaces de capturar la componente no lineal del tráfico que el modelo estadístico puro no logra representar. Tian \cite{tian2021} propone un enfoque híbrido en el que ARIMA se 
+emplea para modelar y predecir la componente lineal de la serie de tráfico, mientras que un filtro de Volterra adaptativo —optimizado mediante un algoritmo de enjambre de partículas— se encarga de modelar la componente no lineal residual que queda después de sustraer la predicción de 
+ARIMA de la serie original. Los resultados reportados por el autor muestran una mejora en la precisión de predicción respecto del uso de ARIMA de manera aislada, lo cual respalda una idea central que se retomará en la síntesis de este capítulo: los modelos puramente lineales, 
+si bien valiosos como referencia, resultan insuficientes por sí solos para capturar la complejidad real del tráfico de redes modernas.
+
+Más recientemente, Kochetkova et al. \cite{kochetkova2023} evaluaron el desempeño de modelos SARIMA (ARIMA estacional) y de suavizamiento exponencial de Holt-Winters para la predicción a corto plazo de tráfico en redes móviles de quinta generación (5G), motivados por la necesidad de una 
+gestión dinámica y eficiente de los recursos de radio en este tipo de infraestructuras. Este trabajo es particularmente pertinente para la presente tesis por dos razones: primero, porque emplea explícitamente la componente estacional del tráfico (patrones que se repiten en ciclos horarios, 
+diarios o semanales), un fenómeno que también se espera observar en el dataset primario de esta investigación, dada la coexistencia de tráfico residencial, de videovigilancia y de sincronización en la nube descrita en la Sección \ref{sec:fuente_datos}; y segundo, porque data de un periodo 
+reciente (2023), lo cual evidencia que, a pesar del auge de los modelos de Deep Learning, los métodos estadísticos clásicos continúan siendo objeto de investigación activa y conservan vigencia práctica, particularmente como líneas base computacionalmente económicas frente a modelos más complejos.
+
+En conjunto, estos tres trabajos —que abarcan más de una década de investigación— permiten extraer una primera conclusión relevante para esta tesis: los modelos estadísticos como ARIMA y sus variantes ofrecen un desempeño razonable y una implementación computacionalmente accesible cuando el 
+tráfico exhibe patrones regulares y estacionarios, pero muestran limitaciones consistentes frente a comportamientos no lineales, anómalos o súbitos —que son, precisamente, los que con mayor frecuencia preceden a un evento de congestión severa. Esta observación motiva directamente la revisión de 
+enfoques de Machine Learning clásico que se presenta en la Sección 3.2, los cuales fueron desarrollados en buena medida como respuesta a estas limitaciones.
 
 \section{Predicción de tráfico/congestión con Machine Learning clásico}
 
+Frente a las limitaciones de los modelos estadísticos lineales discutidas en la sección anterior, un segundo cuerpo de literatura ha explorado el empleo de algoritmos de Machine Learning clásico —presentados en la Sección 2.2.3 de esta tesis— para abordar el problema de predicción de congestión, 
+aprovechando su capacidad de modelar relaciones no lineales entre múltiples variables de red simultáneamente.
+
+Un trabajo directamente pertinente para esta investigación es el de Sneha et al. \cite{sneha2020}, quienes abordaron específicamente el problema de predecir congestión a nivel de enrutador con el fin de anticipar la pérdida de paquetes antes de que esta ocurriera. Los autores entrenaron y compararon 
+cuatro algoritmos de clasificación —K-Vecinos Más Cercanos (KNN), Random Forest, Gradient Boosting y Árboles de Decisión— sobre datos de tráfico simulado, encontrando que Random Forest y KNN ofrecieron el mejor desempeño para anticipar el tipo de pérdida de paquetes que se produciría. Este trabajo 
+resulta especialmente relevante para la presente tesis por dos razones: primero, porque aborda la congestión como un evento a nivel de dispositivo de red (el enrutador) en lugar de como una propiedad agregada de toda la red, un enfoque compatible con la definición operativa formulada en la Ecuación \ref{eq:congestion_def}; 
+y segundo, porque confirma empíricamente la superioridad de Random Forest sobre otros algoritmos clásicos para esta tarea específica, lo cual respalda su inclusión como uno de los tres modelos a implementar en esta tesis.
+
+En un dominio relacionado mas no idéntico, Qian et al. \cite{qian2016} propusieron SVR-NoC, un modelo basado en Support Vector Regression para predecir la latencia de tráfico en arquitecturas de Redes en Chip (\textit{Network-on-Chip}, NoC) —infraestructuras de interconexión a pequeña escala empleadas 
+dentro de procesadores multinúcleo—. Si bien este trabajo no se refiere a redes de computadoras tradicionales como las que aborda esta tesis, sino a una escala de red sustancialmente distinta, resulta útil citarlo porque demuestra la viabilidad de SVR para modelar fenómenos de saturación y tiempos de 
+espera en sistemas basados en colas, obteniendo una reducción superior al 100\% en tiempo de cómputo respecto a métodos de simulación tradicionales sin sacrificar precisión de manera significativa. Esta evidencia, aunque proveniente de un dominio distinto, refuerza la pertinencia de incluir SVR entre 
+los modelos de ML clásico a evaluar en el Capítulo 5, dada su comprobada capacidad para modelar fenómenos de congestión basados en teoría de colas —el mismo fundamento teórico presentado en la Sección \ref{sec:congestion} de esta tesis.
+
+Finalmente, el trabajo de Labonne et al. \cite{labonne2021} resulta el más cercano en espíritu al problema abordado en esta investigación, ya que se enfoca explícitamente en predecir la utilización de ancho de banda en enlaces de red con el propósito declarado de detectar y corregir la congestión antes de que esta 
+ocurra —el mismo objetivo central planteado en el Planteamiento del Problema de esta tesis (Sección 1.1)—. Los autores generaron su propio conjunto de datos mediante una red simulada, sometida deliberadamente a cargas de tráfico variables para provocar enlaces saturados, y aplicaron un proceso de ingeniería de 
+características para enriquecer las variables de entrada antes de entrenar y comparar tres modelos: ARIMA, un Perceptrón Multicapa (MLP) y una red LSTM. Aunque estos dos últimos modelos corresponden propiamente a la familia de Deep Learning que se revisará en la Sección 3.3, el aporte metodológico de este trabajo 
+para la presente tesis reside en su estrategia de generación y preprocesamiento de datos: la construcción deliberada de escenarios de saturación mediante tráfico controlado ofrece un precedente metodológico directamente aplicable a la validación del dataset primario de esta investigación, descrito en la Sección 
+\ref{sec:fuente_datos}, en caso de que la red del cliente no exhiba de forma natural una cantidad suficiente de episodios de congestión durante el periodo de recolección.
+
+La revisión de estos tres trabajos permite extraer una segunda conclusión relevante para esta tesis: los modelos de Machine Learning clásico, y en particular Random Forest y SVR, han demostrado un desempeño consistentemente superior a los modelos puramente estadísticos cuando se trata de capturar relaciones no 
+lineales en el tráfico de red, incluso en dominios de aplicación tan distintos como enrutadores IP tradicionales, redes en chip y enlaces de banda ancha simulados. No obstante, ninguno de los trabajos revisados en esta sección explota explícitamente la naturaleza \textit{secuencial} y dependiente del tiempo del 
+tráfico de red —es decir, el hecho de que el valor de utilización en un instante dado depende fuertemente de una ventana de observaciones pasadas, y no únicamente de un conjunto de variables independientes—. Esta limitación motiva la revisión de los modelos de Deep Learning basados en arquitecturas recurrentes, 
+presentados en la siguiente sección, los cuales fueron diseñados precisamente para capturar este tipo de dependencias temporales.
+
 \section{Predicción con Deep Learning}
+
+El auge de las arquitecturas de Deep Learning presentadas en la Sección 2.2.4 —particularmente las redes recurrentes LSTM y GRU— ha desplazado en buena medida a los enfoques de Machine Learning clásico como el foco principal de la investigación reciente en predicción de tráfico de redes, motivado por su capacidad 
+de capturar dependencias temporales de largo alcance sin necesidad de un diseño manual de características tan extenso como el que requieren los modelos revisados en la Sección 3.2.
+
+Uno de los primeros trabajos en establecer una comparación sistemática entre arquitecturas de redes neuronales aplicadas específicamente al tráfico de redes de computadoras —y no de otros dominios— es el de Oliveira, Barbar y Soares \cite{oliveira2016}, quienes evaluaron cuatro enfoques distintos: un Perceptrón 
+Multicapa (MLP) entrenado con retropropagación estándar, una variante con retropropagación resiliente (Rprop), una red neuronal recurrente (RNN) simple, y un Autoencoder Apilado (\textit{Stacked Autoencoder}, SAE) como representante de arquitecturas de aprendizaje profundo más complejas. De manera notable, y hasta 
+cierto punto contraintuitiva, los autores encontraron que los modelos más simples —la RNN y el MLP— superaron en desempeño al SAE, a pesar de que este último posee una arquitectura considerablemente más profunda y compleja. Este hallazgo resulta relevante para la presente tesis porque introduce una advertencia metodológica 
+importante: mayor complejidad arquitectónica no garantiza necesariamente mejor desempeño predictivo, especialmente cuando el volumen de datos disponible es limitado, una condición que podría presentarse en el dataset primario de esta investigación (Sección \ref{sec:fuente_datos}) dada la escala reducida de la red del 
+cliente en comparación con los grandes conjuntos de datos empleados típicamente en la literatura de Deep Learning.
+
+Precisamente sobre esta preocupación —la disponibilidad limitada de datos— profundiza el trabajo de Saha, Haque y Sidebottom \cite{saha2024}, quienes abordan explícitamente el problema de predicción de tráfico de Internet en redes de proveedores de servicio (ISP) de tamaño reducido, donde la cantidad de datos históricos 
+disponibles suele ser insuficiente para entrenar adecuadamente modelos de Deep Learning de gran capacidad. Los autores proponen el empleo de \textit{transfer learning} —entrenando inicialmente modelos LSTM (en sus variantes Seq2Seq y Seq2Seq con mecanismo de atención) sobre un conjunto de datos extenso proporcionado por 
+Juniper Networks, para posteriormente adaptarlos a conjuntos de datos considerablemente más pequeños— junto con técnicas de aumento de datos basadas en transformada wavelet. Este trabajo es particularmente pertinente para esta tesis porque su motivación —redes pequeñas con historial de datos limitado— describe con precisión 
+la situación del dataset primario de esta investigación, recolectado durante un periodo de apenas dos meses sobre una red de escala reducida. Sus hallazgos sugieren que, de presentarse limitaciones de datos similares, estrategias como el \textit{transfer learning} o el aumento de datos podrían explorarse como líneas de trabajo 
+futuro si el desempeño de los modelos LSTM y GRU propuestos en el Capítulo 4 resultara insuficiente sobre el dataset primario.
+
+Finalmente, el trabajo de Santos et al. \cite{santos2022} ofrece la comparación más directamente aplicable a las decisiones metodológicas de esta tesis, al confrontar explícitamente el desempeño de LSTM contra GRU —los dos modelos de Deep Learning seleccionados en la Sección 2.2.4 de este trabajo— para la predicción de tráfico de 
+Internet móvil. Los autores emplearon dos meses de datos reales del conjunto Telecom Italia correspondientes al área metropolitana de Milán —una duración de recolección idéntica a la planificada para el dataset primario de esta tesis (Sección \ref{sec:fuente_datos})—, agrupando primero las series de tráfico mediante \textit{clustering} 
+de K-Means y optimizando posteriormente los hiperparámetros de cada modelo mediante búsqueda en malla (\textit{Grid Search}). Sus resultados, evaluados mediante RMSE, indican que la LSTM superó a la GRU en la mayoría de los agrupamientos analizados, aunque los autores destacan que el desempeño relativo varió de manera apreciable entre 
+distintas zonas geográficas de la ciudad, sugiriendo que la superioridad de un modelo sobre otro no es universal, sino que depende de las características particulares del tráfico analizado. Este hallazgo es directamente relevante para el diseño experimental de esta tesis: motiva la necesidad de evaluar tanto LSTM como GRU sobre 
+\textit{ambos} conjuntos de datos —el dataset primario recolectado de forma manual a traves de un cliente y el conjunto de validación MAWI—, en lugar de asumir de antemano la superioridad de un modelo sobre el otro, dado que la literatura revisada aquí no ofrece una conclusión unívoca al respecto.
+
+La revisión de estos tres trabajos, en conjunto con los de la Sección 3.2, permite extraer una tercera y última conclusión relevante para el diseño metodológico de esta tesis: si bien las arquitecturas de Deep Learning —y en particular las redes recurrentes como LSTM y GRU— han demostrado capacidades notables para modelar la naturaleza 
+secuencial del tráfico de red, su desempeño superior frente a modelos más simples no está garantizado de manera universal, sino que depende críticamente de factores como el volumen de datos disponible, la naturaleza del tráfico analizado y la elección adecuada de hiperparámetros. Esta observación refuerza la pertinencia del diseño 
+comparativo adoptado en esta tesis —evaluando ARIMA, Random Forest y LSTM/GRU de manera simultánea sobre los mismos conjuntos de datos—, en lugar de asumir a priori que el modelo más sofisticado será necesariamente el de mejor desempeño. Esta idea se retoma y se sintetiza, junto con las conclusiones de las Secciones 3.1 y 3.2, en la 
+síntesis del estado del arte que cierra este capítulo (Sección 3.5).
 
 \section{Herramientas de monitoreo y datasets utilizados}
 
+Además de los modelos predictivos revisados en las secciones anteriores, resulta igualmente relevante examinar \textit{cómo} la comunidad académica ha obtenido los datos que alimentan dichos modelos, ya que las decisiones de instrumentación —qué herramienta emplear, con qué granularidad y sobre qué tipo de red— condicionan directamente 
+la calidad y el alcance de cualquier sistema de predicción de congestión. Esta sección organiza dicha revisión en dos partes: primero, las herramientas y protocolos de monitoreo empleados típicamente en la literatura; y segundo, una síntesis de los conjuntos de datos concretos utilizados por los trabajos revisados en las Secciones 3.1 a 
+3.3, incluyendo el propio MAWI Working Group Traffic Archive adoptado como dataset de validación en esta tesis (Sección \ref{sec:fuente_datos}).
+
+\subsection*{Taxonomía de las técnicas de monitoreo}
+
+Como se adelantó en la Sección \ref{sec:metricas}, las técnicas de monitoreo de red se dividen fundamentalmente en dos familias: el monitoreo \textbf{pasivo}, que observa el tráfico existente sin generar tráfico adicional, y el monitoreo \textbf{activo}, que inyecta tráfico de prueba deliberadamente para medir el comportamiento de la red. 
+La Figura \ref{fig:taxonomia_monitoreo} sintetiza esta taxonomía junto con las herramientas y protocolos más representativos de cada familia, varios de los cuales fueron adoptados directamente en la metodología de recolección de datos de esta tesis (Sección \ref{sec:fuente_datos}).
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\sffamily\small},
+        level 1/.style={sibling distance=6cm, level distance=1.8cm},
+        level 2/.style={sibling distance=2.6cm, level distance=2cm},
+        box/.style={rectangle, draw=black!70, thick, rounded corners=3pt, align=center, minimum height=1cm, fill=gray!5, text width=3.2cm},
+        rootbox/.style={box, fill=black!10, text width=4cm},
+        leaf/.style={box, text width=2.6cm, fill=black!5, font=\sffamily\footnotesize}
+    ]
+    \node[rootbox] {Técnicas de\\ Monitoreo de Red}
+        child { node[box, fill=black!15] {Monitoreo\\ Pasivo}
+            child { node[leaf] {SNMP\\ \footnotesize (contadores)} }
+            child { node[leaf] {NetFlow /\\ sFlow} }
+            child { node[leaf] {Captura de\\ paquetes (pcap)} }
+        }
+        child { node[box, fill=black!15] {Monitoreo\\ Activo}
+            child { node[leaf] {ICMP\\ (ping)} }
+            child { node[leaf] {Generadores\\ (iperf)} }
+        };
+    \end{tikzpicture}
+    \caption{Taxonomía de las técnicas de monitoreo de red empleadas en la literatura revisada.}
+    \label{fig:taxonomia_monitoreo}
+\end{figure}
+
+La Tabla \ref{tab:herramientas_monitoreo} amplía esta taxonomía, contrastando cada herramienta en términos de la sobrecarga (\textit{overhead}) que introduce en la red, la granularidad temporal que permite obtener, y el tipo de información que provee.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|p{4.2cm}|}
+        \hline
+        \textbf{Herramienta} & \textbf{Tipo} & \textbf{Overhead} & \textbf{Información obtenida} \\
+        \hline
+        SNMP & Pasivo & Muy bajo & Contadores agregados de utilización, errores, descartes (Sección \ref{sec:metricas}) \\
+        \hline
+        NetFlow / sFlow & Pasivo & Medio* & Metadatos por flujo: IPs, puertos, bytes, paquetes. *El overhead real depende críticamente de la tasa de muestreo (\textit{sampling rate}) configurada en el equipo. \\
+        \hline
+        Captura de paquetes (pcap) & Pasivo & Medio-Alto & Registro completo de paquetes; requiere procesamiento posterior (ej. \texttt{tshark}) \\
+        \hline
+        ICMP (\texttt{ping}) & Activo & Bajo & Latencia (RTT) y pérdida de paquetes hacia un destino específico \\
+        \hline
+        Generadores de tráfico (\texttt{iperf}) & Activo & Alto & Throughput máximo alcanzable; puede inducir congestión artificialmente \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de herramientas de monitoreo empleadas en la literatura revisada.}
+    \label{tab:herramientas_monitoreo}
+\end{table}
+
+Como se estableció en la Sección \ref{sec:fuente_datos}, esta tesis adopta un enfoque predominantemente pasivo (SNMP para utilización, complementado con mediciones activas ligeras mediante ICMP para latencia y pérdida de paquetes), evitando deliberadamente el uso de generadores de tráfico como \texttt{iperf} sobre la red del cliente, 
+dado que estos podrían introducir una carga adicional que alterara artificialmente las condiciones reales de operación que se busca modelar.
+
+\subsection*{Síntesis de datasets empleados en la literatura}
+
+La Tabla \ref{tab:datasets_literatura} sintetiza los conjuntos de datos empleados por los trabajos revisados en las Secciones 3.1 a 3.3 de este capítulo, permitiendo identificar patrones respecto al tipo de red, la duración de recolección y la naturaleza —real o simulada— de cada dataset.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{3.2cm}|p{2.6cm}|p{2cm}|p{2.2cm}|p{2.2cm}|}
+        \hline
+        \textbf{Trabajo} & \textbf{Dataset} & \textbf{Naturaleza} & \textbf{Escala} & \textbf{Duración} \\
+        \hline
+        Moayedi \& Masnadi-Shirazi \cite{moayedi2008} & Tráfico propio & Real & No especificada & No especificada \\
+        \hline
+        Kochetkova et al. \cite{kochetkova2023} & Red móvil 5G & Real & Operador móvil & Corto plazo \\
+        \hline
+        Sneha et al. \cite{sneha2020} & Simulación & Simulado & Enrutador individual & No aplica \\
+        \hline
+        Labonne et al. \cite{labonne2021} & Red simulada (VirtualBox) & Simulado & Red de laboratorio & No especificada \\
+        \hline
+        Santos et al. \cite{santos2022} & Telecom Italia (Milán) & Real & Metropolitana & 2 meses \\
+        \hline
+        Saha et al. \cite{saha2024} & Juniper Networks + ISPs pequeños & Real & ISP (variable) & Variable \\
+        \hline
+        \textbf{Esta tesis (primario)} & \textbf{Red Privada Corporativa} & \textbf{Real} & \textbf{PYME / Monitoreo} & \textbf{2 meses} \\
+        \hline
+        \textbf{Esta tesis (validación)} & \textbf{MAWI Archive} \cite{mawi} & \textbf{Real} & \textbf{Tránsito 1-10 Gbps} & \textbf{Diaria (continua)} \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de datasets empleados en la literatura revisada frente a los datasets adoptados en esta tesis.}
+    \label{tab:datasets_literatura}
+\end{table}
+
+Dos observaciones se desprenden de esta comparación. En primer lugar, la duración de dos meses adoptada para el dataset primario de esta tesis coincide con la empleada por Santos et al. \cite{santos2022}, uno de los trabajos más metodológicamente cercanos revisados en este capítulo, 
+lo cual respalda la suficiencia de dicho periodo para capturar patrones cíclicos diarios y semanales de tráfico. En segundo lugar, se observa que una proporción considerable de los trabajos revisados —particularmente aquellos enfocados en ML clásico— recurren a datos simulados en 
+lugar de tráfico real, una decisión metodológica que facilita el control experimental pero que limita la validez de los hallazgos frente a condiciones de operación reales. Esta observación refuerza el valor diferencial del enfoque híbrido adoptado en esta tesis, que combina datos reales 
+de dos naturalezas y escalas distintas en lugar de recurrir a tráfico simulado o a una única fuente.
+
 \section{Síntesis del estado del arte y brecha a cubrir}
+
+Las secciones anteriores de este capítulo revisaron nueve trabajos distintos, organizados cronológica y metodológicamente en tres grandes familias: métodos estadísticos clásicos (Sección 3.1), Machine Learning clásico (Sección 3.2) y Deep Learning (Sección 3.3), complementados con 
+una revisión de las herramientas de instrumentación y los datasets empleados por dichos trabajos (Sección 3.4). El propósito de esta sección final es triple: primero, consolidar en un solo lugar los hallazgos dispersos a lo largo del capítulo; segundo, analizar de manera sistemática 
+el \textit{qué}, \textit{por qué}, \textit{cómo}, \textit{para qué} y \textit{cuándo} de la literatura revisada, con el fin de identificar patrones que no resultan evidentes al leer cada trabajo de manera aislada; y tercero —y más importante—, delimitar con precisión la brecha específica 
+que esta tesis busca cubrir, así como el aporte concreto que este trabajo ofrece de vuelta a la comunidad académica.
+
+\subsection*{Tabla maestra de trabajos revisados}
+
+La Tabla \ref{tab:sintesis_maestra} reúne los nueve trabajos citados en este capítulo, contrastando su enfoque metodológico, la naturaleza de los datos empleados, su aporte principal, y —el elemento más relevante para los fines de esta síntesis— la limitación específica que, 
+desde la perspectiva de esta tesis, dicho trabajo deja abierta.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{2.6cm}|p{1.6cm}|p{2.6cm}|p{3cm}|p{3.4cm}|}
+        \hline
+        \textbf{Trabajo} & \textbf{Año} & \textbf{Enfoque} & \textbf{Aporte principal} & \textbf{Limitación relevante} \\
+        \hline
+        Moayedi \& Masnadi-Shirazi \cite{moayedi2008} & 2008 & ARIMA & Detección de anomalías vía residuos de predicción & No captura no linealidades; congestión inferida indirectamente \\
+        \hline
+        Tian \cite{tian2021} & 2021 & ARIMA + Volterra & Mejora de ARIMA con componente no lineal & Sigue centrado en volumen de tráfico, no en congestión como evento \\
+        \hline
+        Kochetkova et al. \cite{kochetkova2023} & 2023 & SARIMA / Holt-Winters & Explota estacionalidad en redes 5G & Sin comparación contra ML/DL en el mismo estudio \\
+        \hline
+        Sneha et al. \cite{sneha2020} & 2020 & Random Forest, KNN, GB, DT & Predicción de congestión a nivel de enrutador & Datos simulados; sin validación en tráfico real \\
+        \hline
+        Qian et al. \cite{qian2016} & 2016 & SVR & Modelado de latencia basado en colas & Dominio distinto (NoC, no redes IP) \\
+        \hline
+        Labonne et al. \cite{labonne2021} & 2021 & ARIMA, MLP, LSTM & Framework completo de generación y predicción de utilización & Red simulada; sin validación externa \\
+        \hline
+        Oliveira et al. \cite{oliveira2016} & 2016 & MLP, RNN, SAE & Comparación de arquitecturas de red neuronal & Mayor complejidad (SAE) no garantiza mejor desempeño \\
+        \hline
+        Saha et al. \cite{saha2024} & 2024 & LSTM + Transfer Learning & Aborda datasets pequeños en ISPs & No compara contra modelos estadísticos ni ML clásico \\
+        \hline
+        Santos et al. \cite{santos2022} & 2022 & LSTM vs. GRU & Comparación directa LSTM/GRU en tráfico real (2 meses) & Un solo paradigma (DL); sin ARIMA ni ML clásico \\
+        \hline
+    \end{tabular}
+    \caption{Síntesis comparativa de los trabajos revisados en el Estado del Arte.}
+    \label{tab:sintesis_maestra}
+\end{table}
+
+\subsection*{Evolución cronológica y metodológica}
+
+La Figura \ref{fig:linea_tiempo} presenta una línea de tiempo que sitúa los trabajos revisados —junto con los hitos teóricos fundamentales presentados en el Marco Teórico de esta tesis (Capítulo 2)— dentro de la evolución histórica del campo, permitiendo visualizar de manera 
+inmediata la transición gradual de los métodos estadísticos hacia el Machine Learning clásico y, finalmente, hacia el Deep Learning.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\sffamily\footnotesize},
+        dot/.style={circle, fill=black!70, minimum size=6pt, inner sep=0pt}
+    ]
+    \draw[thick, -{Latex[length=3mm]}] (0,0) -- (14.5,0);
+
+    
+    \node[dot] at (0.5,0) {};
+    \node[align=center, text width=2cm] at (0.5,-1) {\textbf{1988}\\ Jacobson\\ (Control TCP)};
+
+    \node[dot] at (2.5,0) {};
+    \node[align=center, text width=2.2cm] at (2.5,1) {\textbf{2008}\\ Moayedi \&\\ Masnadi-Shirazi\\ (ARIMA)};
+
+    \node[dot] at (4.5,0) {};
+    \node[align=center, text width=2.2cm] at (4.5,-1) {\textbf{2016}\\ Oliveira et al. /\\ Qian et al.\\ (RNN / SVR)};
+
+    \node[dot] at (6.5,0) {};
+    \node[align=center, text width=2.2cm] at (6.5,1) {\textbf{2020}\\ Sneha et al.\\ (Random Forest)};
+
+    \node[dot] at (8.5,0) {};
+    \node[align=center, text width=2.4cm] at (8.5,-1) {\textbf{2021}\\ Tian / Labonne\\ et al.\\ (Híbridos)};
+
+    \node[dot] at (10.5,0) {};
+    \node[align=center, text width=2.2cm] at (10.5,1) {\textbf{2022--23}\\ Santos et al. /\\ Kochetkova\\ et al.};
+
+    \node[dot] at (12.5,0) {};
+    \node[align=center, text width=2.2cm] at (12.5,-1) {\textbf{2024}\\ Saha et al.\\ (Transfer\\ Learning)};
+
+    \node[dot, fill=black!20, draw=black, thick] at (14.5,0) {};
+    \node[align=center, text width=2.4cm, font=\sffamily\footnotesize\bfseries] at (14.5,1.2) {2026\\ \textbf{Esta tesis}};
+
+    \end{tikzpicture}
+    \caption{Línea de tiempo de la evolución metodológica en predicción de tráfico/congestión de red.}
+    \label{fig:linea_tiempo}
+\end{figure}
+
+Esta visualización revela un patrón claro: durante casi dos décadas (1988--2008) predominaron los métodos estadísticos; a partir de 2016 comienza una transición gradual y simultánea hacia el ML clásico y las primeras arquitecturas de Deep Learning; y a partir de 2020 los tres 
+paradigmas coexisten activamente en la literatura, sin que ninguno haya desplazado por completo a los anteriores. Esta coexistencia —más que una sustitución progresiva— es, como se argumentará más adelante, uno de los elementos que justifica el diseño comparativo de esta tesis.
+
+\subsection*{Análisis por dimensiones}
+
+\paragraph{¿Qué se ha investigado?} La literatura revisada se ha concentrado abrumadoramente en la predicción del \textbf{volumen de tráfico} como una serie temporal continua (Moayedi \& Masnadi-Shirazi \cite{moayedi2008}; Tian \cite{tian2021}; Kochetkova et al. \cite{kochetkova2023}; 
+Oliveira et al. \cite{oliveira2016}; Santos et al. \cite{santos2022}), tratando la congestión como una consecuencia implícita de dicho volumen más que como un evento a predecir de manera directa y explícita. Solo dos de los nueve trabajos revisados —Sneha et al. \cite{sneha2020} y, 
+de manera indirecta, Qian et al. \cite{qian2016}— abordan la congestión como una variable de interés discreta y directamente accionable, más cercana al enfoque de clasificación binaria establecido en la definición operativa de esta tesis (Ecuación \ref{eq:congestion_def}).
+
+\paragraph{¿Por qué se ha investigado de esta manera?} La motivación predominante en la literatura revisada es la optimización de la gestión de recursos de red —asignación dinámica de ancho de banda, planeación de capacidad, mejora de la Calidad de Servicio (QoS)— más que la prevención 
+proactiva de eventos específicos de degradación del servicio. Esta orientación explica por qué la mayoría de los trabajos evalúan sus modelos mediante métricas de error continuo (RMSE, MAE, MAPE) en lugar de métricas propias de un problema de clasificación (precisión, exhaustividad, F1-score), 
+a pesar de que estas últimas resultarían más informativas para un caso de uso de alertamiento temprano como el que plantea esta tesis.
+
+\paragraph{¿Cómo se ha investigado?} Metodológicamente, se observa una fragmentación notable: cada trabajo revisado evalúa típicamente \textbf{un solo paradigma} de modelado —o, en el mejor de los casos, variantes dentro de un mismo paradigma, como Santos et al. \cite{santos2022} comparando LSTM 
+contra GRU, ambos de Deep Learning—. Ningún trabajo de los revisados en este capítulo compara de manera simultánea, sobre el mismo conjunto de datos y bajo las mismas condiciones experimentales, representantes de los tres paradigmas (estadístico, ML clásico y Deep Learning), lo cual dificulta 
+extraer conclusiones comparativas robustas a partir de la literatura existente de forma aislada. Asimismo, como se documentó en la Tabla \ref{tab:datasets_literatura} de la Sección 3.4, una proporción considerable de los trabajos de ML clásico recurre a datos simulados (Sneha et al. \cite{sneha2020}; 
+Labonne et al. \cite{labonne2021}), mientras que los trabajos con datos reales rara vez validan sus hallazgos en más de un escenario de red.
+
+\paragraph{¿Para qué se ha investigado?} La finalidad última declarada por la mayoría de los trabajos revisados es habilitar una gestión de red proactiva en lugar de reactiva, alineada con la motivación general de esta tesis expuesta en el Planteamiento del Problema (Sección 1.1). Sin embargo, 
+pocos trabajos —con la notable excepción de Sneha et al. \cite{sneha2020}— formulan explícitamente un umbral operativo o un mecanismo de alertamiento accionable; la mayoría se detiene en la demostración de la capacidad predictiva del modelo, la mayoría se detiene en la demostración de la capacidad 
+predictiva del modelo, sin traducir dicha capacidad en un criterio de decisión concreto. En contraste, contar con un umbral predictivo accionable como $U_{th}$ permite a un administrador o sistema automatizado tomar medidas preventivas reales en la infraestructura, tales como la inyección dinámica 
+de reglas de \textit{firewall} para limitar tráfico no esencial, el ajuste de métricas en protocolos de enrutamiento para desviar flujos, o la redirección de tráfico crítico a través de túneles seguros alternativos antes de que la saturación provoque la caída de servicios esenciales como el monitoreo 
+remoto.
+
+\paragraph{¿Cuándo se ha investigado y hacia dónde se dirige el campo?} Como se ilustra en la Figura \ref{fig:linea_tiempo}, la investigación más reciente (2022--2024) muestra dos tendencias emergentes particularmente relevantes para esta tesis: por un lado, una preocupación creciente por la aplicabilidad 
+práctica de estos modelos en escenarios de datos limitados (Saha et al. \cite{saha2024}), reconociendo que gran parte de la literatura previa asume la disponibilidad de conjuntos de datos extensos poco representativos de redes pequeñas o medianas; y por otro, comparaciones cada vez más rigurosas entre 
+arquitecturas específicas de Deep Learning (Santos et al. \cite{santos2022}) que evidencian que la superioridad de un modelo sobre otro no es universal, sino dependiente del contexto de red particular.
+
+A partir del análisis anterior es posible formular con precisión la brecha que esta tesis busca cubrir, articulada en tres componentes específicos:
+
+\begin{enumerate}
+    \item \textbf{Brecha conceptual}: la literatura revisada predice predominantemente el \textit{volumen} de tráfico como serie continua, mientras que esta tesis predice la \textit{congestión} como evento discreto y accionable, mediante la definición operativa formalizada en la Ecuación \ref{eq:congestion_def} 
+    (Sección \ref{sec:congestion}), permitiendo abordar el problema tanto desde la regresión como desde la clasificación (Sección 2.2.1).
+    \item \textbf{Brecha metodológica}: ningún trabajo revisado compara de manera simultánea y bajo condiciones experimentales controladas representantes de los tres paradigmas de modelado —estadístico (ARIMA), ML clásico (Random Forest) y Deep Learning (LSTM/GRU)—, tal como se plantea en el diseño metodológico de 
+    esta tesis (Capítulo 4).
+    \item \textbf{Brecha de validación}: la mayoría de los trabajos revisados se apoyan en un único dataset, ya sea real o simulado, sin contrastar sus hallazgos frente a escenarios de red de naturaleza o escala distinta. Esta tesis, mediante el enfoque híbrido descrito en la Sección \ref{sec:fuente_datos} —combinando 
+    la red real de escala reducida de un cliente con el archivo de tráfico de gran escala MAWI—, aborda directamente esta limitación, en línea con la recomendación implícita de trabajos como el de Saha et al. \cite{saha2024} respecto a la necesidad de validar modelos más allá de un único escenario de datos.
+\end{enumerate}
+
+La Tabla \ref{tab:posicionamiento_tesis} sintetiza visualmente este posicionamiento, contrastando las características metodológicas predominantes en la literatura revisada frente al diseño adoptado en esta tesis.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|p{4.5cm}|p{4cm}|p{4cm}|}
+        \hline
+        \textbf{Dimensión} & \textbf{Literatura revisada (predominante)} & \textbf{Esta tesis} \\
+        \hline
+        Variable objetivo & Volumen de tráfico (continuo) & Congestión (discreta, vía $U_{th}$) \\
+        \hline
+        Paradigmas comparados & Uno solo, o variantes de uno solo & Tres (estadístico, ML clásico, DL) simultáneamente \\
+        \hline
+        Naturaleza de los datos & Real \textit{o} simulado, una sola fuente & Real, dos fuentes complementarias (híbrido) \\
+        \hline
+        Escala de validación & Una sola escala de red & Dos escalas contrastantes (PYME y tránsito de gran escala) \\
+        \hline
+        Umbral accionable & Raramente explícito & Definido formalmente ($U_{th}$, Ecuación \ref{eq:congestion_def}) \\
+        \hline
+    \end{tabular}
+    \caption{Posicionamiento metodológico de esta tesis frente a la literatura revisada.}
+    \label{tab:posicionamiento_tesis}
+\end{table}
+
+\subsection*{Aporte de esta tesis a la literatura existente}
+
+En correspondencia con las tres brechas identificadas, esta tesis ofrece tres aportes concretos a la comunidad académica. Primero, aporta evidencia empírica comparativa entre los tres paradigmas de modelado revisados en este capítulo, evaluados bajo condiciones experimentales controladas y sobre los mismos conjuntos de 
+datos —un tipo de comparación ausente en la literatura revisada, donde cada paradigma suele evaluarse de manera aislada—. Segundo, aporta un caso de estudio de recolección de datos reales en una red heterogénea de pequeña escala (residencial/PYME con videovigilancia, servicios en la nube y tráfico de ISP coexistiendo 
+en el mismo enlace), un escenario significativamente menos representado en la literatura que las redes troncales de gran escala o los entornos simulados de laboratorio. Tercero, aporta una definición operativa explícita y formalizada de congestión (Ecuación \ref{eq:congestion_def}), que traduce directamente la salida 
+de los modelos predictivos en un criterio accionable para la toma de decisiones, respondiendo a la limitación de "umbral accionable raramente explícito" identificada en la Tabla \ref{tab:posicionamiento_tesis}.
+
+Recíprocamente, esta tesis también reconoce su deuda con la literatura revisada: la definición del umbral operativo $U_{th}$ se apoya en la evidencia de estacionalidad documentada por Kochetkova et al. \cite{kochetkova2023}; el diseño de la comparación LSTM/GRU replica la metodología validada por Santos et al. \cite{santos2022} 
+sobre un periodo de recolección equivalente; y la estrategia de mitigación ante datasets de tamaño reducido, en caso de ser necesaria, se apoyaría directamente en el precedente de \textit{transfer learning} establecido por Saha et al. \cite{saha2024}. De esta manera, el capítulo de Metodología que sigue a continuación (Capítulo 4) 
+no parte de cero, sino que se construye deliberadamente sobre las fortalezas identificadas y en respuesta directa a las limitaciones documentadas a lo largo de esta revisión del estado del arte.
 
 \chapter{Metodología}
 
+Los capítulos anteriores construyeron el fundamento conceptual de esta tesis: se definió formalmente qué se entiende por congestión de red (Capítulo 2, Ecuación \ref{eq:congestion_def}), y se identificaron, mediante la revisión sistemática de la literatura, tres brechas específicas que este trabajo busca cubrir (Capítulo 3, Sección 3.5). 
+Corresponde ahora al presente capítulo dar el paso de la revisión a la ejecución: traducir esas definiciones y esa brecha identificada en un plan de trabajo preciso, replicable y justificado en cada una de sus decisiones.
+
+A diferencia de los capítulos precedentes, en los que el objeto de estudio era la producción académica de terceros, este capítulo describe exclusivamente decisiones propias del autor: qué tipo de investigación se está realizando, cómo se define y mide operativamente cada variable, de dónde provienen los datos, cómo se procesan, qué modelos 
+se implementan y con qué criterios se evalúan. Cada una de estas decisiones no es arbitraria, sino que responde directamente a lo establecido en capítulos anteriores —la definición operativa de congestión, el dataset híbrido descrito en la Sección \ref{sec:fuente_datos}, y los tres paradigmas de modelado comparados en la Sección 2.2— por 
+lo que el lector encontrará a lo largo de este capítulo referencias constantes hacia atrás, cerrando el círculo argumentativo abierto desde el planteamiento del problema.
+
+Es importante señalar que las decisiones metodológicas aquí documentadas no necesariamente se tomaron en un único momento ni de manera lineal; muchas de ellas —como la elección del dataset híbrido o la definición del umbral de congestión— fueron resultado de un proceso iterativo de análisis y ajuste. Sin embargo, este capítulo las 
+presenta de manera ordenada y sistemática, tal como corresponde a un documento metodológico formal, comenzando por la caracterización general del tipo de investigación que enmarca a esta tesis.
+
 \section{Tipo de investigación}
+
+La presente investigación se clasifica, de acuerdo con los criterios propuestos por Hernández-Sampieri \cite{hernandez2023}, en cuatro dimensiones complementarias: su finalidad, su enfoque, su diseño y su alcance. Esta caracterización no es un mero formalismo, sino que determina directamente las decisiones metodológicas que se detallan 
+en el resto de este capítulo, desde la forma en que se recolectan los datos hasta los criterios empleados para evaluar los modelos desarrollados.
+
+\subsection*{Según su finalidad: investigación aplicada}
+
+Esta tesis constituye una investigación de tipo \textbf{aplicada} (también denominada tecnológica), en tanto que su propósito no es generar conocimiento teórico nuevo sobre las técnicas de Machine Learning empleadas —ARIMA, Random Forest y LSTM/GRU, cuyos fundamentos matemáticos ya se encuentran plenamente establecidos y fueron revisados 
+en la Sección 2.2—, sino aplicar dicho conocimiento existente a la resolución de un problema práctico y delimitado: la predicción de congestión en un escenario real de red, tal como se planteó en la Sección 1.1. El criterio de éxito de esta investigación, por tanto, no reside en la novedad matemática de los modelos empleados, sino en la 
+evidencia empírica que se obtenga sobre su viabilidad y desempeño comparativo al resolver el problema planteado.
+
+\subsection*{Según su enfoque: investigación cuantitativa}
+
+El enfoque adoptado es \textbf{cuantitativo}, ya que la totalidad de las variables involucradas —utilización del enlace, latencia, pérdida de paquetes (Sección \ref{sec:metricas})— se expresan como magnitudes numéricas susceptibles de medición directa. El análisis de los resultados se apoya estrictamente en las métricas estadísticas de error 
+(RMSE, MAE, MAPE) y en las métricas de clasificación (Precisión, Exhaustividad, F1-Score) definidas y fundamentadas teóricamente en el Capítulo 2. No se contempla, en ningún punto del desarrollo de esta tesis, la recolección o el análisis de datos de naturaleza cualitativa.
+
+\subsection*{Según su diseño: mixto secuencial (observacional y experimental)}
+
+Desde la perspectiva de su diseño, esta investigación adopta un enfoque \textbf{mixto secuencial}, compuesto por dos fases distintas que reflejan la dualidad del problema abordado:
+
+En su primera fase (Recolección de Datos), el diseño es predominantemente \textbf{no experimental y longitudinal}. Se observa y registra el comportamiento de la red a lo largo de un periodo extendido de dos meses para capturar la evolución y estacionalidad del tráfico. Si bien se emplea instrumentación híbrida —incluyendo sondeos 
+activos ligeros (ICMP) como se documentará en la Sección 4.X—, no se manipulan artificialmente las cargas de trabajo de los usuarios ni se induce deliberadamente la congestión en la infraestructura del cliente corporativo.
+
+En su segunda fase (Modelado Predictivo), el diseño transita hacia un enfoque \textbf{experimental computacional}. El desarrollo, entrenamiento y evaluación de los modelos de Machine Learning (ARIMA, Random Forest, LSTM/GRU) requiere la manipulación sistemática y controlada de variables independientes —tales como hiperparámetros, 
+arquitecturas de red y ventanas de rezago (\textit{lags})— para medir su efecto sobre las variables dependientes, representadas por las métricas de error predictivo. Esta fase se ejecuta en un entorno de trabajo aislado, garantizando que la experimentación algorítmica no impacte la red de producción.
+
+\subsection*{Según su alcance: comparativo y explicativo}
+
+Finalmente, esta investigación posee un alcance \textbf{comparativo}, en tanto que su objetivo central no se limita a describir el comportamiento del tráfico de red, sino a contrastar sistemáticamente el desempeño de tres paradigmas de modelado predictivo —estadístico, Machine Learning clásico y Deep Learning— evaluados bajo las mismas 
+condiciones experimentales, tal como se estableció en la brecha metodológica identificada en la Sección 3.5. Este alcance comparativo se complementa con un componente \textbf{explicativo}, en la medida en que no basta con determinar \textit{cuál} modelo ofrece el mejor desempeño, sino que se busca argumentar \textit{por qué} dicho modelo 
+se desempeña mejor —por ejemplo, si su ventaja se debe a la naturaleza no lineal del tráfico, a la presencia de dependencias temporales de largo plazo, o a la escala del conjunto de datos empleado—, apoyándose para ello en los fundamentos teóricos desarrollados en el Capítulo 2 y en la evidencia comparativa documentada en el Capítulo 3.
+
+La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera esquemática.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|p{6.5cm}|}
+        \hline
+        \textbf{Dimensión} & \textbf{Clasificación} & \textbf{Justificación breve} \\
+        \hline
+        Finalidad & Aplicada / tecnológica & Aplica técnicas de ML existentes a un problema práctico de redes \\
+        \hline
+        Enfoque & Cuantitativa & Variables numéricas; análisis estadístico de error \\
+        \hline
+        Diseño & No experimental, longitudinal & Observación pasiva de la red durante dos meses, sin manipulación \\
+        \hline
+        Alcance & Comparativo-explicativo & Contrasta tres paradigmas de modelado y explica sus diferencias de desempeño \\
+        \hline
+    \end{tabular}
+    \caption{Clasificación del tipo de investigación de esta tesis.}
+    \label{tab:tipo_investigacion}
+\end{table}
 
 \section{Definición operativa de congestión}
 
@@ -744,7 +1213,6 @@ En ambos casos, la recolección y el procesamiento de los datos se rigen por un 
 \section{Limitaciones del estudio}
 
 \clearpage
-\chapter*{Referencias bibliográficas}
 \addcontentsline{toc}{chapter}{Referencias bibliográficas}
 \bibliographystyle{IEEEtran}
 \bibliography{referencias}
