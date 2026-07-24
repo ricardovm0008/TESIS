@@ -1142,7 +1142,36 @@ La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera es
 \end{table}
 
 \section{Definición operativa de congestión}
+\label{sec:def_operativa_metodologia}
 
+De acuerdo con la Ecuación \ref{eq:congestion_def} establecida en el Marco Teórico, la operacionalización de la variable objetivo exige definir valores numéricos precisos para el umbral crítico de utilización ($U_{th}$) y la ventana temporal sostenida ($\Delta t$). Esta sección establece los parámetros base que gobernarán el etiquetado 
+(\textit{labeling}) del conjunto de datos antes de su ingesta en los modelos de Machine Learning.
+
+\subsection*{Justificación del umbral $U_{th}$}
+
+Se adopta como valor inicial $U_{th} = 0.80$ (80\% de utilización), por dos razones convergentes. En primer lugar, desde la perspectiva teórica desarrollada en la Sección \ref{sec:congestion}, la teoría de colas aplicada a redes de datos establece que el tiempo de espera promedio en un sistema de colas crece de manera proporcional a 
+$\frac{1}{1-\rho}$, donde $\rho$ representa la utilización del recurso \cite{kleinrock1976}; esta expresión matemática diverge conforme $\rho \to 1$, y su crecimiento deja de ser marginal precisamente en la vecindad de $\rho = 0.8$, punto a partir del cual pequeños incrementos adicionales en la utilización producen incrementos 
+desproporcionadamente grandes en el tiempo de encolado. En segundo lugar, desde la perspectiva de la práctica de la industria, un umbral de utilización entre el 70\% y el 80\% constituye una referencia ampliamente adoptada en la operación de redes empresariales para la activación de mecanismos de gestión de colas y alertamiento temprano, 
+un criterio que se refleja, por ejemplo, en los valores por defecto de mecanismos de descarte temprano como WRED (\textit{Weighted Random Early Detection}) en equipos de la industria, los cuales suelen configurarse con umbrales iniciales de descarte alrededor del 80\% de ocupación de buffer.
+
+Este valor de $U_{th} = 0.80$ funge como parámetro de control inicial (línea base) derivado de la literatura. Sin embargo, para garantizar que el modelo predictivo se ajuste a la realidad topológica de la red bajo estudio, este umbral será sometido a validación empírica durante el Análisis Exploratorio de Datos. 
+El valor definitivo para el etiquetado del algoritmo de clasificación se fijará matemáticamente identificando el percentil exacto donde la distribución de utilización histórica comience a correlacionarse con fluctuaciones anómalas en la red.
+
+\subsection*{Justificación de la ventana temporal $\Delta t$}
+
+En congruencia con la granularidad de muestreo establecida para la recolección de datos (Sección \ref{sec:fuente_datos}), se define $\Delta t = 5$ minutos como el intervalo mínimo sostenido durante el cual la condición $U(t) \geq U_{th}$ debe cumplirse para que un periodo se etiquete como congestión. Esta ventana, equivalente a cinco muestras 
+consecutivas bajo una granularidad de muestreo de un minuto, responde a un balance deliberado entre dos riesgos opuestos: una ventana demasiado corta (por ejemplo, una única muestra) resulta susceptible a ráfagas instantáneas y transitorias de tráfico que no representan una congestión sostenida ni operacionalmente relevante —generando así falsos 
+positivos que degradarían la utilidad práctica del sistema de predicción—; mientras que una ventana demasiado larga podría pasar por alto episodios de saturación breves pero significativos para aplicaciones sensibles a la latencia, como las cámaras de videovigilancia o las videollamadas mencionadas en la Sección \ref{sec:fuente_datos}. 
+Al igual que con $U_{th}$, este valor podrá ser ajustado tras el análisis exploratorio del dataset primario si la evidencia empírica así lo sugiere.
+
+\subsection*{Formulación instanciada para la etapa de preprocesamiento}
+
+Tomando como base los parámetros iniciales, la lógica de etiquetado binario que se programará en el pipeline de preprocesamiento de datos se define como:
+
+\begin{equation}
+    \text{Congestión} \iff U(t) \geq 0.80 \quad \text{durante al menos 5 minutos consecutivos}
+    \label{eq:congestion_instanciada}
+\end{equation}
 \section{Descripción de las métricas a utilizar}
 
 \section{Fuente de datos}
