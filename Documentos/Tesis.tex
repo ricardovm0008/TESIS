@@ -8,6 +8,7 @@
 \usepackage{float}
 \usepackage{setspace}
 \usepackage{amsmath}
+\usepackage{array}
 \usetikzlibrary{positioning, arrows.meta, babel}
 
 \geometry{letterpaper, margin=2.5cm}
@@ -1777,8 +1778,53 @@ especializada mediante GPU de alto rendimiento.
 Finalmente, el código fuente desarrollado para esta tesis se gestionará mediante un sistema de control de versiones (Git), con el propósito de mantener un historial reproducible de los experimentos realizados. Los fragmentos de código considerados más relevantes para la comprensión del prototipo se incluirán como parte del Apéndice A de este documento, conforme a lo indicado en el índice general de la tesis.
 
 \chapter{Desarrollo e Implementación}
+El presente capítulo constituye el núcleo empírico de esta investigación, materializando las decisiones metodológicas y arquitectónicas justificadas en el Capítulo 4. Aquí se abandona el plano de las definiciones teóricas para documentar la ejecución sistemática del \textit{pipeline} de datos y la codificación algorítmica del prototipo.
 
-\section{Obtención y exploración del dataset}
+El desarrollo se expone siguiendo la secuencia lógica del flujo de información en un sistema predictivo aplicado a redes. Inicialmente, se detalla la extracción híbrida de telemetría desde la infraestructura de enrutamiento y la posterior exploración estadística del conjunto de datos real para definir el umbral de congestión (Sección 5.1). A continuación, se implementan los tratamientos matemáticos de limpieza, 
+ventaneo y escalado exigidos para mitigar las discrepancias estructurales entre las fuentes de información (Sección 5.2). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados —transitando desde la línea base estadística, pasando por el ensamble de Machine Learning clásico, 
+hasta culminar con las topologías de redes neuronales recurrentes—.
+
+El objetivo rector de este capítulo no es constituir un manual de programación, sino evidenciar, que la transformación del tráfico bruto en un sistema predictivo funcional obedece a un diseño de software determinista, reproducible y científicamente fundamentado.
+
+\section{Obtención y exploración de los conjuntos de datos}
+
+La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario mediante SNMP e ICMP en la red corporativa exige un periodo de observación longitudinal (dos meses) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
+
+\subsection*{Extracción y decodificación de trazas de validación}
+
+Para construir la serie temporal de validación externa, se consumieron las trazas de tráfico troncal correspondientes al año 2026 del repositorio MAWI. Dado que la distribución original de estos datos consiste en capturas binarias altamente comprimidas (\texttt{.pcap.gz}), fue necesario implementar un proceso de extracción automatizada en un entorno de procesamiento Linux. 
+
+En lugar de inspeccionar el \textit{payload} o reconstruir flujos individuales, la extracción se limitó estrictamente a la decodificación de cabeceras mediante la utilidad \texttt{tshark}. Se diseñó un \textit{script} de preprocesamiento para iterar sobre los archivos descargados y ejecutar comandos de entrada/salida estadística, permitiendo agrupar el volumen de bytes transmitidos en ventanas temporales 
+discretas de 60 segundos. Este procedimiento garantiza que la métrica de utilización derivada posea una granularidad de un minuto, haciéndola estructuralmente compatible con el muestreo SNMP que se aplicará al dataset primario.
+
+\subsection*{Justificación técnica de la selección de MAWI}
+
+Si bien la pertinencia teórica del archivo MAWI del proyecto WIDE fue fundamentada en la Sección \ref{sec:fuente_datos}, su adopción en esta fase de implementación obedece a requerimientos de ingeniería que otros repositorios públicos de tráfico de red no logran satisfacer. 
+
+En primer lugar, a diferencia de los conjuntos de datos convencionales que distribuyen métricas pre-agregadas de forma tabular, MAWI expone las capturas en formato crudo a nivel de paquete (\texttt{.pcap}). Esta característica técnica resulta indispensable para poder orquestar un \textit{pipeline} de decodificación propio que homologue la ventana temporal de agregación (60 segundos) con la granularidad del sondeo SNMP del dataset corporativo. 
+
+En segundo lugar, operar sobre un enlace de tránsito intercontinental con un caudal sostenido en el orden de los Gigabits por segundo proporciona el contraste de escala necesario para someter a los modelos de Machine Learning a una prueba de validación extrema. Si el algoritmo de predicción logra adaptarse con éxito a la dinámica estocástica de este caudal de gran escala, se descarta el riesgo de sobreajuste estructural (\textit{overfitting}) 
+hacia la topología específica de la red primaria, confirmando la generalización del paradigma propuesto.
+
+Para transparentar esta decisión de diseño, la Tabla \ref{tab:datasets_excluidos} contrasta MAWI con tres de los repositorios de tráfico de red más citados en la literatura académica de Ciencias de la Computación, detallando los impedimentos técnicos que invalidaron su uso para el modelado de congestión propuesto en este trabajo.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{1.9cm}|p{7.0cm}|}
+        \hline
+        \textbf{Repositorio público} & \textbf{Enfoque principal} & \textbf{Formato nativo} & \textbf{Impedimento técnico para esta tesis} \\
+        \hline
+        NSL-KDD \newline (y variantes) & Ciberseguridad (Detección de intrusos) & Tabular pre-agregado (\texttt{.csv}) & Carece de trazas crudas. Sus variables están pre-calculadas y orientadas a clasificar tipos de ataques informáticos (DoS, Probe), imposibilitando la extracción de series temporales de utilización pura. \\
+        \hline
+        CIC-IDS2017 \newline (Univ. of New Brunswick) & Análisis de malware y ataques volumétricos & \texttt{.pcap} y flujos procesados & Aunque provee paquetes crudos, la congestión en este dataset es producto de inyecciones artificiales de ataques DDoS. Esto distorsiona la dinámica estocástica natural del tráfico, entrenando al modelo para detectar malware en lugar de saturación operativa. \\
+        \hline
+        CAIDA \newline (Anonymized Internet Traces) & Análisis de topología y enrutamiento global & \texttt{.pcap} (altamente muestreado) & Sus políticas de acceso son restrictivas. Técnicamente, sus trazas suelen estar tan agresivamente muestreadas que destruyen la micro-dinámica de latencia requerida para la evaluación fina de los algoritmos predictivos. \\
+        \hline
+    \end{tabular}
+    \caption{Comparativa de repositorios públicos de red y justificación técnica de su exclusión.}
+    \label{tab:datasets_excluidos}
+\end{table}
 
 \section{Preprocesamiento}
 
@@ -1790,7 +1836,7 @@ Finalmente, el código fuente desarrollado para esta tesis se gestionará median
 
 \chapter{Resultados y Discusión}
 
-\section{Resultados de ARIMA}
+\section{Resultados de ARIMA}                                                                                                                               
 
 \section{Resultados de Random Forest}
 
