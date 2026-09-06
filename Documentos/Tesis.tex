@@ -1788,7 +1788,15 @@ El objetivo rector de este capítulo no es constituir un manual de programación
 
 \section{Obtención y exploración de los conjuntos de datos}
 
-La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario mediante SNMP e ICMP en la red corporativa exige un periodo de observación longitudinal (dos meses) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
+La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal (dos meses) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
+
+\subsection*{Extracción de telemetría del dataset primario}
+
+Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura del Cliente —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como mecanismo 
+funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza estrictamente pasiva de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
+
+La recolección, iniciada el 06 de Agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el 
+análisis exploratorio completo del dataset primario, se presenta una vez concluido el periodo de dos meses establecido.
 
 \subsection*{Extracción y decodificación de trazas de validación}
 
@@ -1819,7 +1827,7 @@ Para transparentar esta decisión de diseño, la Tabla \ref{tab:datasets_excluid
         \hline
         CIC-IDS2017 \newline (Univ. of New Brunswick) & Análisis de malware y ataques volumétricos & \texttt{.pcap} y flujos procesados & Aunque provee paquetes crudos, la congestión en este dataset es producto de inyecciones artificiales de ataques DDoS. Esto distorsiona la dinámica estocástica natural del tráfico, entrenando al modelo para detectar malware en lugar de saturación operativa. \\
         \hline
-        CAIDA \newline (Anonymized Internet Traces) & Análisis de topología y enrutamiento global & \texttt{.pcap} (altamente muestreado) & Sus políticas de acceso son restrictivas. Técnicamente, sus trazas suelen estar tan agresivamente muestreadas que destruyen la micro-dinámica de latencia requerida para la evaluación fina de los algoritmos predictivos. \\
+        CAIDA \newline (Anonymized Internet Traces) & Análisis de topología y enrutamiento global & \texttt{.pcap} (encabezados completos, sin muestreo) & Sus políticas de acceso son marcadamente restrictivas: requiere solicitud formal de acceso, está limitado a investigadores académicos y agencias gubernamentales de forma gratuita, y las entidades corporativas requieren membresía de pago. Este proceso de autorización resultaba incompatible con los plazos de desarrollo de esta tesis. \\
         \hline
     \end{tabular}
     \caption{Comparativa de repositorios públicos de red y justificación técnica de su exclusión.}
