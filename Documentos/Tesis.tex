@@ -1796,22 +1796,28 @@ Es pertinente señalar una precisión metodológica respecto a lo establecido en
 funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza estrictamente pasiva de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
 
 La recolección, iniciada el 06 de Agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el 
-análisis exploratorio completo del dataset primario, se presenta una vez concluido el periodo de dos meses establecido.
+análisis exploratorio completo del dataset primario se presenta una vez concluido el periodo de dos meses establecido.
 
 \subsection*{Extracción y decodificación de trazas de validación}
 
-Para construir la serie temporal de validación externa, se consumieron las trazas de tráfico troncal correspondientes al año 2026 del repositorio MAWI. Dado que la distribución original de estos datos consiste en capturas binarias altamente comprimidas (\texttt{.pcap.gz}), fue necesario implementar un proceso de extracción automatizada en un entorno de procesamiento Linux. 
+Para construir la serie temporal de validación externa, se consumieron las trazas de tráfico troncal correspondientes a 2026 del repositorio MAWI. Dado que la distribución original de estos datos consiste en capturas binarias comprimidas (\texttt{.pcap.gz}) que registran decenas de millones de paquetes por archivo, la extracción inicial mediante herramientas de disección de protocolos de alto nivel 
+(\texttt{tshark}) resultó impráctica: el 
+procesamiento de más de 170 millones de paquetes por traza demandaba un volumen de memoria que excedía los recursos disponibles en la estación de trabajo empleada, motivado por la sobrecarga inherente a la reconstrucción de flujos y la disección completa de protocolos que dichas herramientas realizan internamente, aun cuando solo se requerían dos campos elementales por paquete.
 
-En lugar de inspeccionar el \textit{payload} o reconstruir flujos individuales, la extracción se limitó estrictamente a la decodificación de cabeceras mediante la utilidad \texttt{tshark}. Se diseñó un \textit{script} de preprocesamiento para iterar sobre los archivos descargados y ejecutar comandos de entrada/salida estadística, permitiendo agrupar el volumen de bytes transmitidos en ventanas temporales 
-discretas de 60 segundos. Este procedimiento garantiza que la métrica de utilización derivada posea una granularidad de un minuto, haciéndola estructuralmente compatible con el muestreo SNMP que se aplicará al dataset primario.
+En consecuencia, se optó por implementar un decodificador propio en Python, capaz de interpretar directamente la estructura binaria del formato \textit{libpcap} —esto es, leer el encabezado de 16 bytes de cada paquete (que ya contiene la marca de tiempo y la longitud original) sin decodificar el contenido de sus protocolos—. Esta estrategia de procesamiento en flujo (\textit{streaming}), sin 
+acumulación de estructuras intermedias de gran tamaño en memoria, permitió agrupar el volumen de bytes transmitidos en ventanas temporales discretas de manera eficiente, garantizando que la métrica de utilización derivada mantuviera una granularidad compatible con el análisis posterior.
+
+Para efectos del desarrollo y prueba integral del pipeline de modelado (Secciones 5.2 a 5.5), las trazas de MAWI se agregaron con una ventana temporal de 1 segundo, en lugar de la ventana de 1 minuto establecida en la Sección \ref{sec:preprocesamiento} para la comparación formal entre datasets. Esta decisión responde a una necesidad de ingeniería: dada la corta duración de cada traza diaria (15 minutos, 
+según se documentó en la Sección \ref{sec:fuente_datos}), una ventana de 1 minuto produce un volumen de observaciones insuficiente para ejercitar adecuadamente las etapas de división cronológica y ventaneo secuencial del pipeline descritas en la Sección \ref{sec:preprocesamiento}. Una vez concluida la recolección del dataset primario, las trazas de MAWI empleadas para la validación final de generalización 
+(Capítulo 6) se reagregarán a la ventana de 1 minuto oficialmente establecida, garantizando la comparabilidad de unidades entre ambas fuentes.
 
 \subsection*{Justificación técnica de la selección de MAWI}
 
 Si bien la pertinencia teórica del archivo MAWI del proyecto WIDE fue fundamentada en la Sección \ref{sec:fuente_datos}, su adopción en esta fase de implementación obedece a requerimientos de ingeniería que otros repositorios públicos de tráfico de red no logran satisfacer. 
 
-En primer lugar, a diferencia de los conjuntos de datos convencionales que distribuyen métricas pre-agregadas de forma tabular, MAWI expone las capturas en formato crudo a nivel de paquete (\texttt{.pcap}). Esta característica técnica resulta indispensable para poder orquestar un \textit{pipeline} de decodificación propio que homologue la ventana temporal de agregación (60 segundos) con la granularidad del sondeo SNMP del dataset corporativo. 
+En primer lugar, a diferencia de los conjuntos de datos convencionales que distribuyen métricas pre-agregadas de forma tabular, MAWI expone las capturas en formato crudo a nivel de paquete (\texttt{.pcap}). Esta característica técnica resulta indispensable para poder orquestar un \textit{pipeline} de decodificación propio que homologue la ventana temporal de agregación con la granularidad de muestreo del dataset primario. 
 
-En segundo lugar, operar sobre un enlace de tránsito intercontinental con un caudal sostenido en el orden de los Gigabits por segundo proporciona el contraste de escala necesario para someter a los modelos de Machine Learning a una prueba de validación extrema. Si el algoritmo de predicción logra adaptarse con éxito a la dinámica estocástica de este caudal de gran escala, se descarta el riesgo de sobreajuste estructural (\textit{overfitting}) 
+En segundo lugar, operar sobre un enlace de tránsito de gran escala, con un caudal sostenido en el orden de los Gigabits por segundo, proporciona el contraste de escala necesario para someter a los modelos de Machine Learning a una prueba de validación extrema. Si el algoritmo de predicción logra adaptarse con éxito a la dinámica estocástica de este caudal de gran escala, se descarta el riesgo de sobreajuste estructural (\textit{overfitting}) 
 hacia la topología específica de la red primaria, confirmando la generalización del paradigma propuesto.
 
 Para transparentar esta decisión de diseño, la Tabla \ref{tab:datasets_excluidos} contrasta MAWI con tres de los repositorios de tráfico de red más citados en la literatura académica de Ciencias de la Computación, detallando los impedimentos técnicos que invalidaron su uso para el modelado de congestión propuesto en este trabajo.
@@ -1833,7 +1839,6 @@ Para transparentar esta decisión de diseño, la Tabla \ref{tab:datasets_excluid
     \caption{Comparativa de repositorios públicos de red y justificación técnica de su exclusión.}
     \label{tab:datasets_excluidos}
 \end{table}
-
 \section{Preprocesamiento}
 
 \section{Construcción del modelo ARIMA}
