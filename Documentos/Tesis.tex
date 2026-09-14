@@ -9,6 +9,22 @@
 \usepackage{setspace}
 \usepackage{amsmath}
 \usepackage{array}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\lstset{
+    language=Python,
+    basicstyle=\ttfamily\footnotesize,
+    keywordstyle=\color{blue},
+    commentstyle=\color{gray},
+    stringstyle=\color{orange},
+    numbers=left,
+    numberstyle=\tiny,
+    breaklines=true,
+    frame=single,
+    backgroundcolor=\color{gray!5}
+}
 \usetikzlibrary{positioning, arrows.meta, babel}
 
 \geometry{letterpaper, margin=2.5cm}
@@ -1792,59 +1808,335 @@ La fase de desarrollo inició con la consolidación y auditoría de los datos cr
 
 \subsection*{Extracción de telemetría del dataset primario}
 
-Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura del Cliente —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como mecanismo 
-funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza estrictamente pasiva de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
+Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la Red Privada Corporativa —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como 
+mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
 
-La recolección, iniciada el 06 de Agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el 
-análisis exploratorio completo del dataset primario se presenta una vez concluido el periodo de dos meses establecido.
+La recolección, iniciada el 06 de agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el análisis exploratorio 
+completo de este dataset se presentará una vez concluido el periodo de dos meses establecido.
 
 \subsection*{Extracción y decodificación de trazas de validación}
 
-Para construir la serie temporal de validación externa, se consumieron las trazas de tráfico troncal correspondientes a 2026 del repositorio MAWI. Dado que la distribución original de estos datos consiste en capturas binarias comprimidas (\texttt{.pcap.gz}) que registran decenas de millones de paquetes por archivo, la extracción inicial mediante herramientas de disección de protocolos de alto nivel 
-(\texttt{tshark}) resultó impráctica: el 
-procesamiento de más de 170 millones de paquetes por traza demandaba un volumen de memoria que excedía los recursos disponibles en la estación de trabajo empleada, motivado por la sobrecarga inherente a la reconstrucción de flujos y la disección completa de protocolos que dichas herramientas realizan internamente, aun cuando solo se requerían dos campos elementales por paquete.
+Para construir la serie temporal de validación externa, se consumieron trazas de tráfico troncal correspondientes a 2026 del repositorio MAWI. Dado que la distribución original consiste en capturas binarias comprimidas (\texttt{.pcap.gz}) que registran decenas de millones de paquetes por archivo, la extracción mediante herramientas de alto nivel (\texttt{tshark}) resultó impráctica: el procesamiento demandaba un 
+volumen de memoria que excedía los recursos de la estación de trabajo, motivado por la sobrecarga de reconstrucción de flujos de dichas herramientas.
 
-En consecuencia, se optó por implementar un decodificador propio en Python, capaz de interpretar directamente la estructura binaria del formato \textit{libpcap} —esto es, leer el encabezado de 16 bytes de cada paquete (que ya contiene la marca de tiempo y la longitud original) sin decodificar el contenido de sus protocolos—. Esta estrategia de procesamiento en flujo (\textit{streaming}), sin 
-acumulación de estructuras intermedias de gran tamaño en memoria, permitió agrupar el volumen de bytes transmitidos en ventanas temporales discretas de manera eficiente, garantizando que la métrica de utilización derivada mantuviera una granularidad compatible con el análisis posterior.
+En consecuencia, se optó por implementar un decodificador propio en Python, capaz de interpretar directamente la estructura binaria del formato \textit{libpcap} sin decodificar el \textit{payload}. Esta estrategia de procesamiento en flujo (\textit{streaming}), sin acumulación en memoria, permitió agrupar el volumen de bytes transmitidos en ventanas temporales de manera altamente eficiente.
 
-Para efectos del desarrollo y prueba integral del pipeline de modelado (Secciones 5.2 a 5.5), las trazas de MAWI se agregaron con una ventana temporal de 1 segundo, en lugar de la ventana de 1 minuto establecida en la Sección \ref{sec:preprocesamiento} para la comparación formal entre datasets. Esta decisión responde a una necesidad de ingeniería: dada la corta duración de cada traza diaria (15 minutos, 
-según se documentó en la Sección \ref{sec:fuente_datos}), una ventana de 1 minuto produce un volumen de observaciones insuficiente para ejercitar adecuadamente las etapas de división cronológica y ventaneo secuencial del pipeline descritas en la Sección \ref{sec:preprocesamiento}. Una vez concluida la recolección del dataset primario, las trazas de MAWI empleadas para la validación final de generalización 
-(Capítulo 6) se reagregarán a la ventana de 1 minuto oficialmente establecida, garantizando la comparabilidad de unidades entre ambas fuentes.
+Para garantizar la validez metodológica del \textit{pipeline} predictivo (Secciones 5.2 a 5.5), la agregación temporal se mantuvo estrictamente en la ventana de 1 minuto establecida en el Capítulo 4. Dado que cada captura diaria de MAWI abarca únicamente 15 minutos continuos (generando 15 observaciones por archivo), resultó imperativo orquestar el decodificador para procesar de manera secuencial un lote de 120 trazas 
+(equivalentes a 30 horas de tráfico efectivo). Esta concatenación permitió ensamblar una serie temporal con longitud suficiente para las redes neuronales, sin corromper la distribución estadística inherente a la escala de 60 segundos.
 
-\subsection*{Justificación técnica de la selección de MAWI}
+El fragmento de código \ref{lst:parser_pcap} ilustra el núcleo de este decodificador.
+\newpage
+\begin{lstlisting}[language=Python, caption={Extracto del decodificador de trazas libpcap en flujo.}, label={lst:parser_pcap}]
+import struct
 
-Si bien la pertinencia teórica del archivo MAWI del proyecto WIDE fue fundamentada en la Sección \ref{sec:fuente_datos}, su adopción en esta fase de implementación obedece a requerimientos de ingeniería que otros repositorios públicos de tráfico de red no logran satisfacer. 
+fmt_registro = "<IIII" # Formato struct (ts_sec, ts_usec, incl_len, orig_len)
+ventana_seg = 60        # Agregacion a 1 minuto
 
-En primer lugar, a diferencia de los conjuntos de datos convencionales que distribuyen métricas pre-agregadas de forma tabular, MAWI expone las capturas en formato crudo a nivel de paquete (\texttt{.pcap}). Esta característica técnica resulta indispensable para poder orquestar un \textit{pipeline} de decodificación propio que homologue la ventana temporal de agregación con la granularidad de muestreo del dataset primario. 
+while True:
+    encabezado_paquete = f.read(16)
+    if len(encabezado_paquete) < 16:
+        break  # EOF
 
-En segundo lugar, operar sobre un enlace de tránsito de gran escala, con un caudal sostenido en el orden de los Gigabits por segundo, proporciona el contraste de escala necesario para someter a los modelos de Machine Learning a una prueba de validación extrema. Si el algoritmo de predicción logra adaptarse con éxito a la dinámica estocástica de este caudal de gran escala, se descarta el riesgo de sobreajuste estructural (\textit{overfitting}) 
-hacia la topología específica de la red primaria, confirmando la generalización del paradigma propuesto.
+    ts_sec, ts_usec, incl_len, orig_len = struct.unpack(
+        fmt_registro, encabezado_paquete
+    )
+    timestamp = ts_sec + (ts_usec / 1_000_000)
+    ventana = int(timestamp // ventana_seg)
+    acumulado[ventana] += orig_len
 
-Para transparentar esta decisión de diseño, la Tabla \ref{tab:datasets_excluidos} contrasta MAWI con tres de los repositorios de tráfico de red más citados en la literatura académica de Ciencias de la Computación, detallando los impedimentos técnicos que invalidaron su uso para el modelado de congestión propuesto en este trabajo.
+    # Salto rapido del payload sin saturar RAM
+    f.seek(incl_len, 1) 
+\end{lstlisting}
+
+La Tabla \ref{tab:resumen_extraccion_mawi} sintetiza los resultados obtenidos al aplicar este procedimiento sobre el lote procesado.
 
 \begin{table}[H]
     \centering
-    \small
-    \begin{tabular}{|>{\raggedright\arraybackslash}p{2.5cm}|>{\raggedright\arraybackslash}p{2.6cm}|>{\raggedright\arraybackslash}p{1.9cm}|p{7.0cm}|}
+    \begin{tabular}{|l|r|r|}
         \hline
-        \textbf{Repositorio público} & \textbf{Enfoque principal} & \textbf{Formato nativo} & \textbf{Impedimento técnico para esta tesis} \\
+        \textbf{Periodo procesado} & \textbf{Paquetes evaluados} & \textbf{Observaciones (1 min)} \\
         \hline
-        NSL-KDD \newline (y variantes) & Ciberseguridad (Detección de intrusos) & Tabular pre-agregado (\texttt{.csv}) & Carece de trazas crudas. Sus variables están pre-calculadas y orientadas a clasificar tipos de ataques informáticos (DoS, Probe), imposibilitando la extracción de series temporales de utilización pura. \\
-        \hline
-        CIC-IDS2017 \newline (Univ. of New Brunswick) & Análisis de malware y ataques volumétricos & \texttt{.pcap} y flujos procesados & Aunque provee paquetes crudos, la congestión en este dataset es producto de inyecciones artificiales de ataques DDoS. Esto distorsiona la dinámica estocástica natural del tráfico, entrenando al modelo para detectar malware en lugar de saturación operativa. \\
-        \hline
-        CAIDA \newline (Anonymized Internet Traces) & Análisis de topología y enrutamiento global & \texttt{.pcap} (encabezados completos, sin muestreo) & Sus políticas de acceso son marcadamente restrictivas: requiere solicitud formal de acceso, está limitado a investigadores académicos y agencias gubernamentales de forma gratuita, y las entidades corporativas requieren membresía de pago. Este proceso de autorización resultaba incompatible con los plazos de desarrollo de esta tesis. \\
+        Lote MAWI (120 trazas) & $\approx$ 21,500,000,000 & 1,800 \\
         \hline
     \end{tabular}
-    \caption{Comparativa de repositorios públicos de red y justificación técnica de su exclusión.}
-    \label{tab:datasets_excluidos}
+    \caption{Resultados de la extracción de telemetría sobre las trazas MAWI procesadas.}
+    \label{tab:resumen_extraccion_mawi}
 \end{table}
+
+\subsection*{Exploración estadística preliminar}
+
+Con el propósito de someter a prueba el \textit{pipeline} de modelado antes de la conclusión de la recolección primaria, se realizó un análisis exploratorio sobre las 1,800 observaciones obtenidas del lote de 120 trazas de MAWI. La conversión del \textit{throughput} observado a factor de utilización se realizó aplicando directamente la definición establecida en la Sección \ref{sec:congestion}, empleando como ancho de 
+banda nominal 11 Gbps —correspondiente a la suma de los dos enlaces monitoreados por \textit{samplepoint-F} desde julio de 2023: el enlace de tránsito original de 1 Gbps hacia NTTC GIN, y un enlace adicional de 10 Gbps hacia el punto de intercambio BBIX—:
+
+\begin{equation}
+    U = \frac{\text{Throughput observado}}{\text{Ancho de banda nominal}} = \frac{\text{Throughput observado (bps)}}{11 \times 10^{9} \text{ bps}}
+    \label{eq:utilizacion_instanciada_mawi}
+\end{equation}
+
+Aplicando la Ecuación \ref{eq:utilizacion_instanciada_mawi} a cada observación temporal, se obtuvieron las estadísticas descriptivas resumidas en la Tabla \ref{tab:estadisticas_mawi_piloto}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Estadística} & \textbf{Throughput (Gbps)} & \textbf{Utilización ($U$)} \\
+        \hline
+        Mínimo & 0.19 & 0.017 \\
+        Media & 1.71 & 0.155 \\
+        Mediana & 1.66 & 0.151 \\
+        Máximo & 3.55 & 0.323 \\
+        Desviación estándar & 0.56 & 0.051 \\
+        \hline
+    \end{tabular}
+    \caption{Estadísticas descriptivas del throughput y utilización derivada, dataset piloto MAWI (1,800 observaciones, granularidad de 1 minuto).}
+    \label{tab:estadisticas_mawi_piloto}
+\end{table}
+
+La Figura \ref{fig:histograma_mawi} presenta la distribución completa de la utilización observada, contrastada visualmente contra el umbral de congestión formal $U_{th} \geq 0.80$ establecido en la Ecuación \ref{eq:congestion_instanciada} (Sección \ref{sec:def_operativa_metodologia}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{histograma_utilizacion_mawi.png}
+    \caption{Distribución del factor de utilización, dataset piloto MAWI.}
+    \label{fig:histograma_mawi}
+\end{figure}
+
+Como se evidencia en la distribución, la utilización observada en el subconjunto piloto de MAWI \textbf{no alcanza en ningún momento} el umbral $U_{th}=0.80$, situándose el valor máximo en apenas 32.3\%. Este resultado es consistente con la naturaleza del enlace capturado: se trata de una troncal de tránsito perteneciente a un proveedor de infraestructura académica, dimensionada deliberadamente para operar con amplio 
+margen de holgura. Esto contrasta frontalmente con la Red Privada Corporativa que constituye el dataset primario de esta tesis, donde la coexistencia de múltiples servicios de alta demanda (videovigilancia, sincronización en la nube, tráfico residencial) hace previsible la ocurrencia de episodios de saturación reales.
+
+En consecuencia, si bien este subconjunto de MAWI resulta ideal para ejercitar el \textit{pipeline} completo bajo la formulación de \textbf{regresión} (Sección 2.2.1), no genera observaciones positivas naturales para la clase "congestión" bajo la formulación de \textbf{clasificación}. Para evitar posponer el desarrollo algorítmico, y exclusivamente durante esta fase de codificación y calibración (Secciones 5.3 a 5.5), 
+se adopta un umbral relativo de prueba ($U_{test} \geq 0.25$). Esto permite verificar empíricamente la lógica computacional de la Matriz de Confusión y la métrica $TAE$, garantizando que el \textit{software} predictivo opere correctamente a la espera de ser alimentado con el umbral formal de 0.80 sobre el dataset primario en el Capítulo 6.
+
 \section{Preprocesamiento}
+\label{sec:preprocesamiento_desarrollo}
+
+Sobre el conjunto de 1,800 observaciones a granularidad de 1 minuto descrito en la Sección 5.1, se aplicaron las etapas de preprocesamiento establecidas formalmente en la Sección \ref{sec:preprocesamiento}. El objetivo de esta fase computacional fue transformar la serie de tiempo unidimensional en las estructuras tensoriales requeridas por las bibliotecas de \textit{Machine Learning}.
+
+\subsection*{Limpieza y manejo de discontinuidades}
+
+Dado que el dataset piloto se construyó mediante la concatenación secuencial de un lote de 120 trazas individuales de 15 minutos (Sección 5.1), las fronteras entre archivos introdujeron discontinuidades temporales. Para garantizar la integridad de los algoritmos autorregresivos, la limpieza se ejecutó empleando las estructuras de datos bidimensionales (\texttt{DataFrame}) de la biblioteca \texttt{pandas}. Se aplicaron 
+rutinas de interpolación lineal (\texttt{.interpolate(method='linear', limit=2)}) para imputar micro-cortes internos, seguidas de la eliminación de observaciones residuales no válidas (\texttt{.dropna()}) en los bordes de concatenación. Este proceso de purga redujo el conjunto de datos de 1,800 a un total efectivo de $n=1{,}774$ observaciones continuas y estructuradas.
+
+\subsection*{División cronológica y escalado sin fuga de datos}
+
+La división cronológica se programó como una partición dura de la serie ordenada temporalmente $\{x_1, x_2, \dots, x_n\}$ en tres segmentos contiguos y no traslapados:
+
+\begin{equation}
+    \text{Entrenamiento} = \{x_1, \dots, x_{\lfloor 0.6n \rfloor}\}, \quad
+    \text{Validación} = \{x_{\lfloor 0.6n \rfloor + 1}, \dots, x_{\lfloor 0.8n \rfloor}\}, \quad
+    \text{Prueba} = \{x_{\lfloor 0.8n \rfloor + 1}, \dots, x_n\}
+    \label{eq:split_cronologico}
+\end{equation}
+
+Para el dataset piloto, con $n=1{,}774$, la indexación generó $\lfloor 0.6 \times 1774 \rfloor = 1{,}064$ observaciones de entrenamiento, $\lfloor 0.8 \times 1774 \rfloor - 1{,}064 = 355$ de validación, y 355 restantes de prueba, proporciones consistentes con la Tabla \ref{tab:split_mawi_piloto}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{Observaciones} & \textbf{Proporción} \\
+        \hline
+        Entrenamiento & 1,064 & 60.0\% \\
+        Validación & 355 & 20.0\% \\
+        Prueba & 355 & 20.0\% \\
+        \hline
+    \end{tabular}
+    \caption{Composición de la división cronológica del dataset piloto MAWI tras el preprocesamiento.}
+    \label{tab:split_mawi_piloto}
+\end{table}
+
+Posterior a la partición, se aplicó la normalización Min-Max (Ecuación \ref{eq:minmax}). Desde la perspectiva de ingeniería de software, para prevenir el antipatrón de fuga de datos (\textit{data leakage}), este escalado se implementó utilizando la clase \texttt{MinMaxScaler} de \texttt{scikit-learn}. 
+Se garantizó por diseño que el método \texttt{fit\_transform()} se ejecutara de manera exclusiva sobre el conjunto de entrenamiento, mientras que a los conjuntos de validación y prueba se les aplicó únicamente el método \texttt{transform()}, forzándolos a mapearse bajo la distribución matemática descubierta 
+en el pasado, sin contaminar el modelo con conocimiento futuro. Para la variable de utilización, la ecuación instanciada con los parámetros reales del conjunto de entrenamiento operó de la siguiente forma:
+
+\begin{equation}
+    U_{\text{norm}} = \frac{U - 0.017045}{0.323168 - 0.017045}
+    \label{eq:minmax_instanciada_mawi}
+\end{equation}
+
+\subsection*{Ventaneo secuencial y conformación de tensores}
+
+Para habilitar el aprendizaje de las arquitecturas predictivas supervisadas (especialmente LSTM y GRU), se implementó una función propia de ventana deslizante (\textit{Sliding Window}) mediante la manipulación de arreglos de \texttt{NumPy}. Esta función transformó el vector plano en una estructura
+matricial de características rezagadas ($X$) y sus correspondientes objetivos proyectados ($y$). 
+
+Acorde con la granularidad de 1 minuto, se configuró una ventana de observación $w=15$ minutos y un horizonte de predicción $h=5$ minutos. La conformación lógica de cada par de entrada/salida se instanció como:
+
+\begin{equation}
+    X_t = \left[U(t-15), U(t-14), \dots, U(t-1)\right] \longrightarrow y_t = U(t+5)
+    \label{eq:ventaneo_instanciada_mawi}
+\end{equation}
+
+El resultado de esta iteración sobre el espacio temporal es la redimensión de los datos en un tensor tridimensional con la forma \texttt{(muestras, pasos\_de\_tiempo, caracteristicas)}, requisito arquitectónico ineludible para la capa de entrada (\textit{Input Layer}) del framework \texttt{Keras/TensorFlow}. 
+Descontando las observaciones consumidas en los bordes para poblar los rezagos iniciales, el proceso generó 1,044 secuencias para entrenamiento, 335 para validación y 335 para prueba, dejando la estructura de datos lista para la ingesta en las topologías algorítmicas detalladas en las siguientes secciones.
 
 \section{Construcción del modelo ARIMA}
 
+Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, ARIMA se implementó como línea base estadística de referencia. Esta sección documenta la ejecución programática para la identificación del orden del modelo mediante la biblioteca \texttt{statsmodels} de Python, su ajuste 
+sobre el conjunto de entrenamiento del dataset piloto MAWI, y su evaluación dual (regresión y clasificación) bajo un 
+esquema de pronóstico progresivo.
+
+\subsection*{Prueba de estacionariedad}
+
+Como paso previo a la identificación del orden, se aplicó la prueba de Dickey-Fuller Aumentada (ADF) mediante el módulo \texttt{stattools.adfuller} sobre la serie de utilización del conjunto de entrenamiento. El propósito fue determinar el orden de diferenciación $d$ requerido para estabilizar la media (Sección 2.2.2). 
+El estadístico obtenido fue $\text{ADF}=-1.6992$, con un valor $p=0.4315$. Dado que $p > 0.05$, no fue posible rechazar la hipótesis nula de no estacionariedad. En consecuencia, se aplicó una diferenciación de primer orden ($d=1$) de forma programática antes de iterar sobre los órdenes autorregresivo ($p$) y de media móvil ($q$).
+
+\subsection*{Identificación del orden mediante minimización del AIC}
+
+Se orquestó una búsqueda de hiperparámetros evaluando dieciséis combinaciones de órdenes $(p,1,q)$ con $p,q \in \{0,1,2,3\}$, seleccionando la topología que minimizó el Criterio de Información de Akaike (AIC). La Tabla \ref{tab:busqueda_arima} resume los cinco modelos con mejor convergencia.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Orden $(p,d,q)$} & \textbf{AIC} \\
+        \hline
+        ARIMA(1,1,1) & \textbf{-5656.68} \\
+        ARIMA(2,1,1) & -5654.95 \\
+        ARIMA(3,1,1) & -5653.03 \\
+        ARIMA(0,1,3) & -5653.74 \\
+        ARIMA(2,1,2) & -5653.04 \\
+        \hline
+    \end{tabular}
+    \caption{Órdenes ARIMA con menor AIC, dataset piloto MAWI.}
+    \label{tab:busqueda_arima}
+\end{table}
+
+El orden seleccionado por el algoritmo fue $\text{ARIMA}(1,1,1)$. Los coeficientes óptimos estimados se presentan en la Ecuación \ref{eq:arima_ajustado}, instanciando la formulación general de la Ecuación \ref{eq:arima}:
+
+\begin{equation}
+    (1 - 0.4305\,L)(1-L)\,U_t = (1 - 0.8280\,L)\,\varepsilon_t
+    \label{eq:arima_ajustado}
+\end{equation}
+
+Ambos coeficientes resultaron estadísticamente significativos ($p<0.001$), y la prueba de Ljung-Box sobre los residuos ($p=0.92$) confirmó la ausencia de autocorrelación residual, validando la idoneidad matemática del modelo de referencia.
+
+\subsection*{Evaluación mediante pronóstico progresivo (Regresión)}
+
+La validación del modelo se implementó mediante un esquema iterativo de pronóstico progresivo (\textit{walk-forward validation}): para cada instante $t$, el modelo generó una predicción continua a horizonte $h=5$ minutos. Posteriormente, el valor real observado se ingirió para proyectar el siguiente intervalo. La Tabla \ref{tab:resultados_arima_regresion} 
+presenta las métricas de error continuo.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
+        \hline
+        Validación & 0.0265 & 0.0204 & 10.61\% \\
+        Prueba & 0.0282 & 0.0221 & 10.80\% \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de desempeño en regresión de ARIMA(1,1,1), dataset piloto MAWI.}
+    \label{tab:resultados_arima_regresion}
+\end{table}
+
+La Figura \ref{fig:arima_prediccion} contrasta las predicciones continuas del modelo contra los valores reales observados en el conjunto de prueba, demostrando una consistencia (MAPE $\approx$ 10.80\%) que descarta un sobreajuste estructural.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{arima_prediccion_vs_real.png}
+    \caption{ARIMA(1,1,1): predicción continua vs. valor real, conjunto de prueba.}
+    \label{fig:arima_prediccion}
+\end{figure}
+
+\subsection*{Evaluación de umbral de alerta temprana (Clasificación)}
+
+Para completar la auditoría del código de evaluación propuesto en el Capítulo 4, las predicciones continuas del modelo se sometieron a una binarización computacional utilizando el umbral piloto $U_{test} \geq 0.25$ (justificado en la Sección 5.1). 
+Una alerta se contabilizó como Verdadero Positivo únicamente si la predicción de ARIMA rebasaba el umbral antes del evento real. La Tabla \ref{tab:resultados_arima_clasificacion} expone el desempeño del modelo operando como un clasificador de alertas 
+tempranas sobre el conjunto de prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
+        \hline
+        Precisión & 64.2\% \\
+        Recall (Exhaustividad) & 41.5\% \\
+        F1-Score & 50.4\% \\
+        \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{1.2 minutos} \\
+        \hline
+    \end{tabular}
+    \caption{Desempeño base de clasificación y alertamiento (TAE) de ARIMA.}
+    \label{tab:resultados_arima_clasificacion}
+\end{table}
+
+Estos resultados preliminares evidencian la limitación teórica descrita en el Capítulo 2: al actuar como un suavizador lineal, ARIMA reacciona con retraso ante las ráfagas abruptas de tráfico, lo que explica su bajo nivel de \textit{Recall} (41.5\%) y 
+un $TAE$ marcadamente inferior al horizonte proyectado de 5 minutos. Con la correcta ejecución computacional de este modelo estadístico confirmada y sus métricas establecidas como línea base de superación, el \textit{pipeline} avanza hacia la implementación 
+del paradigma de Machine Learning clásico (Sección 5.4).
+
 \section{Construcción del modelo Random Forest}
 
+Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, se implementó un modelo Random Forest como representante del paradigma de Machine Learning clásico utilizando el módulo \texttt{ensemble.RandomForestRegressor} (y su contraparte \texttt{Classifier}) de la biblioteca \texttt{scikit-learn}. 
+
+Para adaptar el tensor tridimensional generado en el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}) a la entrada tabular (2D) que exigen los algoritmos clásicos, las secuencias de 15 rezagos se aplanaron, extrayendo adicionalmente la media de la ventana ($U_{\text{media\_movil}}$) como característica estadística explícita. A diferencia de ARIMA, que opera iterativamente sobre sus propios residuales, este ensamble mapea de forma no lineal todo el vector de características contra el objetivo.
+
+\subsection*{Configuración y entrenamiento (Regresión)}
+
+Se entrenó un ensamble de 200 árboles de decisión, con una profundidad máxima de 10 niveles por árbol (\texttt{max\_depth=10}), sobre el conjunto de entrenamiento normalizado. A diferencia de ARIMA, cuya variable se mantuvo en escala original, Random Forest consumió la utilización escalada mediante Min-Max, consistente con las mejores prácticas documentadas en el Capítulo 4 para optimizar la partición de la entropía. La Tabla \ref{tab:resultados_rf_regresion} presenta las métricas continuas sobre los conjuntos de validación y prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
+        \hline
+        Validación & 0.0962 & 0.0721 & 12.83\% \\
+        Prueba & 0.1311 & 0.1004 & 16.26\% \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de Random Forest (escala normalizada), dataset MAWI.}
+    \label{tab:resultados_rf_regresion}
+\end{table}
+
+Dado que estas métricas están normalizadas, su comparación con ARIMA requiere una conversión. Al re-escalar el RMSE de prueba ($0.1311$) por el rango de la variable de entrenamiento ($0.323 - 0.017 = 0.306$), se obtiene un RMSE equivalente de aproximadamente $0.040$ en la escala original, ligeramente superior al $0.028$ reportado por la línea base estadística.
+
+La Figura \ref{fig:rf_prediccion} contrasta visualmente las predicciones continuas del modelo contra los valores reales observados en el conjunto de prueba, evidenciando gráficamente el tope predictivo del ensamble ante los picos de utilización.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_prediccion_vs_real.png}
+    \caption{Random Forest: predicción continua vs. valor real (escala normalizada), conjunto de prueba.}
+    \label{fig:rf_prediccion}
+\end{figure}
+
+\subsection*{Análisis de degradación por extrapolación}
+
+A diferencia de ARIMA, cuyo desempeño se mantuvo estable entre particiones, Random Forest exhibió una degradación pronunciada (MAPE de 12.83\% a 16.26\%). La explicación de este fenómeno subyace en una limitación matemática de los métodos basados en árboles: su incapacidad para extrapolar. Dado que cada nodo hoja predice estrictamente la media (o la moda) de las observaciones de entrenamiento que caen en su región espacial, el modelo es ciego ante valores que exceden el máximo histórico conocido. Puesto que el conjunto de prueba piloto contiene ráfagas puntuales cercanas o superiores al límite del rango de entrenamiento, Random Forest subestima sistemáticamente dichos picos, un defecto que ARIMA mitiga mediante la inercia de su componente tendencial.
+
+\subsection*{Evaluación de umbral de alerta temprana (Clasificación)}
+
+Al igual que la línea base, el ensamble se sometió a la formulación de clasificación temprana utilizando el umbral piloto de calibración ($U_{test} \geq 0.25$). La Tabla \ref{tab:resultados_rf_clasificacion} expone la capacidad del modelo para detonar alertas preventivas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
+        \hline
+        Precisión & 76.5\% \\
+        Recall (Exhaustividad) & 68.3\% \\
+        F1-Score & 72.1\% \\
+        \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{2.8 minutos} \\
+        \hline
+    \end{tabular}
+    \caption{Desempeño de clasificación y alertamiento (TAE) de Random Forest.}
+    \label{tab:resultados_rf_clasificacion}
+\end{table}
+
+A pesar de su deficiencia en la extrapolación continua, la capacidad no lineal de Random Forest le permite identificar patrones de saturación inminente con mucha mayor eficacia que ARIMA. El \textit{Recall} escaló del 41.5\% al 68.3\%, logrando un Tiempo de Anticipación Efectivo ($TAE$) promedio de 2.8 minutos antes del evento de congestión real, validando la superioridad del \textit{Machine Learning} sobre la estadística clásica para la tarea de alertamiento.
+
+\subsection*{Importancia de variables}
+
+Aprovechando la interpretabilidad inherente del ensamble, se calculó la impureza de Gini para cuantificar la importancia relativa de las características extraídas de la ventana temporal. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{rf_importancia_variables.png}
+    \caption{Importancia relativa de variables (Impureza de Gini), Random Forest.}
+    \label{fig:rf_importancia}
+\end{figure}
+
+Como ilustra la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\text{media\_movil}}$) concentra más del 66\% de la capacidad discriminativa, superando por amplio margen al rezago inmediato ($U_{\text{lag1}}$, con 13.9\%). Este resultado confirma empíricamente que, a una granularidad de 1 minuto, suavizar el ruido estocástico del tráfico revela la tendencia subyacente de manera más nítida que la simple observación secuencial directa. Con estas métricas y hallazgos topológicos documentados, la calibración del \textit{pipeline} concluye con el desarrollo de la arquitectura de Deep Learning (Sección 5.5).
 \section{Construcción del modelo LSTM}
 
 \chapter{Resultados y Discusión}
