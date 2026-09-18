@@ -823,7 +823,7 @@ cliente en comparación con los grandes conjuntos de datos empleados típicament
 Precisamente sobre esta preocupación —la disponibilidad limitada de datos— profundiza el trabajo de Saha, Haque y Sidebottom \cite{saha2024}, quienes abordan explícitamente el problema de predicción de tráfico de Internet en redes de proveedores de servicio (ISP) de tamaño reducido, donde la cantidad de datos históricos 
 disponibles suele ser insuficiente para entrenar adecuadamente modelos de Deep Learning de gran capacidad. Los autores proponen el empleo de \textit{transfer learning} —entrenando inicialmente modelos LSTM (en sus variantes Seq2Seq y Seq2Seq con mecanismo de atención) sobre un conjunto de datos extenso proporcionado por 
 Juniper Networks, para posteriormente adaptarlos a conjuntos de datos considerablemente más pequeños— junto con técnicas de aumento de datos basadas en transformada wavelet. Este trabajo es particularmente pertinente para esta tesis porque su motivación —redes pequeñas con historial de datos limitado— describe con precisión 
-la situación del dataset primario de esta investigación, recolectado durante un periodo de apenas [NUMERO_FINAL] días sobre una red de escala reducida. Sus hallazgos sugieren que, de presentarse limitaciones de datos similares, estrategias como el \textit{transfer learning} o el aumento de datos podrían explorarse como líneas de trabajo 
+la situación del dataset primario de esta investigación, recolectado durante un periodo de apenas (NUMERO FINAL) días sobre una red de escala reducida. Sus hallazgos sugieren que, de presentarse limitaciones de datos similares, estrategias como el \textit{transfer learning} o el aumento de datos podrían explorarse como líneas de trabajo 
 futuro si el desempeño de los modelos LSTM y GRU propuestos en el Capítulo 4 resultara insuficiente sobre el dataset primario.
 
 Finalmente, el trabajo de Santos et al. \cite{santos2022} ofrece la comparación más directamente aplicable a las decisiones metodológicas de esta tesis, al confrontar explícitamente el desempeño de LSTM contra GRU —los dos modelos de Deep Learning seleccionados en la Sección 2.2.4 de este trabajo— para la predicción de tráfico de 
@@ -922,7 +922,7 @@ La Tabla \ref{tab:datasets_literatura} sintetiza los conjuntos de datos empleado
         \hline
         Saha et al. \cite{saha2024} & Juniper Networks + ISPs pequeños & Real & ISP (variable) & Variable \\
         \hline
-        \textbf{Esta tesis (primario)} & \textbf{Red del Cliente} & \textbf{Real} & \textbf{Red pequeña/PYME} & \textbf{[NUMERO_FINAL] días} \\
+        \textbf{Esta tesis (primario)} & \textbf{Red del Cliente} & \textbf{Real} & \textbf{Red pequeña/PYME} & \textbf{(numero final) días} \\
         \hline
         \textbf{Esta tesis (validación)} & \textbf{MAWI Archive} \cite{mawi} & \textbf{Real} & \textbf{Tránsito 1-10 Gbps} & \textbf{Diaria (continua)} \\
         \hline
@@ -2243,6 +2243,8 @@ La Tabla \ref{tab:sintesis_modelos_piloto} consolida el desempeño transversal d
 La evidencia recabada en esta iteración de prueba confirma estructuralmente la hipótesis algorítmica: mientras que la regresión estadística (ARIMA) es funcional como línea base reactiva, el incremento en la complejidad topológica hacia modelos de ensamble (Random Forest) y estructuras neuronales profundas (LSTM) se traduce en ganancias no lineales para el alertamiento preventivo (pasando de 1.2 a 3.9 minutos de anticipación). 
 
 Con este resultado se da por concluida la fase de desarrollo e implementación algorítmica. El \textit{pipeline} de software —desde la decodificación de telemetría hasta el dictamen tensorial— ha demostrado ser numéricamente estable y metodológicamente congruente. La evaluación de rendimiento definitiva, orientada a demostrar la utilidad general del prototipo sobre un entorno de producción, será ejecutada en el Capítulo 6 al someter esta arquitectura al volumen longitudinal de [NUMERO_FINAL] días de recolección proveniente de la infraestructura primaria RouterOS.
+
+
 \chapter{Resultados y Discusión}
 
 \section{Resultados de ARIMA}                                                                                                                               
