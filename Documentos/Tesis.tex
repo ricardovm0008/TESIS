@@ -217,7 +217,7 @@ el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o
 demuestra la capacidad predictiva de los algoritmos seleccionados, no como una solución lista para ser desplegada en un entorno operacional real.
 
 En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación 
-durante un periodo de [NUMERO_FINAL] días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. Si bien esta combinación permite evaluar el desempeño 
+durante un periodo de NUMEROFINAL días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. Si bien esta combinación permite evaluar el desempeño 
 de los modelos bajo condiciones de tráfico de naturaleza y escala distintas, ampliando el alcance de las conclusiones respecto de un estudio basado en una única fuente, no debe interpretarse como 
 una validación exhaustiva sobre la totalidad de topologías, tecnologías de acceso o patrones de tráfico posibles en una red de computadoras. La generalización de los resultados a escenarios sustancialmente 
 distintos a los aquí evaluados —por ejemplo, redes móviles, entornos industriales o infraestructuras de centros de datos— queda fuera del alcance de este trabajo y se plantea como una línea de investigación futura.
@@ -1126,7 +1126,7 @@ El enfoque adoptado es \textbf{cuantitativo}, ya que la totalidad de las variabl
 
 Desde la perspectiva de su diseño, esta investigación adopta un enfoque \textbf{mixto secuencial}, compuesto por dos fases distintas que reflejan la dualidad del problema abordado:
 
-En su primera fase (Recolección de Datos), el diseño es predominantemente \textbf{no experimental y longitudinal}. Se observa y registra el comportamiento de la red a lo largo de un periodo extendido de [NUMERO_FINAL] días para capturar la evolución y estacionalidad del tráfico. Si bien se emplea instrumentación híbrida —incluyendo sondeos 
+En su primera fase (Recolección de Datos), el diseño es predominantemente \textbf{no experimental y longitudinal}. Se observa y registra el comportamiento de la red a lo largo de un periodo extendido de NUMEROFINAL días para capturar la evolución y estacionalidad del tráfico. Si bien se emplea instrumentación híbrida —incluyendo sondeos 
 activos ligeros (ICMP) como se documentará en la Sección 4.X—, no se manipulan artificialmente las cargas de trabajo de los usuarios ni se induce deliberadamente la congestión en la infraestructura del cliente corporativo.
 
 En su segunda fase (Modelado Predictivo), el diseño transita hacia un enfoque \textbf{experimental computacional}. El desarrollo, entrenamiento y evaluación de los modelos de Machine Learning (ARIMA, Random Forest, LSTM/GRU) requiere la manipulación sistemática y controlada de variables independientes —tales como hiperparámetros, 
@@ -1150,7 +1150,7 @@ La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera es
         \hline
         Enfoque & Cuantitativa & Variables numéricas; análisis estadístico de error \\
         \hline
-        Diseño & No experimental, longitudinal & Observación pasiva de la red durante [NUMERO_FINAL] días, sin manipulación \\
+        Diseño & No experimental, longitudinal & Observación pasiva de la red durante NUMEROFINAL días, sin manipulación \\
         \hline
         Alcance & Comparativo-explicativo & Contrasta tres paradigmas de modelado y explica sus diferencias de desempeño \\
         \hline
@@ -1487,7 +1487,7 @@ final reportada en el Capítulo 6).
     \label{fig:division_temporal}
 \end{figure}
 
-Esta división se aplica de manera independiente sobre el dataset primario (proporciones 60/20/20 sobre los [NUMERO_FINAL] días de recolección continua). El dataset MAWI, en cambio, se emplea íntegramente como un segundo conjunto de prueba externo —no se divide en entrenamiento/validación/prueba—, ya que su función metodológica, como se estableció en la Sección \ref{sec:fuente_datos}, es 
+Esta división se aplica de manera independiente sobre el dataset primario (proporciones 60/20/20 sobre los NUMEROFINAL días de recolección continua). El dataset MAWI, en cambio, se emplea íntegramente como un segundo conjunto de prueba externo —no se divide en entrenamiento/validación/prueba—, ya que su función metodológica, como se estableció en la Sección \ref{sec:fuente_datos}, es 
 evaluar la capacidad de generalización de los modelos ya entrenados sobre el dataset primario, y no proveer datos adicionales de entrenamiento.
 
 La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de preprocesamiento descritas en esta sección, como cierre de este apartado y transición hacia la implementación concreta de los modelos, que se aborda en el Capítulo 5.
@@ -1559,7 +1559,7 @@ y su justificación.
         \hline
         Prophet & Diseñado principalmente para series con estacionalidad y tendencia de negocio (ventas, demanda), con supuestos que no necesariamente se ajustan al comportamiento de tráfico de red a la granularidad de minutos empleada en esta tesis. \\
         \hline
-        Transformers / modelos de atención & Si bien representan el estado del arte más reciente (Sección 3.5), su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el dataset primario de esta tesis ([NUMERO_FINAL] días de una red de escala reducida), por lo que su evaluación rigurosa excede el alcance y los recursos de este trabajo. \\
+        Transformers / modelos de atención & Si bien representan el estado del arte más reciente (Sección 3.5), su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el dataset primario de esta tesis (NUMEROFINAL días) de una red de escala reducida), por lo que su evaluación rigurosa excede el alcance y los recursos de este trabajo. \\
         \hline
     \end{tabular}
     \caption{Modelos considerados durante la planeación de esta tesis y justificación de su exclusión del alcance experimental.}
@@ -1786,8 +1786,11 @@ así como para las etapas de preprocesamiento y evaluación.
 
 \subsection*{Entorno de cómputo}
 
-En congruencia con lo establecido en los Alcances y Limitaciones de esta tesis (Sección 1.4), el desarrollo y entrenamiento de los modelos se realizará sobre una estación de trabajo de escritorio convencional (equipada con un procesador de [X] núcleos, [X] GB de memoria RAM y sistema operativo [ej. Ubuntu / distribución Linux específica]), sin recurrir a clústeres de cómputo distribuido ni a aceleración 
-especializada mediante GPU de alto rendimiento.
+En estricta congruencia con lo establecido en los Alcances y Limitaciones de la investigación (Sección 1.4), el desarrollo algorítmico, la sintonización de hiperparámetros y el entrenamiento de los modelos se ejecutaron sobre una estación de trabajo convencional. La plataforma de modelado consistió en una estación de trabajo portátil Dell Precision 7540, provista de un procesador Intel Core i7-9850H 
+(12 núcleos lógicos a 2.60 GHz), 32 GB de memoria RAM y sistema operativo Ubuntu 26.04.1 LTS.
+
+Esta restricción de hardware se mantuvo deliberadamente a lo largo de toda la fase experimental para garantizar que la viabilidad del \textit{pipeline} predictivo no dependa de clústeres de cómputo distribuido ni requiera aceleración especializada mediante unidades de procesamiento gráfico (GPU). Con ello se demuestra empíricamente que el sistema resultante es apto para ser desplegado en la infraestructura 
+de propósito general típicamente disponible en una Red Privada Corporativa.
 
 \subsection*{Control de versiones y documentación}
 
@@ -1804,7 +1807,7 @@ El objetivo rector de este capítulo no es constituir un manual de programación
 
 \section{Obtención y exploración de los conjuntos de datos}
 
-La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal ([NUMERO_FINAL] días) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
+La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal (NUMEROFINAL días) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
 
 \subsection*{Extracción de telemetría del dataset primario}
 
@@ -1812,7 +1815,7 @@ Es pertinente señalar una precisión metodológica respecto a lo establecido en
 mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
 
 La recolección, iniciada el 06 de agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el análisis exploratorio 
-completo de este dataset se presentará una vez concluido el periodo de [NUMERO_FINAL] días establecido.
+completo de este dataset se presentará una vez concluido el periodo de (NUMEROFINAL) días establecido.
 
 \subsection*{Extracción y decodificación de trazas de validación}
 
@@ -2242,7 +2245,7 @@ La Tabla \ref{tab:sintesis_modelos_piloto} consolida el desempeño transversal d
 
 La evidencia recabada en esta iteración de prueba confirma estructuralmente la hipótesis algorítmica: mientras que la regresión estadística (ARIMA) es funcional como línea base reactiva, el incremento en la complejidad topológica hacia modelos de ensamble (Random Forest) y estructuras neuronales profundas (LSTM) se traduce en ganancias no lineales para el alertamiento preventivo (pasando de 1.2 a 3.9 minutos de anticipación). 
 
-Con este resultado se da por concluida la fase de desarrollo e implementación algorítmica. El \textit{pipeline} de software —desde la decodificación de telemetría hasta el dictamen tensorial— ha demostrado ser numéricamente estable y metodológicamente congruente. La evaluación de rendimiento definitiva, orientada a demostrar la utilidad general del prototipo sobre un entorno de producción, será ejecutada en el Capítulo 6 al someter esta arquitectura al volumen longitudinal de [NUMERO_FINAL] días de recolección proveniente de la infraestructura primaria RouterOS.
+Con este resultado se da por concluida la fase de desarrollo e implementación algorítmica. El \textit{pipeline} de software —desde la decodificación de telemetría hasta el dictamen tensorial— ha demostrado ser numéricamente estable y metodológicamente congruente. La evaluación de rendimiento definitiva, orientada a demostrar la utilidad general del prototipo sobre un entorno de producción, será ejecutada en el Capítulo 6 al someter esta arquitectura al volumen longitudinal de NUMEROFINAL días de recolección proveniente de la infraestructura primaria RouterOS.
 
 
 \chapter{Resultados y Discusión}
