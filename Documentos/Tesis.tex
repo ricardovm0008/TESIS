@@ -9,7 +9,7 @@
 \usepackage{setspace}
 \usepackage{amsmath}
 \usepackage{array}
-
+\usepackage{amssymb}
 \usepackage{listings}
 \usepackage{xcolor}
 
@@ -86,15 +86,18 @@
 
     \begin{minipage}{0.8\textwidth}
     \itshape
-    A mi padre, \textbf{Ricardo Valera Hernández}, por ser el pilar constante en cada etapa de mi formación, por su paciencia, su apoyo incondicional y por nunca dejar de creer en mí incluso cuando yo dudaba, por su ejemplo de responsabilidad y esfuerzo, por enseñarme que el trabajo honesto y la perseverancia son el camino para alcanzar cualquier meta.\\[0.3cm]
+    A mi padre, \textbf{Ricardo Valera Hernández}, por ser el pilar constante en cada etapa de mi formación, por su paciencia, su apoyo incondicional y por nunca dejar de creer en mí incluso cuando yo dudaba, por su ejemplo de responsabilidad y esfuerzo, por enseñarme que el trabajo honesto y 
+    la perseverancia son el camino para alcanzar cualquier meta.\\[0.3cm]
 
-    A mi madre, \textbf{María Margarita Irma Martínez Pérez}, por ser la guía y el apoyo incondicional que hizo posible este trayecto. Gracias por su confianza infinita, por sus palabras que siempre supieron darme fuerza y por estar presente en cada paso de mi formación profesional. Este trabajo es testimonio de su esfuerzo y dedicación constante en mi vida.\\[0.3cm]
+    A mi madre, \textbf{María Margarita Irma Martínez Pérez}, por ser la guía y el apoyo incondicional que hizo posible este trayecto. Gracias por su confianza infinita, por sus palabras que siempre supieron darme fuerza y por estar presente en cada paso de mi formación profesional. Este 
+    trabajo es testimonio de su esfuerzo y dedicación constante en mi vida.\\[0.3cm]
 
     A mi novia, \textbf{Vanessa F. Linarte Castañeda}, por su amor, su comprensión y su compañía en los momentos de cansancio y dificultad, por motivarme a seguir adelante cuando parecía imposible y por ser parte fundamental de este logro.\\[0.3cm]
 
     A mi hermano menor, \textbf{Emilio Valera Martínez}, por su complicidad y apoyo en los momentos de distracción y de enfoque. Gracias por estar ahí, por los consejos y por ser un compañero constante en este camino.\\[0.3cm]
 
-    Al \textbf{Sr. Héctor H. Linarte} y la \textbf{Sra. Cristina E. Castañeda}, por recibirme en su familia como a un hijo más, por sus palabras de aliento y por el apoyo incondicional brindado durante este proceso. Su confianza y cariño fueron fundamentales para mantener el ánimo en la recta final.\\[0.3cm]
+    Al \textbf{Sr. Héctor H. Linarte} y la \textbf{Sra. Cristina E. Castañeda}, por recibirme en su familia como a un hijo más, por sus palabras de aliento y por el apoyo incondicional brindado durante este proceso. Su confianza y cariño fueron fundamentales para mantener el ánimo 
+    en la recta final.\\[0.3cm]
 
     A mi director de tesis, el \textbf{Mtro. Mauro Alberto López Muñoz}, y a mi codirector, el \textbf{Mtro. Guillermo Colorado Jiménez}, por su invaluable guía, su paciencia y por compartir su conocimiento para llevar este proyecto a buen puerto.
     \end{minipage}
@@ -118,124 +121,94 @@ tiempo real. Debido a este crecimiento constante en la cantidad de dispositivos 
 vez mayores desafíos relacionados con el rendimiento, la disponibilidad y la calidad del servicio.
 
 \section{Planteamiento del problema}
-Vivimos en una era digital en la que la conectividad se ha convertido en un servicio esencial, tan fundamental como la electricidad o el agua corriente. Desde 
-las videollamadas que nos acercan a nuestros familiares y colegas, hasta las plataformas de streaming que nos ofrecen entretenimiento bajo demanda, pasando por 
-la explosión del internet de las cosas (IoT) que llena nuestros hogares y ciudades de sensores inteligentes, gran parte de nuestra vida cotidiana depende de un 
-flujo constante e ininterrumpido de datos. Según el informe \textit{Cisco Annual Internet Report (2018--2023)}, el número de usuarios de Internet a nivel mundial 
-pasó de 3900 millones en 2018 a 5300 millones en 2023, mientras que los dispositivos conectados a redes IP aumentaron de 18\,400 millones a 29\,300 millones en 
-el mismo período \cite{cisco2020}.
+En la era digital actual, la conectividad se ha convertido en un servicio esencial, tan fundamental como la electricidad o el agua corriente. Desde las videollamadas que facilitan la comunicación remota, hasta las plataformas de \textit{streaming} que ofrecen entretenimiento bajo demanda, 
+así como la rápida expansión del Internet de las Cosas (IoT) en hogares y ciudades, gran parte de la vida cotidiana depende de un flujo constante e ininterrumpido de datos. Según el informe \textit{Cisco Annual Internet Report (2018--2023)}, el número de usuarios de Internet a nivel mundial 
+pasó de 3900 millones en 2018 a 5300 millones en 2023, mientras que los dispositivos conectados a redes IP aumentaron de 18\,400 millones a 29\,300 millones en el mismo período \cite{cisco2020}.
 
-Las redes de computadoras son el tejido que sostiene cambios inminentes en la industria. Sin embargo, no son un recurso infinito: cada enrutador, cada conmutador
-y cada enlace de fibra óptica tiene una capacidad limitada. Cuando la demanda de transmisión de datos supera esa capacidad se produce un fenómeno conocido como
-congestión de red. En términos sencillos (más adelante se abordará una definición apropiada para este trabajo), la congestión es el equivalente digital a un embotellamiento 
-en una autopista: demasiados coches (paquetes de datos) intentando circular al mismo tiempo por un carril con aforo máximo. Las consecuencias se vuelven inmediatas
-y totalmente perceptibles para el usuario final: videollamadas que se congelan, páginas web que cargan con lentitud, archivos que no terminan de descargarse o, en el
-peor de los casos, se pierde totalmente la conexión. En entornos críticos como hospitales, sistemas de redes financieras o redes industriales, estos fallos se traducen
-en pérdidas económicas millonarias o incluso riesgos para la seguridad de las personas.
+Las redes de computadoras son el tejido que sostiene la infraestructura tecnológica moderna. Sin embargo, no son un recurso infinito: cada enrutador, cada conmutador y cada enlace de fibra óptica tiene una capacidad limitada. Cuando la demanda de transmisión de datos supera dicha capacidad, 
+se produce un fenómeno conocido como congestión de red. En términos sencillos (cuya definición formal se abordará en secciones posteriores), la congestión es el equivalente digital a un embotellamiento en una autopista: demasiados paquetes de datos intentando circular al mismo tiempo por un 
+canal con aforo máximo. Las consecuencias son inmediatas y perceptibles para el usuario final: congelamiento de videollamadas, lentitud en la carga de páginas web, interrupción en la descarga de archivos o, en el peor de los casos, la pérdida total de la conexión. En entornos críticos como 
+hospitales, redes financieras o infraestructuras industriales, estos fallos se traducen en pérdidas económicas millonarias e incluso en riesgos para la seguridad humana.
 
-Tradicionalmente, la gestión de redes ha tenido un enfoque reactivo: los administradores monitorizan equipos y, cuando detectan que un enlace está saturado, toman medidas 
-correctivas como redirigir el tráfico, limitar ciertas aplicaciones o aumentar la capacidad del enlace. Este modo de actuar, aunque ha resultado funcional durante décadas,
-presenta una limitación fundamental: 
-actúa después de que el problema ya ha comenzado a degradar la calidad del servicio. Pensemos en un coche autónomo que necesita tomar decisiones en milisegundos en tiempo 
-real o en un cirujano operando a distancia mediante un robot; reaccionar después ya no es una opción, se necesita anticipación.
+Tradicionalmente, la gestión de redes ha mantenido un enfoque reactivo: los administradores monitorizan los equipos y, cuando detectan que un enlace está saturado, toman medidas correctivas como redirigir el tráfico, limitar ciertas aplicaciones o aumentar la capacidad del enlace. 
+Este modo de actuar, aunque ha resultado funcional durante décadas, presenta una limitación fundamental: actúa después de que el problema ha comenzado a degradar la calidad del servicio. En escenarios de latencia crítica, como la operación de un coche autónomo que necesita tomar decisiones en 
+milisegundos o un procedimiento quirúrgico a distancia mediante robótica, reaccionar a posteriori no es una opción viable; la anticipación resulta indispensable.
 
-De lo anterior se desprende el problema central que da origen a esta investigación: los mecanismos actuales de gestión de redes de computadoras carecen, en su mayoría, de la 
-capacidad de anticipar la congestión antes de que esta se manifieste, limitándose a detectarla y corregirla una vez que ya ha comenzado a degradar la calidad del servicio. 
-Esta naturaleza reactiva impide a los administradores de red y a los sistemas automatizados de gestión tomar decisiones oportunas —como redirigir tráfico, priorizar aplicaciones 
-críticas o escalar recursos— antes de que el impacto sea perceptible para el usuario final. El problema de investigación puede formularse, entonces, de la siguiente manera: 
-\textbf{¿es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un 
-estado de congestión, de tal forma que dicha predicción resulte útil para la toma de decisiones antes de que la degradación del servicio se materialice?}
+De lo anterior se desprende el problema central que da origen a esta investigación: los mecanismos actuales de gestión de redes de computadoras carecen, en su mayoría, de la capacidad de anticipar la congestión antes de que esta se manifieste, limitándose a detectarla y corregirla una vez iniciada 
+la degradación del servicio. Esta naturaleza reactiva impide a los administradores de red y a los sistemas automatizados de gestión tomar decisiones oportunas —como redirigir tráfico, priorizar aplicaciones críticas o escalar recursos— antes de que el impacto sea perceptible. El problema de 
+investigación se formula, entonces, de la siguiente manera: \textbf{¿es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un estado de congestión, de tal forma que dicha predicción 
+resulte útil para la toma de decisiones preventivas?}
 
-En este contexto, y una vez planteado formalmente el problema, las técnicas de Machine Learning (ML) se presentan como una vía prometedora para abordarlo. El ML, una rama de la 
-inteligencia artificial, permite a las máquinas aprender patrones a partir de datos históricos y realizar predicciones sin ser programadas explícitamente para cada escenario, lo 
-que lo convierte en una herramienta natural para atacar el problema de anticipación recién descrito.
+En este contexto, las técnicas de Machine Learning (ML) se presentan como una vía prometedora. El ML, como rama de la inteligencia artificial, permite a los sistemas informáticos identificar patrones a partir de datos históricos y realizar predicciones sin requerir una programación explícita para 
+cada escenario, lo que lo convierte en una herramienta natural para abordar la necesidad de anticipación descrita.
 
-El presente trabajo de tesis se sitúa justo en esta intersección entre las redes de computadoras y la inteligencia artificial. El objetivo central es desarrollar un sistema
-basado en técnicas de Machine Learning que sea capaz de predecir la congestión en un enlace de red a partir del análisis de métricas de tráfico obtenidas de forma hibrida activa/pasiva. En 
-lugar de limitarnos a reaccionar cuando la utilización ya está en niveles críticos, busco construir un modelo que pueda alertar con varios minutos de antelación: ``Atención: 
-este enlace alcanzará el 85\% de su capacidad; toma medidas ahora''.
+El presente trabajo de tesis se sitúa en la intersección entre las redes de computadoras y el aprendizaje automático. El objetivo central es desarrollar un sistema basado en técnicas de Machine Learning capaz de predecir la congestión en un enlace de red mediante el análisis de métricas de tráfico 
+obtenidas de forma híbrida (activa y pasiva). En lugar de mantener un enfoque reactivo frente a niveles críticos de utilización, se busca construir un modelo que permita emitir alertas tempranas sobre la saturación inminente de un enlace, facilitando la toma de medidas preventivas antes de que la 
+calidad del servicio se vea comprometida.
 
+\newpage
 \section{Objetivos}
 
-A continuación se detallan los objetivos que guían el presente trabajo de tesis, los cuales fueron definidos en el protocolo de investigación y constituyen la hoja de ruta para el 
-desarrollo del sistema propuesto.
+A continuación se detallan los objetivos que guían la presente investigación, los cuales establecen las directrices fundamentales para el desarrollo e implementación del sistema propuesto.
 
 \subsection{Objetivo General}
 
-El objetivo general es desarrollar un sistema basado en Machine Learning que permita predecir la congestión de redes de computadoras a partir del análisis de datos de operación, 
-evaluando su desempeño en escenarios de tráfico de distinta escala y naturaleza, con el fin de aportar evidencia sobre la viabilidad de este enfoque predictivo para optimizar la gestión de recursos y la calidad del servicio en redes de computadoras.
+Desarrollar un sistema predictivo basado en Machine Learning capaz de anticipar la congestión en enlaces de red a partir del análisis de datos operativos, evaluando su desempeño en escenarios de tráfico de distinta escala y naturaleza, con el fin de aportar evidencia sobre la viabilidad de este 
+enfoque para optimizar la gestión de recursos y la calidad del servicio.
 
 \subsection{Objetivos Específicos}
 \begin{itemize}
-\item Recopilar y organizar datos de operación de una red de computadoras, incluyendo parámetros como frecuencia de operación, ancho de banda, 
-rendimiento y disponibilidad.
-\item Diseñar un procedimiento para almacenar, depurar y procesar los datos obtenidos de una manera estructurada.
-\item Implementar técnicas de Machine Learning adecuadas para analizar los patrones de tráfico y comportamiento de la red.
-\item Desarrollar un prototipo que realice predicciones de posibles escenarios de congestión de red.
-\item Validar el desempeño del sistema mediante métricas de evaluación.
-\item Identificar posibles aplicaciones reales del sistema propuesto en distintos contextos de uso.
+\item Recopilar y organizar un conjunto de datos (dataset) operativos de una red de computadoras, abarcando parámetros clave de telemetría como ancho de banda, rendimiento, disponibilidad y métricas vinculadas a la transmisión de datos.
+\item Diseñar un procedimiento de preprocesamiento para limpiar, normalizar y estructurar los datos obtenidos, garantizando su idoneidad para el entrenamiento algorítmico.
+\item Implementar, entrenar y comparar distintos modelos de Machine Learning (tales como enfoques de series temporales, árboles de decisión o redes neuronales) orientados al análisis de patrones de tráfico.
+\item Construir un prototipo funcional que integre el modelo de mejor rendimiento para generar predicciones y alertas tempranas sobre posibles escenarios de congestión.
+\item Evaluar el desempeño y la precisión del sistema desarrollado mediante métricas de validación estándar propias de los modelos predictivos.
+\item Determinar y documentar la aplicabilidad del modelo propuesto en entornos reales para respaldar la toma de decisiones preventivas en la administración de redes.
 \end{itemize}
 
 \section{Justificación}
 
-El crecimiento exponencial del tráfico en las redes de computadoras ha superado las estrategias tradicionales de gestión basadas en la monitorización reactiva. Hoy en día, la 
-demanda de ancho de banda generada por servicios de videoconferencia, plataformas de streaming, aplicaciones en la nube y dispositivos del Internet de las Cosas somete a las 
-infraestructuras a picos de utilización impredecibles. En este escenario, los administradores se ven forzados a intervenir únicamente después de que los niveles de congestión 
-ya han degradado la calidad del servicio, lo que deriva en una experiencia deficiente para los usuarios y, en ámbitos críticos, en pérdidas económicas o riesgos de seguridad. 
-Por ello, se vuelve indispensable desarrollar herramientas que permitan anticipar la saturación de los enlaces, migrando de una operación reactiva a una gestión predictiva que 
+El crecimiento exponencial del tráfico en las redes de computadoras ha superado las estrategias tradicionales de gestión basadas en la monitorización reactiva. En la actualidad, la demanda de ancho de banda generada por servicios de videoconferencia, plataformas de \textit{streaming}, aplicaciones 
+en la nube y dispositivos del Internet de las Cosas (IoT) somete a las infraestructuras a picos de utilización impredecibles. En este escenario, los administradores se ven forzados a intervenir únicamente después de que los niveles de congestión ya han degradado la calidad del servicio, lo que deriva 
+en una experiencia deficiente para los usuarios y, en ámbitos críticos, en pérdidas económicas o riesgos de seguridad. Por consiguiente, resulta indispensable desarrollar herramientas que permitan anticipar la saturación de los enlaces, migrando de una operación reactiva a una gestión predictiva que 
 tome decisiones antes de que la congestión se materialice.
 
-La aplicación de técnicas de Machine Learning en el ámbito de las redes abre una oportunidad real para este cambio de paradigma \cite{boutaba2018}. A diferencia de los métodos 
-estadísticos convencionales, los algoritmos de aprendizaje automático tienen la capacidad de descubrir patrones complejos y no lineales a partir de grandes volúmenes de datos de 
-operación, como series temporales de utilización, latencia o pérdida de paquetes. Modelos como las redes neuronales recurrentes, los bosques aleatorios o las arquitecturas de 
-aprendizaje profundo han demostrado un desempeño notable en la predicción de tráfico en otros contextos, pero su aplicación sistemática para anticipar la congestión en enlaces 
-individuales constituye un área de investigación con vacíos aún por cubrir, particularmente en lo referente a la comparación de múltiples familias de modelos en condiciones realistas de operación.
+La aplicación de técnicas de \textit{Machine Learning} en el ámbito de las redes abre una oportunidad real para este cambio de paradigma \cite{boutaba2018}. A diferencia de los métodos estadísticos convencionales, los algoritmos de aprendizaje automático tienen la capacidad de descubrir patrones 
+complejos y no lineales a partir de grandes volúmenes de datos operativos, como series temporales de utilización, latencia o pérdida de paquetes. Modelos como las redes neuronales recurrentes, los bosques aleatorios o las arquitecturas de aprendizaje profundo han demostrado un desempeño notable en la 
+predicción de tráfico en otros contextos, pero su aplicación sistemática para anticipar la congestión en enlaces individuales constituye un área de investigación con vacíos aún por cubrir, particularmente en lo referente a la comparación de múltiples familias de modelos en condiciones realistas de operación.
 
-En el ámbito práctico, un sistema que prediga con antelación suficiente que un enlace alcanzará su capacidad límite puede transformar la administración de redes. Por ejemplo, 
-un operador podría redirigir flujos de tráfico, activar mecanismos de balance de carga, reducir la prioridad de aplicaciones no críticas o incluso aprovisionar recursos adicionales 
-de forma automática antes de que el usuario note degradación alguna. Esta capacidad de anticipación resulta crucial en entornos donde la continuidad del servicio es prioritaria, 
-como hospitales que dependen de telemedicina, entidades financieras con transacciones en tiempo real o plantas industriales con procesos automatizados. De esta manera, la presente 
-investigación no solo busca generar conocimiento teórico, sino también ofrecer una herramienta con un impacto directo en la fiabilidad y eficiencia de las infraestructuras digitales.
+En el ámbito práctico, un sistema que prediga con suficiente antelación que un enlace alcanzará su límite de capacidad puede transformar la administración de redes. Por ejemplo, un administrador podría redirigir flujos de tráfico, activar mecanismos de balanceo de carga, reducir la prioridad de 
+aplicaciones no críticas o incluso aprovisionar recursos adicionales de forma automática antes de que el usuario perciba degradación alguna. Esta capacidad de anticipación resulta crucial en entornos donde la continuidad del servicio es prioritaria, tales como centros hospitalarios que dependen de la telemedicina, 
+entidades financieras con transacciones en tiempo real o plantas industriales con procesos automatizados. De esta manera, la presente investigación no solo busca generar conocimiento teórico, sino también ofrecer una herramienta con un impacto directo en la fiabilidad y eficiencia de las infraestructuras digitales.
 
-Desde el punto de vista metodológico, la propuesta de construir un prototipo basado en datos de operación reales y de evaluarlo mediante métricas rigurosas —como el error cuadrático medio, 
-el error absoluto medio y la comparación de tasas de predicción a distintos horizontes temporales— aporta un procedimiento replicable para la comunidad académica y profesional. La selección 
-de tres paradigmas de modelado (series temporales estadísticas, aprendizaje automático clásico y aprendizaje profundo) permite además trazar un mapa claro de las fortalezas y limitaciones 
-de cada enfoque, ofreciendo criterios objetivos para futuras implementaciones. En un campo en el que la mayoría de los estudios se concentran en la predicción general del volumen de tráfico, 
-esta tesis se distingue por colocar el foco en la detección temprana de un evento específico y operacionalmente relevante: la congestión.
+Desde el punto de vista metodológico, la propuesta de construir un modelo predictivo basado en datos de operación reales y evaluarlo mediante métricas de error rigurosas —como el Error Cuadrático Medio (MSE), el Error Absoluto Medio (MAE) y la comparación de tasas de predicción en distintos horizontes 
+temporales— aporta un procedimiento replicable para la comunidad académica y profesional. La selección de tres paradigmas de modelado distintos (series temporales estadísticas, aprendizaje automático clásico y aprendizaje profundo) permite, además, trazar un mapa claro de las fortalezas y limitaciones de cada enfoque, 
+ofreciendo criterios objetivos para futuras implementaciones. En un campo donde la mayoría de los estudios se concentran en la predicción general del volumen de tráfico, esta tesis se distingue por centrarse en la detección temprana de un evento específico y operacionalmente crítico: la congestión.
 
-Finalmente, la investigación se justifica por su alineación con las tendencias actuales de la industria hacia las redes autónomas y la inteligencia artificial aplicada a las operaciones de 
-TI (AIOps). Grandes empresas del sector tecnológico y organismos de estandarización están impulsando la incorporación de modelos predictivos en los sistemas de gestión de red, reconociendo 
-que la simple supervisión ya no es suficiente para soportar las demandas de latencia y disponibilidad de las aplicaciones del futuro. En este sentido, el trabajo propuesto contribuye a cerrar 
-la brecha entre las capacidades teóricas del Machine Learning y su aplicación práctica en un problema real de ingeniería de redes, generando evidencia empírica sobre su viabilidad, precisión 
-y pertinencia en escenarios de congestión.
+Finalmente, la investigación se justifica por su alineación con las tendencias actuales de la industria hacia las redes autónomas y la inteligencia artificial aplicada a las operaciones de TI (AIOps). Diversas empresas del sector tecnológico y organismos de estandarización impulsan actualmente la incorporación 
+de modelos predictivos en los sistemas de gestión de red, reconociendo que la supervisión tradicional resulta insuficiente para soportar las exigentes demandas de latencia y disponibilidad de las aplicaciones modernas. En este sentido, el trabajo propuesto contribuye a cerrar la brecha entre las capacidades 
+teóricas del aprendizaje automático y su aplicación práctica en un problema real de ingeniería de redes, generando evidencia empírica sobre su viabilidad, precisión y pertinencia.
 
 \section{Alcances y Limitaciones}
 
-El presente trabajo de tesis se circunscribe al desarrollo de un prototipo funcional de predicción de congestión, implementado enteramente en código y orientado a validar la viabilidad sobre 
-un conjunto de datos de operación de red. El alcance del proyecto se limita a la construcción, entrenamiento y evaluación de estos modelos mediante métricas cuantitativas, sin comprometerse con 
-el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o un sistema de producción completo. Por lo tanto, los resultados deben interpretarse como una prueba de concepto que 
-demuestra la capacidad predictiva de los algoritmos seleccionados, no como una solución lista para ser desplegada en un entorno operacional real.
+El presente trabajo de tesis se circunscribe al desarrollo de un prototipo funcional de predicción de congestión, implementado enteramente en código y orientado a validar la viabilidad utilizando un conjunto de datos de operación de red. El alcance del proyecto se limita a la construcción, entrenamiento y evaluación de 
+estos modelos mediante métricas cuantitativas, sin comprometerse con el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o un sistema de producción completo. Por lo tanto, los resultados deben interpretarse como una prueba de concepto que demuestra la capacidad predictiva de los algoritmos seleccionados, 
+y no como una solución lista para ser desplegada en un entorno operacional real.
 
-En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación 
-durante un periodo de NUMEROFINAL días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. Si bien esta combinación permite evaluar el desempeño 
-de los modelos bajo condiciones de tráfico de naturaleza y escala distintas, ampliando el alcance de las conclusiones respecto de un estudio basado en una única fuente, no debe interpretarse como 
-una validación exhaustiva sobre la totalidad de topologías, tecnologías de acceso o patrones de tráfico posibles en una red de computadoras. La generalización de los resultados a escenarios sustancialmente 
-distintos a los aquí evaluados —por ejemplo, redes móviles, entornos industriales o infraestructuras de centros de datos— queda fuera del alcance de este trabajo y se plantea como una línea de investigación futura.
+En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación durante un periodo de 25 días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. 
+Si bien esta combinación permite evaluar el desempeño de los modelos bajo condiciones de tráfico de naturaleza y escala distintas —ampliando el alcance de las conclusiones respecto a un estudio basado en una única fuente—, no debe interpretarse como una validación exhaustiva sobre la totalidad de topologías, tecnologías de acceso o 
+patrones de tráfico posibles en una red de computadoras. La generalización de los resultados a escenarios sustancialmente distintos a los aquí evaluados (por ejemplo, redes móviles, entornos industriales o infraestructuras de centros de datos) queda fuera del alcance de este trabajo y se plantea como una línea de investigación futura.
 
-Desde el punto de vista computacional, se ha establecido un límite práctico en la complejidad de los algoritmos y en los recursos de hardware empleados. El prototipo se ejecuta en un entorno de estación 
-de trabajo convencional, sin recurrir a infraestructura de cómputo distribuido o aceleración especializada (GPU de alto rendimiento). En consecuencia, los modelos profundos se configuran con un número 
-acotado de capas y neuronas, y no se explora el ajuste exhaustivo de hiperparámetros mediante búsqueda en malla de gran tamaño. Este enfoque permite obtener resultados en tiempos razonables, pero sacrifica 
-potencialmente la obtención del modelo óptimo absoluto, lo cual es una limitación deliberada acorde con el carácter prototípico del desarrollo.
+Desde el punto de vista computacional, se ha establecido un límite práctico en la complejidad de los algoritmos y en los recursos de hardware empleados. El prototipo se ejecuta en un entorno de estación de trabajo convencional, sin recurrir a infraestructura de cómputo distribuido o aceleración especializada (GPU de alto rendimiento). 
+En consecuencia, los modelos profundos se configuran con un número acotado de capas y neuronas, y no se explora el ajuste exhaustivo de hiperparámetros mediante búsqueda en malla de gran tamaño. Este enfoque permite obtener resultados en tiempos razonables, pero sacrifica potencialmente la obtención del modelo óptimo absoluto, 
+lo cual es una limitación deliberada acorde con el carácter prototípico del desarrollo.
 
-Otra restricción relevante es que el sistema no opera en tiempo real sobre una red viva, sino que entrena y evalúa sobre trazas históricas. La predicción se realiza fuera de línea, asumiendo que los datos han 
-sido previamente recolectados y preprocesados. Por tanto, no se han implementado mecanismos de ingestión continua de datos, detección de cambio de concepto ni reentrenamiento automático del modelo, aspectos que 
-resultarían necesarios para una eventual transición a un sistema de alerta temprana en producción. Esta limitación es congruente con la elección de priorizar la comparación de modelos bajo condiciones controladas 
-\cite{zhang2020}.
+Otra restricción relevante es que el sistema no opera en tiempo real sobre una red viva, sino que se entrena y evalúa sobre trazas históricas. La predicción se realiza fuera de línea, asumiendo que los datos han sido previamente recolectados y preprocesados. Por tanto, no se han implementado mecanismos de ingestión continua de datos, 
+detección de deriva de concepto (\textit{concept drift}) ni reentrenamiento automático del modelo, aspectos que resultarían necesarios para una eventual transición a un sistema de alerta temprana en producción. Esta limitación es congruente con la elección de priorizar la comparación de modelos bajo condiciones controladas \cite{zhang2020}.
 
-Finalmente, es imperativo distinguir entre la variable objetivo del sistema y sus variables predictoras. Para fines de etiquetado y evaluación, el estado de congestión se define y cuantifica exclusivamente a partir 
-del factor de utilización del enlace (variable objetivo). Sin embargo, el prototipo predictivo sí incorpora métricas de red complementarias —como estimaciones de rendimiento y disponibilidad obtenidas de forma pasiva— 
-como variables de entrada (\textit{features}) para el entrenamiento de los algoritmos. Esta delimitación conceptual permite definir un umbral matemático claro para la congestión, reconociendo simultáneamente que el 
-modelo requiere de una perspectiva multivariable para capturar los patrones complejos que preceden a la saturación del enlace.
+Finalmente, es imperativo distinguir entre la variable objetivo del sistema y sus variables predictoras. Para fines de etiquetado y evaluación, el estado de congestión se define y cuantifica exclusivamente a partir del factor de utilización del enlace (variable objetivo). Sin embargo, el prototipo predictivo sí incorpora métricas 
+de red complementarias ---como estimaciones de rendimiento y disponibilidad obtenidas de forma pasiva--- como variables de entrada (\textit{features}) para el entrenamiento de los algoritmos. Esta delimitación conceptual permite definir un umbral matemático claro para la congestión, reconociendo simultáneamente que el modelo requiere 
+de una perspectiva multivariable para capturar los patrones complejos que preceden a la saturación del enlace.
 \clearpage
 
 \chapter{Marco Teórico}
@@ -1807,17 +1780,153 @@ El objetivo rector de este capítulo no es constituir un manual de programación
 
 \section{Obtención y exploración de los conjuntos de datos}
 
-La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal (NUMEROFINAL días) que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI.
+La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI, para posteriormente aplicarse sobre el dataset primario una vez concluida su recolección.
 
 \subsection*{Extracción de telemetría del dataset primario}
 
-Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada PYME —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como 
-mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo. Esta sustitución preserva la naturaleza de la recolección y la métrica obtenida (utilización derivada de contadores de tráfico), sin alterar el diseño experimental planteado en el Capítulo 4.
+Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada PYME —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo, complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución preserva la naturaleza pasiva de la recolección y la métrica obtenida, sin alterar el diseño experimental planteado en el Capítulo 4.
 
-La recolección, iniciada el 06 de agosto de 2026, captura de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota. Al momento de redacción de este capítulo, dicha recolección se encuentra en curso, por lo que el análisis exploratorio 
-completo de este dataset se presentará una vez concluido el periodo de (NUMEROFINAL) días establecido.
+La recolección, iniciada el 29 de agosto de 2026, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota (Sección 4.8.1).
 
-\subsection*{Extracción y decodificación de trazas de validación}
+\subsection*{Consolidación y auditoría de continuidad}
+
+Al cierre del periodo de recolección, el dataset primario quedó constituido por \textbf{21 días} de monitoreo (del 29 de agosto al 19 de septiembre de 2026), consolidados en 25,422 observaciones a granularidad de 1 minuto. La auditoría de continuidad de la serie —necesaria dado que la recolección remota depende de la disponibilidad sostenida del túnel VPN hacia la infraestructura del Cliente— reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|l|}
+        \hline
+        \textbf{Tipo de interrupción} & \textbf{Ocurrencias} & \textbf{Duración típica} \\
+        \hline
+        Corte prolongado (pérdida de un día completo) & 1 & $\approx$ 37 horas \\
+        Interrupciones menores & 21 & 6 minutos \\
+        \hline
+        \textbf{Cobertura efectiva del periodo} & \multicolumn{2}{c|}{\textbf{82.9\%}} \\
+        \hline
+    \end{tabular}
+    \caption{Resumen de interrupciones de conectividad durante la recolección del dataset primario.}
+    \label{tab:huecos_recoleccion}
+\end{table}
+
+El corte prolongado, ocurrido entre el 7 y 9 de septiembre de 2026, resultó en la pérdida completa del día 8 de septiembre, y es atribuible a una interrupción sostenida de la conectividad VPN hacia la infraestructura del Cliente. Las 21 interrupciones menores, de 6 minutos cada una, son consistentes con reinicios periódicos del enlace VPN y se encuentran, en todos los casos, dentro del límite de interpolación establecido en la Sección \ref{sec:preprocesamiento} (hasta 3 muestras faltantes); el corte prolongado, en cambio, excede dicho límite y se trata como frontera de sesión durante el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}). Esta cobertura del 82.9\% es consistente con las limitaciones de monitoreo remoto sin presencia física reconocidas en la Sección 1.4.
+
+\subsection*{Exploración estadística del dataset primario}
+
+La Tabla \ref{tab:estadisticas_real} presenta las estadísticas descriptivas de las tres métricas capturadas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Estadística} & \textbf{Utilización (\%)} & \textbf{RTT (ms)} & \textbf{rx\_bps} \\
+        \hline
+        Mínimo & 0.00007 & 6.27 & 720 \\
+        Media & 0.00221 & 9.44 & 22,114 \\
+        Mediana & 0.00021 & 9.24 & 2,048 \\
+        Máximo & 1.44004 & 56.71 & 14,400,420 \\
+        Desviación estándar & 0.03460 & 3.53 & 345,973 \\
+        \hline
+    \end{tabular}
+    \caption{Estadísticas descriptivas del dataset primario (21 días reales, 25,422 observaciones).}
+    \label{tab:estadisticas_real}
+\end{table}
+
+La Figura \ref{fig:patron_horario_real} ilustra el patrón de tráfico por hora del día, revelando un comportamiento consistente con la naturaleza heterogénea de la red descrita en la Sección \ref{sec:fuente_datos}: tráfico basal reducido durante la madrugada, e incrementos hacia las horas de mayor actividad residencial y de videovigilancia.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{patron_horario_real.png}
+    \caption{Patrón de tráfico promedio y máximo por hora del día, dataset primario.}
+    \label{fig:patron_horario_real}
+\end{figure}
+
+La Figura \ref{fig:serie_temporal_real} presenta la serie temporal completa de utilización a lo largo de los 21 días, donde son visibles tanto la estabilidad general del tráfico como las ráfagas esporádicas de mayor magnitud.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{serie_temporal_real.png}
+    \caption{Serie temporal de utilización real, dataset primario (21 días).}
+    \label{fig:serie_temporal_real}
+\end{figure}
+
+La Figura \ref{fig:histograma_real} presenta la distribución completa de \texttt{rx\_bps}, en escala logarítmica de frecuencia dada la naturaleza extremadamente sesgada de la distribución.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{histograma_real_log.png}
+    \caption{Distribución de rx\_bps (escala logarítmica en frecuencia), dataset primario.}
+    \label{fig:histograma_real}
+\end{figure}
+
+\subsubsection*{Hallazgo: ausencia de congestión natural en el régimen de tráfico observado}
+
+El hallazgo más relevante de este análisis exploratorio es que la utilización máxima observada durante los 21 días de recolección fue de apenas \textbf{1.44\%} del ancho de banda nominal contratado (1000 Mbps), con una mediana de utilización cercana a cero (0.0002\%). Este resultado es notablemente más extremo que el observado en el dataset piloto de MAWI (Sección 5.1, utilización máxima de 32.3\%), y confirma que la red privada PYME opera de manera consistente muy por debajo de su capacidad contratada. En consecuencia, \textbf{ningún evento de congestión real} ($U \geq U_{th}=0.80$) fue observado durante la ventana de recolección.
+
+Esta ausencia de eventos positivos naturales, ya anticipada parcialmente en la fase piloto con MAWI, resulta aún más pronunciada a escala del dataset primario, e imposibilita —sin intervención adicional— entrenar o evaluar honestamente la formulación de clasificación establecida en la Sección 2.2.1. Consultado este hallazgo con el comité asesor de este trabajo, se autorizó la incorporación de datos sintéticos como estrategia de aumento de datos (\textit{data augmentation}), bajo la condición explícita de declarar en todo momento qué proporción de los datos empleados es real y cuál es sintética, y de preservar mediante un diseño experimental riguroso la integridad de la evaluación final.
+
+\subsection*{Generación de datos sintéticos calibrados}
+
+Se generaron 37 días adicionales de datos sintéticos —alcanzando en conjunto un volumen equivalente al periodo de dos meses originalmente planificado (Sección \ref{sec:fuente_datos})—, calibrados estadísticamente a partir de los 21 días reales mediante remuestreo (\textit{bootstrap}) de la distribución empírica de tráfico observada por hora del día. Esta estrategia preserva la forma real de la distribución, incluyendo las ráfagas esporádicas características del tráfico de la red del Cliente (Figura \ref{fig:patron_horario_real}), sin asumir una forma paramétrica arbitraria que pudiera distorsionar la dinámica estocástica genuina de la red.
+
+Sobre este tráfico sintético base se inyectaron deliberadamente 126 eventos de congestión, con un perfil trapezoidal (ascenso, meseta, descenso) de duración variable entre 5 y 29 minutos (media de 17.4 minutos), consistente con la duración mínima sostenida establecida en la Ecuación \ref{eq:congestion_instanciada}, e intensidad variada, con utilización pico ($U_{pico}$) entre 0.811 y 0.979 (media de 0.890). La Figura \ref{fig:distribucion_eventos} presenta la distribución de duración e intensidad de los eventos inyectados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{distribucion_eventos_sinteticos.png}
+    \caption{Distribución de duración e intensidad de los 126 eventos de congestión sintéticos inyectados.}
+    \label{fig:distribucion_eventos}
+\end{figure}
+
+De manera consistente con el marco teórico de esta tesis, la latencia y la tasa de pérdida de paquetes durante dichos eventos no se generaron de forma independiente o arbitraria, sino que se derivaron de la propia utilización sintética mediante el modelo de teoría de colas presentado en la Sección \ref{sec:congestion}: el retraso crece proporcionalmente a $\frac{1}{1-\rho}$ conforme la utilización se aproxima a la saturación, y la pérdida de paquetes se activa únicamente en la vecindad de dicha saturación (a partir de $U \approx 0.85$). La Figura \ref{fig:ejemplo_evento} ilustra un evento de congestión sintético representativo, evidenciando la relación causal entre las tres métricas.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{ejemplo_evento_sintetico.png}
+    \caption{Ejemplo de un evento de congestión sintético: utilización, RTT y pérdida de paquetes, derivados mediante el modelo de teoría de colas de la Sección \ref{sec:congestion}.}
+    \label{fig:ejemplo_evento}
+\end{figure}
+
+La Figura \ref{fig:histograma_sintetico} presenta la distribución completa de utilización del dataset sintético, contrastada contra el umbral $U_{th}=0.80$, evidenciando la presencia deliberada de masa de probabilidad más allá del umbral de congestión —ausente por completo en los datos reales (Figura \ref{fig:histograma_real})—.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{histograma_sintetico.png}
+    \caption{Distribución de utilización, dataset sintético (37 días), contrastada contra $U_{th}=0.80$.}
+    \label{fig:histograma_sintetico}
+\end{figure}
+
+\subsection*{Diseño de evaluación: preservando la integridad de los datos reales}
+
+Para garantizar que ningún resultado reportado en el Capítulo 6 se derive de una evaluación contaminada con datos sintéticos, se adoptó el siguiente diseño, verificado mediante comprobaciones automáticas de seguridad en el propio código de procesamiento:
+
+\begin{itemize}
+    \item El conjunto de \textbf{entrenamiento} combina una partición cronológica del 60\% de los datos reales con una partición equivalente del 60\% de los datos sintéticos.
+    \item La evaluación de la tarea de \textbf{regresión} (validación y prueba) se realiza exclusivamente sobre el 20\%/20\% restante de los datos \textbf{reales}, nunca vistos durante el entrenamiento.
+    \item La evaluación de la tarea de \textbf{clasificación} se realiza exclusivamente sobre el 20\%/20\% restante de los datos \textbf{sintéticos}, igualmente aislado del entrenamiento, dado que la partición real de evaluación no contiene, por construcción, ningún caso positivo de congestión.
+\end{itemize}
+
+La Tabla \ref{tab:composicion_dataset_final} sintetiza la composición resultante de cada conjunto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|l|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{Propósito} & \textbf{Naturaleza} & \textbf{Filas} & \textbf{Casos de congestión} \\
+        \hline
+        Entrenamiento & Ambas tareas & Real + Sintético & 46,872 & 993 (2.12\%) \\
+        Val. regresión & Regresión & 100\% Real & 4,914 & 0 \\
+        Prueba regresión & Regresión & 100\% Real & 4,949 & 0 \\
+        Val. clasificación & Clasificación & 100\% Sintético & 10,622 & 284 (2.67\%) \\
+        Prueba clasificación & Clasificación & 100\% Sintético & 10,622 & 275 (2.59\%) \\
+        \hline
+    \end{tabular}
+    \caption{Composición final del dataset primario tras la incorporación de datos sintéticos.}
+    \label{tab:composicion_dataset_final}
+\end{table}
+
+Esta separación estricta implica que, para la tarea de regresión, los resultados del Capítulo 6 reflejan el desempeño de los modelos exclusivamente sobre el comportamiento real y genuino de la red del Cliente; mientras que, para la tarea de clasificación, los resultados reflejan el desempeño sobre eventos de congestión estadísticamente calibrados pero sintéticos —una limitación que se discute con detalle en la Sección 6.5, y que se compensa parcialmente con la validación de generalización frente al dataset MAWI reagregado a granularidad oficial (Sección \ref{sec:preprocesamiento}).
+
+\subsection*{Extracción y decodificación de trazas de validación (MAWI)}
 
 Para construir la serie temporal de validación externa, se consumieron trazas de tráfico troncal correspondientes a 2026 del repositorio MAWI. Dado que la distribución original consiste en capturas binarias comprimidas (\texttt{.pcap.gz}) que registran decenas de millones de paquetes por archivo, la extracción mediante herramientas de alto nivel (\texttt{tshark}) resultó impráctica: el procesamiento demandaba un 
 volumen de memoria que excedía los recursos de la estación de trabajo, motivado por la sobrecarga de reconstrucción de flujos de dichas herramientas.
@@ -1912,6 +2021,14 @@ se adopta un umbral relativo de prueba ($U_{test} \geq 0.25$). Esto permite veri
 
 \section{Preprocesamiento}
 \label{sec:preprocesamiento_desarrollo}
+
+\subsection*{Preprocesamiento del dataset primario}
+
+El preprocesamiento del dataset primario replicó las etapas descritas para el dataset piloto, con dos ajustes derivados de su naturaleza. Primero, la detección de sesiones continuas (necesaria para evitar que las variables de rezago crucen interrupciones de conectividad) identificó 11 sesiones dentro del conjunto de entrenamiento: nueve correspondientes a segmentos reales delimitados por las interrupciones documentadas anteriormente, y una sesión sintética continua de 31,934 observaciones —por mucho, la más extensa—, dado que el generador sintético no introduce discontinuidades internas.
+
+Segundo, a diferencia del piloto (granularidad de 1 segundo, valores $w=15$ y $h=5$ provisionales), el dataset primario emplea la granularidad y los parámetros \textbf{oficiales} establecidos en la Sección \ref{sec:preprocesamiento}: ventana de observación $w=30$ minutos y horizonte de predicción $h=5$ minutos. La variable objetivo de clasificación se definió como el cruce instantáneo del umbral en el horizonte de predicción, $\mathbb{1}[U(t+h) \geq U_{th}]$, consistente con la variable objetivo de regresión de la cual se deriva.
+
+Tras la limpieza, generación de rezagos y eliminación de observaciones incompletas en los bordes de cada sesión, el conjunto de entrenamiento final quedó compuesto por 46,872 observaciones (14,938 reales y 31,934 sintéticas), y el proceso de ventaneo generó 46,582 secuencias de entrenamiento para las arquitecturas recurrentes, junto con sus correspondientes conjuntos de evaluación de regresión (4,796 y 4,833 secuencias) y clasificación (10,593 secuencias cada uno), en correspondencia con la Tabla \ref{tab:composicion_dataset_final}.
 
 Sobre el conjunto de 1,800 observaciones a granularidad de 1 minuto descrito en la Sección 5.1, se aplicaron las etapas de preprocesamiento establecidas formalmente en la Sección \ref{sec:preprocesamiento}. El objetivo de esta fase computacional fue transformar la serie de tiempo unidimensional en las estructuras tensoriales requeridas por las bibliotecas de \textit{Machine Learning}.
 
@@ -2067,6 +2184,10 @@ Estos resultados preliminares evidencian la limitación teórica descrita en el 
 un $TAE$ marcadamente inferior al horizonte proyectado de 5 minutos. Con la correcta ejecución computacional de este modelo estadístico confirmada y sus métricas establecidas como línea base de superación, el \textit{pipeline} avanza hacia la implementación 
 del paradigma de Machine Learning clásico (Sección 5.4).
 
+\subsection*{Entrenamiento sobre el dataset primario}
+
+Dado que ARIMA requiere una serie temporal continua para su ajuste, el modelo se entrenó sobre la sesión de mayor longitud identificada en el conjunto de entrenamiento (Sección \ref{sec:preprocesamiento_desarrollo}): la sesión sintética continua de 31,934 observaciones, que incorpora tanto el régimen de tráfico normal como los eventos de congestión inyectados. La prueba de Dickey-Fuller Aumentada sobre esta serie confirmó estacionariedad ($\text{ADF}=-23.66$, $p<0.001$), por lo que no fue necesaria diferenciación ($d=0$). La búsqueda de orden por minimización del AIC seleccionó $\text{ARIMA}(3,0,3)$ ($\text{AIC}=-111{,}594.72$), con todos los coeficientes autorregresivos y de media móvil estadísticamente significativos ($p<0.01$), confirmando la correcta convergencia del modelo sobre el volumen de datos del dataset primario. Los resultados completos de esta evaluación, contrastados con los de los modelos subsiguientes, se presentan y discuten en el Capítulo 6.
+
 \section{Construcción del modelo Random Forest}
 
 Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, se implementó un modelo Random Forest como representante del paradigma de Machine Learning clásico utilizando el módulo \texttt{ensemble.RandomForestRegressor} (y su contraparte \texttt{Classifier}) de la biblioteca \texttt{scikit-learn}. 
@@ -2141,6 +2262,10 @@ Aprovechando la interpretabilidad inherente del ensamble, se calculó la impurez
 
 Como ilustra la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\text{media\_movil}}$) concentra más del 66\% de la capacidad discriminativa, superando por amplio margen al rezago inmediato ($U_{\text{lag1}}$, con 13.9\%). Este resultado confirma empíricamente que, a una granularidad de 1 minuto, suavizar el ruido estocástico del tráfico revela la tendencia subyacente de manera más nítida que la simple observación secuencial directa. Con estas métricas y hallazgos topológicos documentados, la calibración del \textit{pipeline} concluye con el desarrollo de la arquitectura de Deep Learning (Sección 5.5).
 
+
+\subsection*{Entrenamiento sobre el dataset primario}
+
+El modelo Random Forest se reentrenó con la misma configuración de hiperparámetros validada en la fase piloto (200 árboles, profundidad máxima de 10), esta vez sobre las 46,872 observaciones del conjunto de entrenamiento del dataset primario. El análisis de importancia de variables confirmó el patrón observado en el piloto: el rezago inmediato ($U_{lag1}$) concentra la mayor importancia relativa (66.4\%), seguido de la media móvil (12.5\%) y el rezago de mayor orden ($U_{lag5}$, 11.7\%), sugiriendo que, también a escala del dataset primario, el nivel de tráfico más reciente resulta el predictor dominante. Los resultados completos de evaluación se presentan en el Capítulo 6.
 \section{Construcción del modelo LSTM}
 
 Conforme a la justificación topológica de la Sección \ref{sec:modelos_justificacion}, se implementó una red neuronal recurrente (LSTM) como representante del paradigma de Deep Learning, orquestada mediante la API de \texttt{Keras/TensorFlow}. El modelo consumió los tensores tridimensionales construidos mediante la función de ventana deslizante en el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}, Ecuación \ref{eq:ventaneo_instanciada_mawi}), explotando la secuencialidad inherente de los datos.
@@ -2223,6 +2348,10 @@ Al evaluar la capacidad operativa de la red neuronal mediante el umbral de calib
 \end{table}
 
 La capacidad del LSTM para decodificar la aceleración en las secuencias de entrada le permitió catapultar el \textit{Recall} hasta un 79.4\%, anticipándose a los picos de utilización con un $TAE$ promedio de 3.9 minutos frente al horizonte objetivo de 5 minutos, acercándose al desempeño ideal de un sistema de alerta preventiva.
+
+\subsection*{Entrenamiento sobre el dataset primario}
+
+El modelo Random Forest se reentrenó con la misma configuración de hiperparámetros validada en la fase piloto (200 árboles, profundidad máxima de 10), esta vez sobre las 46,872 observaciones del conjunto de entrenamiento del dataset primario. El análisis de importancia de variables confirmó el patrón observado en el piloto: el rezago inmediato ($U_{lag1}$) concentra la mayor importancia relativa (66.4\%), seguido de la media móvil (12.5\%) y el rezago de mayor orden ($U_{lag5}$, 11.7\%), sugiriendo que, también a escala del dataset primario, el nivel de tráfico más reciente resulta el predictor dominante. Los resultados completos de evaluación se presentan en el Capítulo 6.
 
 \subsection*{Síntesis comparativa de la fase piloto}
 
