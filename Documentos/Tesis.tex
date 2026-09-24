@@ -195,7 +195,7 @@ El presente trabajo de tesis se circunscribe al desarrollo de un prototipo funci
 estos modelos mediante métricas cuantitativas, sin comprometerse con el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o un sistema de producción completo. Por lo tanto, los resultados deben interpretarse como una prueba de concepto que demuestra la capacidad predictiva de los algoritmos seleccionados, 
 y no como una solución lista para ser desplegada en un entorno operacional real.
 
-En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación durante un periodo de 25 días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. 
+En términos de datos, el prototipo se desarrolla y evalúa sobre dos fuentes complementarias: una red privada de escala reducida sobre la cual se realizó recolección propia de datos de operación durante un periodo de 30 días, y un archivo académico de tráfico de Internet de gran escala empleado como conjunto de validación externa. 
 Si bien esta combinación permite evaluar el desempeño de los modelos bajo condiciones de tráfico de naturaleza y escala distintas —ampliando el alcance de las conclusiones respecto a un estudio basado en una única fuente—, no debe interpretarse como una validación exhaustiva sobre la totalidad de topologías, tecnologías de acceso o 
 patrones de tráfico posibles en una red de computadoras. La generalización de los resultados a escenarios sustancialmente distintos a los aquí evaluados (por ejemplo, redes móviles, entornos industriales o infraestructuras de centros de datos) queda fuera del alcance de este trabajo y se plantea como una línea de investigación futura.
 
@@ -212,19 +212,18 @@ de una perspectiva multivariable para capturar los patrones complejos que preced
 \clearpage
 
 \chapter{Marco Teórico}
+\label{cap:marco_teorico}
 
 \section{Fundamentos de redes de computadoras}
+\label{sec:fundamentos_redes}
 
-Imaginemos por un momento dos computadoras aisladas, cada una con información valiosa almacenada en su interior. Para que esos datos puedan ser aprovechados por el otro equipo, alguien debe copiarlos en un dispositivo de 
-almacenamiento externo, trasladarlos físicamente e introducirlos en la segunda máquina. Este procedimiento, aunque funcional, es lento, propenso a errores humanos y completamente inviable cuando la cantidad de información 
-crece o cuando quien la necesita se encuentra a cientos o miles de kilómetros de distancia. Precisamente para resolver esta limitación nacieron las redes de computadoras: sistemas que conectan dos o más dispositivos de cómputo 
-mediante algún medio de transmisión —cables de cobre, fibra óptica o el espectro electromagnético— con el propósito de intercambiar datos de manera rápida, confiable y eficiente \cite{tanenbaum2011}.
+Considérese un escenario con dos computadoras aisladas, cada una con información valiosa almacenada en su interior. Para que esos datos puedan ser aprovechados por el otro equipo, un usuario debe copiarlos en un dispositivo de almacenamiento externo, trasladarlos físicamente e introducirlos en la segunda máquina. Este procedimiento, 
+aunque funcional, es lento, propenso a errores humanos y completamente inviable cuando la cantidad de información crece o cuando los dispositivos se encuentran a cientos o miles de kilómetros de distancia. Precisamente para resolver esta limitación nacieron las redes de computadoras: sistemas que conectan dos o más dispositivos de 
+cómputo mediante algún medio de transmisión —cables de cobre, fibra óptica o el espectro electromagnético— con el propósito de intercambiar datos de manera rápida, confiable y eficiente \cite{tanenbaum2011}.
 
-En esencia, una red de computadoras es un conjunto de nodos autónomos interconectados que cooperan para compartir recursos e información. El término "nodo" designa a cualquier dispositivo capaz de originar, recibir o retransmitir 
-datos: computadoras personales, servidores, teléfonos móviles, sensores, impresoras e incluso electrodomésticos inteligentes. Estos nodos se comunican a través de enlaces, que son los caminos físicos o inalámbricos por los que 
-viaja la información. A su vez, los enlaces se conectan entre sí por medio de dispositivos de interconexión como conmutadores y enrutadores, cuya misión es encaminar los datos desde su origen hasta su destino, eligiendo la ruta 
-más adecuada en cada momento y gestionando las colas de espera que se forman cuando varios flujos de tráfico coinciden en un mismo punto. El comportamiento de estas colas de espera bajo condiciones de alta demanda es, como se 
-detallará en la sección \ref{sec:congestion}, el origen mismo del fenómeno de congestión.
+En esencia, una red de computadoras es un conjunto de nodos autónomos interconectados que cooperan para compartir recursos e información. El término \textit{nodo} designa a cualquier dispositivo capaz de originar, recibir o retransmitir datos: computadoras personales, servidores, teléfonos móviles, sensores, impresoras e incluso 
+electrodomésticos inteligentes. Estos nodos se comunican a través de enlaces, que son los caminos físicos o inalámbricos por los que viaja la información. A su vez, los enlaces se conectan entre sí por medio de dispositivos de interconexión como conmutadores y enrutadores, cuya misión es encaminar los datos desde su origen hasta su 
+destino, eligiendo la ruta más adecuada en cada momento y gestionando las colas de espera que se forman cuando varios flujos de tráfico coinciden en un mismo punto. El comportamiento de estas colas de espera bajo condiciones de alta demanda es, como se detallará en la sección \ref{sec:congestion}, el origen mismo del fenómeno de congestión.
 
 \begin{figure}[H]
     \centering
@@ -250,148 +249,147 @@ detallará en la sección \ref{sec:congestion}, el origen mismo del fenómeno de
 \end{figure}
 \newpage
 
-El funcionamiento de una red se organiza de manera jerárquica para domar la complejidad inherente a la comunicación digital. Esta organización se plasma en los llamados modelos de referencia, que dividen el problema de transmitir 
-información en varias capas superpuestas, cada una con responsabilidades claramente acotadas: desde los aspectos puramente físicos de la transmisión (voltajes, pulsos de luz, ondas de radio) hasta la interacción con las aplicaciones 
-que el usuario ve en pantalla. Esta arquitectura en capas permite que un fabricante mejore un componente sin necesidad de rediseñar toda la red, y que tecnologías muy dispares puedan interoperar siempre que respeten los protocolos 
-definidos en cada nivel. El modelo de referencia más utilizado para describir esta organización, el modelo OSI, se desarrolla con mayor profundidad en la sección \ref{sec:osi}.
+El funcionamiento de una red se organiza de manera jerárquica para gestionar la complejidad inherente a la comunicación digital. Esta organización se plasma en los llamados modelos de referencia, que dividen el problema de transmitir información en varias capas superpuestas, cada una con responsabilidades claramente acotadas: desde 
+los aspectos puramente físicos de la transmisión (voltajes, pulsos de luz, ondas de radio) hasta la interacción con las aplicaciones que el usuario ve en pantalla. Esta arquitectura en capas permite que un fabricante mejore un componente sin necesidad de rediseñar toda la red, y que tecnologías muy dispares puedan interoperar siempre 
+que respeten los protocolos definidos en cada nivel. El modelo de referencia más utilizado para describir esta organización, el modelo OSI, se desarrolla con mayor profundidad en la sección \ref{sec:osi}.
 
-Más allá de cómo se organizan las capas, existe una decisión de diseño fundamental que determina cómo viajan realmente los datos a través de una red: el paradigma de conmutación. En las redes telefónicas tradicionales se empleaba la 
-\textbf{conmutación de circuitos}: cuando dos personas iniciaban una llamada, la red reservaba un camino físico dedicado y exclusivo entre ambos extremos durante toda la conversación. Este enfoque garantiza una calidad de servicio constante 
-y predecible, pero resulta profundamente ineficiente desde el punto de vista de la utilización de recursos: si los interlocutores hacen una pausa de diez segundos, el circuito reservado permanece completamente ocioso y ningún otro usuario 
-puede aprovecharlo, incluso si la red entera está saturada de solicitudes en ese instante.
+Más allá de cómo se organizan las capas, existe una decisión de diseño fundamental que determina cómo viajan realmente los datos a través de una red: el paradigma de conmutación. En las redes telefónicas tradicionales se empleaba la \textbf{conmutación de circuitos}: cuando dos personas iniciaban una llamada, la red reservaba un camino 
+físico dedicado y exclusivo entre ambos extremos durante toda la conversación. Este enfoque garantiza una calidad de servicio constante y predecible, pero resulta profundamente ineficiente desde el punto de vista de la utilización de recursos: si los interlocutores hacen una pausa de diez segundos, el circuito reservado permanece 
+completamente ocioso y ningún otro usuario puede aprovecharlo, incluso si la red entera está saturada de solicitudes en ese instante.
 
-Las redes de computadoras modernas, incluida Internet, optaron por un modelo radicalmente distinto: la \textbf{conmutación de paquetes}. En este paradigma, los datos se fragmentan en pequeñas unidades llamadas paquetes o datagramas, cada una 
-encabezada por información de control (dirección de origen, destino, número de secuencia, entre otros campos). Cada paquete viaja de nodo en nodo de manera independiente y sin reservar recursos exclusivos, compartiendo dinámicamente los enlaces 
-con paquetes pertenecientes a otras comunicaciones completamente distintas. Cuando un remitente hace una pausa en su transmisión, otros flujos aprovechan inmediatamente el enlace liberado, lo que multiplica la eficiencia global del sistema comparado 
-con la conmutación de circuitos \cite{kurose2017}.
+Las redes de computadoras modernas, incluida Internet, optaron por un modelo radicalmente distinto: la \textbf{conmutación de paquetes}. En este paradigma, los datos se fragmentan en pequeñas unidades llamadas paquetes o datagramas, cada una encabezada por información de control (dirección de origen, destino, número de secuencia, entre 
+otros campos). Cada paquete viaja de nodo en nodo de manera independiente y sin reservar recursos exclusivos, compartiendo dinámicamente los enlaces con paquetes pertenecientes a otras comunicaciones completamente distintas. Cuando un remitente hace una pausa en su transmisión, otros flujos aprovechan inmediatamente el enlace liberado, 
+lo que multiplica la eficiencia global del sistema comparado con la conmutación de circuitos \cite{kurose2017}.
 
-Esta compartición estadística de los recursos es, precisamente, la razón por la que Internet puede ofrecer conectividad a miles de millones de dispositivos con una infraestructura física finita. Sin embargo, tiene una contrapartida inevitable: como ningún 
-flujo individual tiene garantizado un ancho de banda exclusivo, si demasiados remitentes transmiten de manera simultánea a través del mismo enlace, la demanda agregada puede superar la capacidad disponible. Es precisamente en este punto —cuando la suma de los 
-flujos que compiten por un recurso compartido excede lo que ese recurso puede entregar— donde se origina el fenómeno que esta tesis busca predecir: la congestión de red, que se define y caracteriza formalmente en la siguiente sección.
+Esta compartición estadística de los recursos es, precisamente, la razón por la que Internet puede ofrecer conectividad a miles de millones de dispositivos con una infraestructura física finita. Sin embargo, tiene una contrapartida inevitable: como ningún flujo individual tiene garantizado un ancho de banda exclusivo, si demasiados 
+remitentes transmiten de manera simultánea a través del mismo enlace, la demanda agregada puede superar la capacidad disponible. Es precisamente en este punto —cuando la suma de los flujos que compiten por un recurso compartido excede lo que ese recurso puede entregar— donde se origina el fenómeno que esta investigación busca predecir: 
+la congestión de red, que se define y caracteriza formalmente en las siguientes secciones.
 
-\subsection*{Capacidad del enlace: ancho de banda, throughput y utilización}
+\subsection{Capacidad del enlace: ancho de banda, throughput y utilización}
+\label{subsec:capacidad_enlace}
 
-Para poder cuantificar cuándo un enlace se encuentra cerca de su límite, es necesario introducir tres métricas básicas que se emplearán a lo largo de toda la tesis. Cada enlace en una red posee una capacidad máxima teórica de transmisión, 
-denominada \textbf{ancho de banda} (\textit{bandwidth}), que se mide en bits por segundo (bps). Un enlace de fibra óptica típico puede ofrecer 1 Gbps, mientras que una conexión inalámbrica doméstica quizás solo alcance 50 Mbps. 
-Esta cifra representa el límite superior teórico del enlace, no la cantidad de datos que efectivamente circula por él en un momento dado.
+Para poder cuantificar cuándo un enlace se encuentra cerca de su límite, es necesario introducir tres métricas básicas que se emplearán a lo largo del presente trabajo. Cada enlace en una red posee una capacidad máxima teórica de transmisión, denominada \textbf{ancho de banda} (\textit{bandwidth}), que se mide en bits por segundo (bps). 
+Un enlace de fibra óptica típico puede ofrecer 1 Gbps, mientras que una conexión inalámbrica doméstica quizás solo alcance 50 Mbps. Esta cifra representa el límite superior teórico del enlace, no la cantidad de datos que efectivamente circula por él en un momento dado.
 
-El tráfico real que atraviesa el enlace en un instante determinado se conoce como \textbf{throughput} o rendimiento efectivo, y su valor siempre es inferior o igual al ancho de banda nominal, ya que factores como la sobrecarga de los encabezados de protocolo, 
-las retransmisiones y el propio comportamiento del tráfico impiden alcanzar el máximo teórico de manera sostenida. La razón entre el throughput observado y el ancho de banda disponible se denomina \textbf{factor de utilización}, y constituye una de las métricas 
-más reveladoras sobre el estado de salud de un enlace:
+El tráfico real que atraviesa el enlace en un instante determinado se conoce como \textbf{\textit{throughput}} o rendimiento efectivo, y su valor siempre es inferior o igual al ancho de banda nominal, ya que factores como la sobrecarga de los encabezados de protocolo, las retransmisiones y el propio comportamiento del tráfico impiden 
+alcanzar el máximo teórico de manera sostenida. La razón entre el \textit{throughput} observado y el ancho de banda disponible se denomina \textbf{factor de utilización}, y constituye una de las métricas más reveladoras sobre el estado de salud de un enlace:
 
 \begin{equation}
     U = \frac{\text{Throughput observado}}{\text{Ancho de banda nominal}}
     \label{eq:utilizacion}
 \end{equation}
 
-Mientras el factor de utilización se mantenga en niveles moderados, la red opera con holgura: existe margen suficiente para absorber ráfagas de tráfico sin que se produzcan retrasos perceptibles. Conforme $U$ se aproxima a $1$ (es decir, al 100\% de la capacidad), 
-comienzan a manifestarse los síntomas característicos de la congestión, los cuales se explican en detalle a continuación.
+Mientras el factor de utilización se mantenga en niveles moderados, la red opera con holgura: existe margen suficiente para absorber ráfagas de tráfico sin que se produzcan retrasos perceptibles. Conforme $U$ se aproxima a $1$ (es decir, al 100\,\% de la capacidad), comienzan a manifestarse los síntomas característicos de la congestión, 
+los cuales se explican en detalle a continuación.
 
 \subsection{Modelo OSI y TCP/IP}
 \label{sec:osi}
 
-El Modelo de Interconexión de Sistemas Abiertos (OSI, \textit{Open Systems Interconnection}), estandarizado por la Organización Internacional de Normalización (ISO) en 1984, constituye un marco conceptual que divide el proceso de comunicación en redes en siete 
-capas funcionales independientes \cite{tanenbaum2011}. Cada nivel abstrae un conjunto específico de responsabilidades, desde la transmisión física de bits hasta la interacción con las aplicaciones del usuario. Esta estratificación facilita la interoperabilidad 
-entre equipos de distintos fabricantes y permite analizar los fenómenos de red, como la congestión, dentro de una estructura bien definida. En particular, la gestión de la congestión incide directamente en las capas de transporte y red, donde se regulan el control 
-de flujo, el enrutamiento y la asignación de recursos, aspectos que serán modelados en este trabajo a partir de métricas de utilización.
+El Modelo de Interconexión de Sistemas Abiertos (OSI, \textit{Open Systems Interconnection}), estandarizado por la Organización Internacional de Normalización (ISO) en 1984, constituye un marco conceptual que divide el proceso de comunicación en redes en siete capas funcionales independientes \cite{tanenbaum2011}. Cada nivel abstrae un 
+conjunto específico de responsabilidades, desde la transmisión física de bits hasta la interacción con las aplicaciones del usuario. Esta estratificación facilita la interoperabilidad entre equipos de distintos fabricantes y permite analizar los fenómenos de red, como la congestión, dentro de una estructura bien definida. En particular, 
+la gestión de la congestión incide directamente en las capas de transporte y red, donde se regulan el control de flujo, el enrutamiento y la asignación de recursos; aspectos que serán modelados en este trabajo a partir de métricas de utilización.
+
+Aunque el modelo OSI es el estándar de referencia teórica, en la práctica, las redes modernas operan bajo la arquitectura TCP/IP (\textit{Transmission Control Protocol/Internet Protocol}). Este modelo condensa las siete capas de OSI en cuatro niveles prácticos: Acceso a la Red, Internet, Transporte y Aplicación. Para efectos de esta investigación, 
+la telemetría recolectada en los enlaces —como el \textit{throughput} y el factor de utilización— se sustenta en los protocolos del modelo TCP/IP (tales como IP en la capa de red y TCP/UDP en la capa de transporte), si bien el análisis subyacente del fenómeno de congestión sigue los principios teóricos establecidos por OSI.
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[
         layer/.style={
-            rectangle, draw=black!70, thick, text width=4cm, align=center,
-            minimum height=.7cm, font=\sffamily\large\bfseries, rounded corners=2pt
+            rectangle, draw=black!70, thick, text width=3.8cm, align=center,
+            minimum height=.7cm, font=\sffamily\small\bfseries, rounded corners=2pt
+        },
+        tcp/.style={
+            rectangle, draw=black!70, thick, text width=3.8cm, align=center,
+            font=\sffamily\small\bfseries, rounded corners=2pt
         }
     ]
-    \node[layer, fill=black!10] (L7) {7. Aplicación};
-    \node[layer, fill=black!15, below=0.2cm of L7] (L6) {6. Presentación};
-    \node[layer, fill=black!20, below=0.2cm of L6] (L5) {5. Sesión};
-    \node[layer, fill=black!30, below=0.2cm of L5] (L4) {4. Transporte};
-    \node[layer, fill=black!40, below=0.2cm of L4] (L3) {3. Red};
-    \node[layer, fill=black!50, below=0.2cm of L3] (L2) {2. Enlace de Datos};
-    \node[layer, fill=black!60, below=0.2cm of L2] (L1) {1. Física};
+    \node[layer, fill=black!10] (O7) {7. Aplicación};
+    \node[layer, fill=black!15, below=0.15cm of O7] (O6) {6. Presentación};
+    \node[layer, fill=black!20, below=0.15cm of O6] (O5) {5. Sesión};
+    \node[layer, fill=black!30, below=0.15cm of O5] (O4) {4. Transporte};
+    \node[layer, fill=black!40, below=0.15cm of O4] (O3) {3. Red};
+    \node[layer, fill=black!50, below=0.15cm of O3] (O2) {2. Enlace de Datos};
+    \node[layer, fill=black!60, below=0.15cm of O2] (O1) {1. Física};
+
+    \node[tcp, fill=blue!10, right=1.2cm of O6, minimum height=2.4cm] (T4) {Aplicación};
+    \node[tcp, fill=blue!20, right=1.2cm of O4, minimum height=0.7cm] (T3) {Transporte};
+    \node[tcp, fill=blue!30, right=1.2cm of O3, minimum height=0.7cm] (T2) {Internet};
+
+    \node[tcp, fill=blue!40, below=0.15cm of T2, minimum height=1.55cm] (T1) {Acceso a la Red};
+
+    \node[above=0.3cm of O7, font=\sffamily\bfseries] {Modelo OSI};
+    \node[above=0.3cm of T4, font=\sffamily\bfseries] {Modelo TCP/IP};
+    
     \end{tikzpicture}
-    \caption{Capas del modelo OSI.}
-    \label{fig:osi}
+    \caption{Comparativa entre las capas del modelo OSI y la arquitectura TCP/IP.}
+    \label{fig:osi_tcpip}
 \end{figure}
 
 \subsection{Concepto de congestión}
 \label{sec:congestion}
 
-Con las nociones de ancho de banda, throughput y utilización ya establecidas, es posible ahora caracterizar con precisión qué ocurre dentro de una red cuando la demanda de tráfico se aproxima o supera la capacidad disponible de un enlace. A este fenómeno se le 
-denomina \textbf{congestión de red}, y constituye el objeto central de estudio de esta tesis.
+Con las nociones de ancho de banda, \textit{throughput} y utilización ya establecidas, es posible caracterizar con precisión qué ocurre dentro de una red cuando la demanda de tráfico se aproxima o supera la capacidad disponible de un enlace. A este fenómeno se le denomina \textbf{congestión de red}, y constituye el objeto central de estudio de esta investigación.
 
 \subsubsection*{Qué ocurre dentro de un enrutador}
 
-Para entender el origen físico de la congestión es necesario examinar qué sucede dentro de un enrutador o conmutador cuando procesa tráfico. Cada dispositivo de interconexión dispone de pequeñas memorias temporales llamadas \textbf{buffers}, donde almacena los 
-paquetes que van llegando mientras esperan ser procesados y reenviados por el enlace de salida correspondiente. Si los paquetes llegan a una tasa inferior a la capacidad del enlace de salida, el buffer apenas se ocupa y los paquetes son despachados casi de 
-inmediato, sin apenas tiempo de espera.
+Para entender el origen físico de la congestión es necesario examinar qué sucede dentro de un enrutador o conmutador cuando procesa tráfico. Cada dispositivo de interconexión dispone de pequeñas memorias temporales llamadas \textbf{\textit{buffers}}, donde se almacenan los paquetes que arriban mientras esperan ser procesados y reenviados por el enlace de salida 
+correspondiente. Si los paquetes llegan a una tasa inferior a la capacidad del enlace de salida, el \textit{buffer} apenas se ocupa y los paquetes son despachados casi de inmediato, con un tiempo de espera mínimo.
 
-El problema surge cuando, durante un intervalo sostenido, la tasa de llegada de paquetes supera la tasa a la que el enlace de salida puede transmitirlos. En ese escenario, la cola de espera dentro del buffer comienza a crecer progresivamente. Este fenómeno es 
-análogo a lo que ocurre en una caseta de cobro de autopista: mientras los vehículos lleguen a un ritmo menor al que la caseta puede atender, la fila permanece corta y el retraso es mínimo; pero si llegan más vehículos de los que la caseta puede procesar, la fila 
-se alarga sin control y el tiempo de espera se dispara de forma no lineal. Es importante subrayar este último punto: el retraso generado por la congestión \textbf{no crece de manera proporcional} al exceso de tráfico, sino que tiende a dispararse de forma abrupta 
-una vez que se cruza cierto umbral de utilización, un comportamiento bien documentado en la teoría de colas aplicada a redes de datos \cite{kleinrock1976}.
+El problema surge cuando, durante un intervalo sostenido, la tasa de llegada de paquetes supera la tasa a la que el enlace de salida puede transmitirlos. En este escenario, la cola de espera dentro del \textit{buffer} comienza a crecer progresivamente. Este fenómeno es análogo a lo que ocurre en una caseta de cobro de autopista: mientras los vehículos lleguen a 
+un ritmo menor al que la caseta puede atender, la fila permanece corta y el retraso es mínimo; pero si llegan más vehículos de los que la infraestructura puede procesar, la fila se alarga sin control y el tiempo de espera se incrementa de forma no lineal. Es importante subrayar este último comportamiento: el retraso generado por la congestión 
+\textbf{no crece de manera proporcional} al exceso de tráfico, sino que tiende a dispararse abruptamente una vez que se cruza cierto umbral de utilización, un fenómeno exhaustivamente documentado en la teoría de colas aplicada a redes de datos \cite{kleinrock1976}.
 
 \subsubsection*{Latencia y sus componentes}
 
-El tiempo total que un paquete tarda en viajar desde que ingresa a la red hasta que llega a su destino se conoce como \textbf{latencia} o retardo extremo a extremo, y se compone de cuatro elementos:
+El tiempo total que un paquete tarda en viajar desde que ingresa a la red hasta que llega a su destino final se conoce como \textbf{latencia} o retardo extremo a extremo, y se compone de cuatro elementos fundamentales:
 
 \begin{itemize}
-    \item \textbf{Tiempo de propagación}: lo que tarda la señal física en recorrer el medio de transmisión (cable, fibra, aire), determinado por la distancia y la velocidad de propagación de la señal.
-    \item \textbf{Tiempo de transmisión}: lo que tarda el nodo emisor en colocar todos los bits del paquete sobre el medio físico, el cual depende del tamaño del paquete y del ancho de banda del enlace.
-    \item \textbf{Tiempo de procesamiento}: el que cada nodo intermedio invierte en examinar el encabezado del paquete y decidir hacia dónde reenviarlo.
-    \item \textbf{Tiempo de encolado}: el tiempo que el paquete permanece esperando dentro del buffer de un enrutador antes de ser transmitido.
+    \item \textbf{Tiempo de propagación}: el tiempo que tarda la señal física en recorrer el medio de transmisión (cable, fibra, espectro electromagnético), determinado por la distancia y la velocidad de propagación del medio.
+    \item \textbf{Tiempo de transmisión}: el tiempo que tarda el nodo emisor en colocar todos los bits del paquete sobre el enlace físico, el cual depende del tamaño del paquete y del ancho de banda disponible.
+    \item \textbf{Tiempo de procesamiento}: el tiempo que cada nodo intermedio emplea en examinar el encabezado del paquete y determinar la ruta de reenvío.
+    \item \textbf{Tiempo de encolado}: el tiempo que el paquete permanece en espera dentro del \textit{buffer} de un dispositivo antes de ser transmitido.
 \end{itemize}
 
-En condiciones normales de operación, el tiempo de encolado es prácticamente insignificante frente a los otros tres componentes. Sin embargo, bajo congestión, este componente puede convertirse —y de hecho suele convertirse— en el factor dominante de la latencia total, 
-siendo responsable de la gran mayoría del retraso que experimenta el usuario final.
+En condiciones normales de operación, el tiempo de encolado es prácticamente insignificante frente a los otros tres componentes. Sin embargo, bajo condiciones de congestión, este componente suele convertirse en el factor dominante de la latencia total, siendo el responsable principal del retraso que experimenta el usuario.
 
 \subsubsection*{Jitter: la variabilidad del retraso}
 
-Dado que la llegada de paquetes a un enrutador es irregular e impredecible por naturaleza, el tamaño de la cola de espera fluctúa constantemente a lo largo del tiempo. Como consecuencia, la latencia experimentada por paquetes consecutivos de un mismo flujo no es constante, 
-sino que varía de un paquete a otro. Esta variabilidad en el retardo se denomina \textbf{jitter}, y resulta particularmente perjudicial para aplicaciones sensibles al tiempo que requieren una entrega de datos a ritmo constante, como las videollamadas, los juegos en línea o 
-la transmisión de audio y video en tiempo real, donde un jitter elevado se traduce en cortes, distorsión o congelamiento de la imagen incluso cuando la latencia promedio parece aceptable.
+Dado que la llegada de paquetes a un enrutador es irregular e impredecible por naturaleza, el tamaño de la cola de espera fluctúa constantemente a lo largo del tiempo. Como consecuencia, la latencia experimentada por paquetes consecutivos de un mismo flujo no es constante, sino que varía de un paquete a otro. Esta variabilidad en el retardo se denomina \textbf{\textit{jitter}}, 
+y resulta particularmente perjudicial para aplicaciones sensibles al tiempo que requieren una entrega de datos a ritmo constante (como videollamadas, juegos en línea o transmisiones de audio y video en tiempo real), donde un \textit{jitter} elevado se traduce en cortes, distorsiones o congelamiento de la imagen, incluso cuando la latencia promedio parece aceptable.
 
 \subsubsection*{Pérdida de paquetes y la respuesta reactiva de TCP}
 
-Cuando la congestión se agrava lo suficiente, el buffer de un enrutador puede llegar a llenarse por completo. Llegado ese punto, el dispositivo no tiene más opción que descartar los paquetes entrantes que ya no caben en la memoria disponible, un evento conocido como 
-\textbf{pérdida de paquetes}. Una tasa de pérdida ocasional puede ser tolerable e incluso pasar desapercibida para el usuario, pero cuando se vuelve frecuente, degrada severamente la calidad de la comunicación.
+Cuando la congestión se agrava lo suficiente, el \textit{buffer} de un enrutador puede llenarse por completo. Llegado a este límite, el dispositivo no tiene más opción que descartar los paquetes entrantes que no caben en la memoria disponible, evento conocido como \textbf{pérdida de paquetes}. Una tasa de pérdida ocasional puede ser mitigada o pasar desapercibida, pero al volverse 
+frecuente, degrada severamente la calidad de la comunicación.
 
-Es en este punto donde interviene el comportamiento de los protocolos de transporte, particularmente TCP. Este protocolo interpreta la pérdida de paquetes como una señal indirecta de que la red está congestionada, y en respuesta reduce drásticamente su tasa de envío mediante 
-mecanismos de control de congestión \cite{jacobson1988}, para posteriormente incrementarla de manera gradual mientras no detecte nuevas pérdidas. Este mecanismo, formalizado en estándares como el RFC 2914 \cite{rfc2914}, ha sido fundamental para preservar la estabilidad de Internet 
-durante décadas. No obstante, es crucial notar su naturaleza intrínsecamente \textbf{reactiva}: el mecanismo solo se activa \textit{después} de que la congestión ya ha provocado pérdidas reales, momento en el cual la calidad del servicio ya se ha degradado y el usuario final ya ha percibido 
-el problema. Esta limitación reactiva es, precisamente, la motivación central que da origen al enfoque predictivo propuesto en esta tesis.
+Es en este escenario donde interviene el comportamiento de los protocolos de transporte, particularmente TCP. Este protocolo interpreta la pérdida de paquetes como una señal indirecta de congestión en la red, y en respuesta reduce drásticamente su tasa de envío mediante mecanismos de control de congestión \cite{jacobson1988}, para posteriormente incrementarla de manera gradual mientras 
+no detecte nuevas pérdidas. Este mecanismo, formalizado en estándares como el RFC 2914 \cite{rfc2914}, ha sido fundamental para preservar la estabilidad de Internet durante décadas. No obstante, es crucial notar su naturaleza intrínsecamente \textbf{reactiva}: el mecanismo se activa únicamente \textit{después} de que la congestión ha provocado pérdidas reales, momento en el cual la calidad 
+del servicio se ha degradado y el problema ya es perceptible. Esta limitación reactiva es la motivación central que impulsa el enfoque predictivo propuesto en esta tesis.
 
 \subsubsection*{El cuello de botella}
 
-En cualquier ruta que conecte dos nodos de una red, típicamente a través de múltiples enlaces intermedios, existe un concepto adicional relevante: el \textbf{cuello de botella} (\textit{bottleneck}). Se trata del enlace con menor capacidad disponible a lo largo de toda la ruta, y 
-es este el que determina la velocidad máxima a la que pueden fluir los datos de extremo a extremo, de manera análoga a como el tramo más estrecho de una tubería limita el caudal total de agua que puede circular por ella, sin importar qué tan anchos sean los demás tramos. Los cuellos de botella 
-son, por definición, los puntos donde la congestión se manifiesta primero y con mayor intensidad dentro de una red, y por lo tanto son los candidatos naturales sobre los cuales aplicar técnicas de predicción y prevención, como la que se propone en este trabajo.
+En cualquier ruta que conecte dos nodos de una red a través de múltiples enlaces intermedios, existe un concepto estructural determinante: el \textbf{cuello de botella} (\textit{bottleneck}). Se trata del enlace con la menor capacidad disponible a lo largo de toda la ruta, el cual establece la velocidad máxima teórica a la que pueden fluir los datos de extremo a extremo. De manera análoga 
+al tramo más estrecho de una tubería que limita el caudal total de agua, el cuello de botella es, por definición, el punto donde la congestión se manifiesta primero y con mayor intensidad. Por consiguiente, estos enlaces son los candidatos naturales para la aplicación de técnicas de predicción y prevención.
 
-\subsubsection*{Definición operativa de congestión para esta tesis}
+\subsubsection*{Definición operativa de congestión}
 
-A partir de los elementos anteriores —utilización, buffers, latencia, jitter, pérdida de paquetes y cuellos de botella— es posible ahora formular una definición precisa y, sobre todo, \textit{medible} de congestión, que es la que se adoptará de manera consistente a lo largo de todo el desarrollo 
-metodológico y experimental de esta tesis.
+A partir de los elementos anteriores (utilización, \textit{buffers}, latencia, \textit{jitter}, pérdida de paquetes y cuellos de botella), es posible formular una definición precisa y \textit{medible} de congestión, la cual se adoptará de manera consistente a lo largo del desarrollo metodológico y experimental del presente trabajo.
 
-Se dice que un enlace se encuentra en estado de \textbf{congestión} cuando su factor de utilización $U$ (Ecuación \ref{eq:utilizacion}) supera un umbral crítico $U_{th}$ durante un intervalo de tiempo sostenido, más allá del cual el comportamiento del sistema deja de ser lineal y comienzan a 
-manifestarse de forma perceptible los síntomas descritos anteriormente: crecimiento acelerado del tiempo de encolado, incremento del jitter y, en los casos más severos, pérdida de paquetes. Formalmente:
+Se establece que un enlace se encuentra en estado de \textbf{congestión} cuando su factor de utilización $U$ (Ecuación \ref{eq:utilizacion}) supera un umbral crítico $U_{th}$ durante un intervalo de tiempo sostenido, punto a partir del cual el comportamiento del sistema deja de ser lineal y comienzan a manifestarse los síntomas de degradación: crecimiento acelerado del tiempo de encolado, 
+incremento del \textit{jitter} y pérdida de paquetes. Formalmente:
 
 \begin{equation}
     \text{Congestión} \iff U(t) \geq U_{th} \quad \text{durante un intervalo } [t, t+\Delta t]
     \label{eq:congestion_def}
 \end{equation}
 
-La determinación del umbral crítico $U_{th}$ y la ventana de observación $\Delta t$ no se establecerá de manera arbitraria. Para garantizar el rigor del etiquetado, el valor de $U_{th}$ se derivará empíricamente en el Capítulo 4 a partir de un análisis estadístico sobre el conjunto de datos de 
-operación histórica. Específicamente, se buscará identificar el punto de inflexión en la distribución de los datos (por ejemplo, mediante el percentil 85 o 90) donde la métrica de utilización comienza a correlacionarse con un incremento exponencial en los retardos o fluctuaciones de la red. 
-De igual forma, el intervalo $\Delta t$ estará dictado por la granularidad de muestreo soportada por las herramientas de instrumentación pasiva empleadas durante la recolección de las trazas.
+La determinación del umbral crítico $U_{th}$ y la ventana de observación $\Delta t$ no se establecerá de manera arbitraria. Para garantizar el rigor empírico, el valor de $U_{th}$ se derivará en el Capítulo 4 a partir de un análisis estadístico sobre el conjunto de datos operativos, identificando el punto de inflexión en la distribución (por ejemplo, mediante el percentil 85 o 90) donde la métrica de utilización comienza a correlacionarse con un incremento exponencial en las fluctuaciones de la red. De igual forma, el intervalo $\Delta t$ estará dictado por la granularidad de muestreo soportada por las herramientas de instrumentación pasiva empleadas durante la recolección de las trazas de 30 días.
 
-Esta definición operativa presenta dos ventajas fundamentales para los fines de esta investigación. En primer lugar, se apoya en una métrica directamente observable y de fácil recolección de forma pasiva —el factor de utilización—, a diferencia de otras métricas como el jitter o la pérdida de 
-paquetes, que requieren instrumentación más invasiva o cálculos derivados más complejos. En segundo lugar, al tratarse de un umbral cuantitativo y no de una apreciación cualitativa, permite convertir el problema de predecir congestión en un problema bien definido de aprendizaje automático: 
-ya sea como una tarea de \textbf{regresión} (predecir el valor futuro de $U(t)$) o como una tarea de \textbf{clasificación binaria} (predecir si $U(t)$ superará o no el umbral $U_{th}$ en un horizonte temporal determinado), ambos enfoques que se explorarán y compararán en los capítulos metodológico 
-y experimental de este trabajo.
+Esta definición operativa presenta dos ventajas fundamentales. En primer lugar, se apoya en una métrica directamente observable y de fácil recolección pasiva (el factor de utilización), a diferencia del \textit{jitter} o la pérdida de paquetes, que requieren instrumentación invasiva. En segundo lugar, al establecer un umbral cuantitativo, permite convertir la detección de congestión en un problema formal de aprendizaje automático. De este modo, el problema puede abordarse como una tarea de \textbf{regresión} (predecir el valor futuro de $U(t)$) o como una tarea de \textbf{clasificación binaria} (predecir si $U(t)$ superará o no el umbral $U_{th}$ en un horizonte temporal determinado); ambos enfoques se explorarán y compararán en los capítulos metodológico y experimental.
 
-Es importante reconocer, sin embargo, que esta definición constituye una simplificación deliberada de un fenómeno inherentemente multifactorial. Como se mencionó en la sección de alcances y limitaciones, otras dimensiones de la congestión —como el jitter o la tasa de pérdida de paquetes— no son
-modeladas de forma directa por el prototipo desarrollado en esta tesis, aunque su comprensión teórica, expuesta en esta sección, resulta indispensable para justificar por qué la utilización constituye un proxy razonable y suficientemente informativo del estado de congestión de un enlace.
+Es importante reconocer que esta definición constituye una simplificación deliberada de un fenómeno inherentemente multifactorial. Como se estableció en la sección de alcances y limitaciones, variables como el \textit{jitter} o la tasa de pérdida no son modeladas directamente por el prototipo, aunque su comprensión teórica, expuesta en esta sección, resulta indispensable para justificar por qué el factor de utilización constituye un indicador robusto y suficientemente informativo para anticipar la saturación de un enlace.
+
 \subsection{Métricas de rendimiento}
 \label{sec:metricas}
 
