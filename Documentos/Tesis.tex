@@ -2022,6 +2022,87 @@ se adopta un umbral relativo de prueba ($U_{test} \geq 0.25$). Esto permite veri
 \section{Preprocesamiento}
 \label{sec:preprocesamiento_desarrollo}
 
+
+\subsection*{Detección de sesiones en el dataset primario}
+
+A diferencia del dataset piloto, cuyas discontinuidades se originan exclusivamente en la frontera entre trazas diarias independientes, el dataset primario presenta dos fuentes distintas de discontinuidad temporal: las interrupciones de conectividad documentadas en la Tabla \ref{tab:huecos_recoleccion}, y la frontera cronológica entre el segmento real de entrenamiento (que finaliza el 12 de septiembre de 2026) y el segmento sintético de entrenamiento (que inicia el 20 de septiembre de 2026, Sección 5.1). Aplicando el mismo criterio de segmentación por sesión (huecos superiores a 5 minutos), se identificaron 10 sesiones dentro del conjunto de entrenamiento, resumidas en la Tabla \ref{tab:sesiones_train}.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|r|r|l|l|l|}
+        \hline
+        \textbf{Sesión} & \textbf{Filas} & \textbf{Naturaleza} & \textbf{Inicio} & \textbf{Fin} \\
+        \hline
+        10 & 31,934 & Sintética & 2026-09-20 00:29 & 2026-10-12 04:42 \\
+        0  & 6,137  & Real & 2026-08-29 17:30 & 2026-09-02 23:50 \\
+        5  & 1,401  & Real & 2026-09-07 00:29 & 2026-09-07 23:49 \\
+        2  & 1,401  & Real & 2026-09-04 00:29 & 2026-09-04 23:49 \\
+        4  & 1,401  & Real & 2026-09-06 00:29 & 2026-09-06 23:49 \\
+        3  & 1,401  & Real & 2026-09-05 00:29 & 2026-09-05 23:49 \\
+        7  & 1,401  & Real & 2026-09-10 00:29 & 2026-09-10 23:49 \\
+        9  & 658    & Real & 2026-09-12 00:29 & 2026-09-12 11:26 \\
+        6  & 611    & Real & 2026-09-09 13:39 & 2026-09-09 23:49 \\
+        1  & 527    & Real & 2026-09-03 15:03 & 2026-09-03 23:49 \\
+        \hline
+    \end{tabular}
+    \caption{Sesiones continuas detectadas en el conjunto de entrenamiento del dataset primario.}
+    \label{tab:sesiones_train}
+\end{table}
+
+Como es de esperarse dado que el generador sintético (Sección 5.1) no introduce discontinuidades internas, la sesión sintética (identificador 10) constituye, por mucho, la más extensa —31,934 observaciones, equivalentes al 68.1\% del conjunto de entrenamiento total—, mientras que las nueve sesiones reales restantes corresponden a los segmentos delimitados por las interrupciones de conectividad de la Tabla \ref{tab:huecos_recoleccion}. Esta segmentación resulta indispensable para el cálculo de las variables de rezago y media móvil (Sección \ref{sec:metricas_utilizar}), evitando que dichas variables incorporen información proveniente de una sesión distinta separada por una interrupción de conectividad o por la frontera conceptual entre datos reales y sintéticos.
+
+\subsection*{Granularidad y parámetros oficiales}
+
+A diferencia del dataset piloto (granularidad de 1 segundo, valores $w=15$ y $h=5$ adoptados provisionalmente por razones de volumen, Sección 5.1), el dataset primario emplea la granularidad y los parámetros \textbf{oficiales} establecidos en la Sección \ref{sec:preprocesamiento}: granularidad de 1 minuto, ventana de observación $w=30$ minutos y horizonte de predicción $h=5$ minutos. La variable objetivo de clasificación se definió como una variable binaria que toma el valor 1 si $U(t+h) \geq U_{th}$, y 0 en caso contrario, consistente con la variable objetivo de regresión de la cual se deriva.
+
+\subsection*{Limpieza y variables derivadas}
+
+Sobre cada una de las 10 sesiones identificadas, se aplicó de manera independiente la interpolación lineal de huecos cortos (límite de 3 muestras) y el cálculo de las variables de rezago ($U_{lag1}$ a $U_{lag5}$) y media móvil (ventana de 30 minutos), siguiendo el mismo procedimiento validado sobre el dataset piloto (Ecuación \ref{eq:iqr} y criterios de la Sección \ref{sec:preprocesamiento}). Tras la limpieza y la eliminación de observaciones incompletas en los bordes de cada sesión, el conjunto de entrenamiento quedó compuesto por 46,872 observaciones (14,938 reales y 31,934 sintéticas, Tabla \ref{tab:composicion_dataset_final}).
+
+\subsection*{Normalización sin fuga de datos entre las cinco particiones}
+
+A diferencia del dataset piloto, cuya evaluación se realizó sobre un único par de conjuntos de validación y prueba, el diseño de evaluación dual establecido en la Sección 5.1 requiere que la normalización Min-Max se aplique consistentemente sobre \textbf{cinco} particiones distintas: entrenamiento, validación y prueba de regresión, y validación y prueba de clasificación. Conforme al criterio de la Sección \ref{sec:preprocesamiento}, los parámetros de escala se calcularon exclusivamente a partir del conjunto de entrenamiento, y se aplicaron sin recalcular sobre las cuatro particiones de evaluación restantes.
+
+La Figura \ref{fig:comparativa_distribuciones} contrasta la distribución de la utilización normalizada resultante en cada una de las cinco particiones, evidenciando visualmente la razón de fondo del diseño de evaluación dual: mientras que las particiones de regresión (100\% reales) concentran su masa de probabilidad completamente por debajo del umbral $U_{th}$ normalizado (línea roja discontinua), las particiones de clasificación (100\% sintéticas) exhiben una distribución que sí abarca la región de congestión.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{comparativa_distribuciones_conjuntos.png}
+    \caption{Distribución de la utilización normalizada en las cinco particiones del dataset primario.}
+    \label{fig:comparativa_distribuciones}
+\end{figure}
+
+La Tabla \ref{tab:rangos_normalizados} resume el rango normalizado resultante en cada partición, confirmando adicionalmente que, como es esperable al no recalcular los parámetros de escala, las particiones de evaluación pueden presentar valores mínimos ligeramente negativos o máximos distintos de 1 —consecuencia directa e intencional de evitar la fuga de información desde el futuro hacia el pasado.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{Mínimo} & \textbf{Máximo} & \textbf{Observaciones} \\
+        \hline
+        Entrenamiento & 0.000000 & 1.000000 & 46,872 \\
+        Validación (regresión) & 0.0000001 & 0.002992 & 4,914 \\
+        Prueba (regresión) & 0.0000001 & 0.014414 & 4,949 \\
+        Validación (clasificación) & $-$0.0000001 & 1.000000 & 10,622 \\
+        Prueba (clasificación) & $-$0.0000001 & 1.000000 & 10,622 \\
+        \hline
+    \end{tabular}
+    \caption{Rango de utilización normalizada por partición, dataset primario.}
+    \label{tab:rangos_normalizados}
+\end{table}
+
+\subsection*{Ventaneo secuencial}
+
+Para las arquitecturas LSTM y GRU, se construyeron secuencias mediante ventana deslizante de $w=30$ observaciones, respetando estrictamente las fronteras de sesión identificadas en la Tabla \ref{tab:sesiones_train}, conforme a la Ecuación \ref{eq:ventaneo}:
+
+\begin{equation}
+    X_t = \left[U(t-30), U(t-29), \dots, U(t-1)\right] \longrightarrow y_t = U(t+5)
+    \label{eq:ventaneo_instanciada_primario}
+\end{equation}
+
+El proceso resultó en 46,582 secuencias de entrenamiento, 4,796 y 4,833 secuencias para validación y prueba de regresión respectivamente, y 10,593 secuencias para cada partición de clasificación, cifras consistentes con la Tabla \ref{tab:composicion_dataset_final} una vez descontadas las observaciones consumidas en la conformación de cada ventana.
+
 \subsection*{Preprocesamiento del dataset primario}
 
 El preprocesamiento del dataset primario replicó las etapas descritas para el dataset piloto, con dos ajustes derivados de su naturaleza. Primero, la detección de sesiones continuas (necesaria para evitar que las variables de rezago crucen interrupciones de conectividad) identificó 11 sesiones dentro del conjunto de entrenamiento: nueve correspondientes a segmentos reales delimitados por las interrupciones documentadas anteriormente, y una sesión sintética continua de 31,934 observaciones —por mucho, la más extensa—, dado que el generador sintético no introduce discontinuidades internas.
@@ -2186,8 +2267,105 @@ del paradigma de Machine Learning clásico (Sección 5.4).
 
 \subsection*{Entrenamiento sobre el dataset primario}
 
-Dado que ARIMA requiere una serie temporal continua para su ajuste, el modelo se entrenó sobre la sesión de mayor longitud identificada en el conjunto de entrenamiento (Sección \ref{sec:preprocesamiento_desarrollo}): la sesión sintética continua de 31,934 observaciones, que incorpora tanto el régimen de tráfico normal como los eventos de congestión inyectados. La prueba de Dickey-Fuller Aumentada sobre esta serie confirmó estacionariedad ($\text{ADF}=-23.66$, $p<0.001$), por lo que no fue necesaria diferenciación ($d=0$). La búsqueda de orden por minimización del AIC seleccionó $\text{ARIMA}(3,0,3)$ ($\text{AIC}=-111{,}594.72$), con todos los coeficientes autorregresivos y de media móvil estadísticamente significativos ($p<0.01$), confirmando la correcta convergencia del modelo sobre el volumen de datos del dataset primario. Los resultados completos de esta evaluación, contrastados con los de los modelos subsiguientes, se presentan y discuten en el Capítulo 6.
+Dado que ARIMA requiere una serie temporal continua para su ajuste, el modelo se entrenó sobre la sesión de mayor longitud identificada en el conjunto de entrenamiento (Tabla \ref{tab:sesiones_train}): la sesión sintética continua de 31,934 observaciones, que incorpora tanto el régimen de tráfico normal como los 126 eventos de congestión inyectados (Sección 5.1).
 
+\subsubsection*{Estacionariedad e identificación del orden}
+
+La prueba de Dickey-Fuller Aumentada sobre esta serie arrojó $\text{ADF}=-23.6571$ ($p<0.0001$), confirmando estacionariedad sin necesidad de diferenciación ($d=0$) —a diferencia del dataset piloto de MAWI, que sí requirió diferenciación de primer orden (Sección 5.3)—. La búsqueda de orden por minimización del AIC, sobre las mismas dieciséis combinaciones $(p,0,q)$ evaluadas en la fase piloto, seleccionó $\text{ARIMA}(3,0,3)$ ($\text{AIC}=-111{,}594.72$), cuyos coeficientes estimados se presentan en la Ecuación \ref{eq:arima_primario_ajustado}:
+
+\begin{equation}
+    U_t = 0.0324 + 2.3103\,U_{t-1} - 1.7123\,U_{t-2} + 0.3971\,U_{t-3} + \varepsilon_t - 1.0847\,\varepsilon_{t-1} + 0.1825\,\varepsilon_{t-2} - 0.0209\,\varepsilon_{t-3}
+    \label{eq:arima_primario_ajustado}
+\end{equation}
+
+Todos los coeficientes resultaron estadísticamente significativos ($p<0.01$), y la prueba de Ljung-Box sobre los residuos ($p=0.98$) no permite rechazar la hipótesis de ausencia de autocorrelación residual. No obstante, es pertinente señalar, con honestidad metodológica, que la prueba de Jarque-Bera reveló una desviación marcada de la normalidad en los residuos (curtosis de 249.4), atribuible a los eventos de congestión sintéticos inyectados, cuyos cambios abruptos de régimen generan residuos ocasionales de magnitud considerablemente mayor a la del comportamiento típico de la serie.
+
+\subsubsection*{Evaluación de regresión (datos reales)}
+
+Conforme al diseño de evaluación dual establecido en la Sección 5.1, la capacidad de regresión del modelo se evaluó exclusivamente sobre las particiones reales de validación y prueba, mediante el esquema de pronóstico progresivo por bloques descrito en la Sección \ref{sec:metricas_evaluacion}. La Tabla \ref{tab:arima_primario_regresion} presenta los resultados.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
+        \hline
+        Validación (real) & 0.046045 & 0.015110 \\
+        Prueba (real) & 0.045872 & 0.015059 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de ARIMA(3,0,3) sobre el dataset primario (escala original de utilización).}
+    \label{tab:arima_primario_regresion}
+\end{table}
+
+La Figura \ref{fig:arima_primario_regresion} contrasta visualmente las predicciones del modelo contra los valores reales observados en el conjunto de prueba de regresión.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{arima_primario_regresion_test.png}
+    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \label{fig:arima_primario_regresion}
+\end{figure}
+
+Se omite deliberadamente el MAPE de esta tabla, en congruencia con la advertencia formulada en la Sección \ref{sec:metricas_evaluacion}: dado que la utilización real observada se encuentra sistemáticamente cercana a cero (Sección 5.1, Tabla \ref{tab:estadisticas_real}), esta métrica se vuelve numéricamente inestable y pierde valor interpretativo. Tanto el RMSE como el MAE resultan, en cambio, considerablemente mayores que el rango típico de la señal real (utilización máxima observada de apenas 1.44\%, Tabla \ref{tab:estadisticas_real}), evidenciando un sesgo sistemático de sobreestimación: al haber sido entrenado sobre una serie que incluye picos de congestión de hasta 0.98, el modelo ARIMA(3,0,3) internaliza una media incondicional ($\text{const}=0.0324$) muy superior al comportamiento típico de la red real, produciendo pronósticos que exceden consistentemente los valores reales observados.
+
+\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
+
+La Tabla \ref{tab:arima_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización de las predicciones continuas en $U_{th}=0.80$, conforme al criterio de la Sección \ref{sec:metricas_evaluacion}.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
+        \hline
+        Accuracy & 0.9741 & 0.9750 \\
+        Precision & 0.6667 & 1.0000 \\
+        Recall & 0.0357 & 0.0185 \\
+        F1-score & 0.0678 & 0.0364 \\
+        AUC-ROC & 0.8905 & 0.8939 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de clasificación de ARIMA(3,0,3), umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:arima_primario_clasificacion}
+\end{table}
+
+La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_arima}) revela el patrón subyacente a estas métricas:
+
+\begin{equation}
+    \begin{pmatrix} \text{VN}=2070 & \text{FP}=0 \\ \text{FN}=53 & \text{VP}=1 \end{pmatrix}
+    \label{eq:confusion_arima}
+\end{equation}
+
+
+La Figura \ref{fig:arima_primario_clasificacion} ilustra este mismo comportamiento en el conjunto de prueba de clasificación, donde es visible cómo la predicción del modelo (línea discontinua) rara vez alcanza el umbral $U_{th}=0.80$ (línea punteada), incluso durante los eventos de congestión sintéticos claramente presentes en la serie real.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{arima_primario_clasificacion_test.png}
+    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:arima_primario_clasificacion}
+\end{figure}
+
+El patrón de alta precisión (100\%) combinado con un recall extremadamente bajo (1.85\%) es consistente con el hallazgo de la fase piloto (Sección 5.3): ARIMA, al suavizar sus pronósticos hacia la tendencia central de la serie mediante su componente de media móvil, rara vez genera predicciones puntuales que crucen el umbral $U_{th}$, incluso cuando la dinámica subyacente de la serie indica una tendencia de congestión, resultando en un número elevado de falsos negativos (53 de 54 eventos reales de congestión no detectados en el conjunto de prueba).
+
+La Tabla \ref{tab:comparativa_arima_piloto_primario} contrasta el desempeño de ARIMA entre la fase piloto (MAWI) y el dataset primario definitivo.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        Orden seleccionado & ARIMA(1,1,1) & ARIMA(3,0,3) \\
+        Recall (clasificación) & N/A\footnotemark & 1.85\% \\
+        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.8939 \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de ARIMA entre la fase piloto y el dataset primario.}
+    \label{tab:comparativa_arima_piloto_primario}
+\end{table}
+\footnotetext{No aplicable: el dataset piloto de MAWI no contuvo casos naturales de congestión (Sección 5.1), por lo que la formulación de clasificación no pudo evaluarse en esa fase.}
 \section{Construcción del modelo Random Forest}
 
 Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, se implementó un modelo Random Forest como representante del paradigma de Machine Learning clásico utilizando el módulo \texttt{ensemble.RandomForestRegressor} (y su contraparte \texttt{Classifier}) de la biblioteca \texttt{scikit-learn}. 
@@ -2265,7 +2443,140 @@ Como ilustra la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\text{medi
 
 \subsection*{Entrenamiento sobre el dataset primario}
 
-El modelo Random Forest se reentrenó con la misma configuración de hiperparámetros validada en la fase piloto (200 árboles, profundidad máxima de 10), esta vez sobre las 46,872 observaciones del conjunto de entrenamiento del dataset primario. El análisis de importancia de variables confirmó el patrón observado en el piloto: el rezago inmediato ($U_{lag1}$) concentra la mayor importancia relativa (66.4\%), seguido de la media móvil (12.5\%) y el rezago de mayor orden ($U_{lag5}$, 11.7\%), sugiriendo que, también a escala del dataset primario, el nivel de tráfico más reciente resulta el predictor dominante. Los resultados completos de evaluación se presentan en el Capítulo 6.
+El modelo Random Forest se reentrenó con idéntica configuración de hiperparámetros a la validada en la fase piloto (200 árboles, profundidad máxima de 10 niveles), esta vez sobre las 46,872 observaciones del conjunto de entrenamiento del dataset primario (real más sintético, Tabla \ref{tab:composicion_dataset_final}).
+
+\subsubsection*{Evaluación de regresión (datos reales)}
+
+La Tabla \ref{tab:rf_primario_regresion} presenta las métricas de regresión sobre las particiones reales de validación y prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
+        \hline
+        Validación (real) & 0.005084 & 0.004766 \\
+        Prueba (real) & 0.049590 & 0.010301 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de Random Forest sobre el dataset primario (escala normalizada).}
+    \label{tab:rf_primario_regresion}
+\end{table}
+
+Las Figuras \ref{fig:rf_primario_regresion_val} y \ref{fig:rf_primario_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_val.png}
+    \caption{Random Forest: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \label{fig:rf_primario_regresion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
+    \caption{Random Forest: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \label{fig:rf_primario_regresion_test}
+\end{figure}
+
+Se observa una diferencia notable entre el error de validación (RMSE=0.0051) y el de prueba (RMSE=0.0496), un incremento de casi un orden de magnitud. Esta discrepancia es consistente con el fenómeno de incapacidad de extrapolación de los modelos basados en árboles de decisión, ya documentado en la fase piloto (Sección 5.4): dado que el conjunto de prueba corresponde temporalmente al segmento final de la recolección real, cualquier ráfaga de tráfico en dicho segmento que exceda el rango de valores objetivo observados durante el entrenamiento —compuesto mayoritariamente por el régimen de baja utilización característico de la red del Cliente (Sección 5.1)— es sistemáticamente subestimada por el modelo, replicando a escala del dataset primario la misma limitación estructural identificada sobre MAWI.
+
+\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
+
+La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización de las predicciones continuas en $U_{th}=0.80$ (normalizado).
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
+        \hline
+        Accuracy & 0.9803 & 0.9813 \\
+        Precision & 0.9121 & 0.9318 \\
+        Recall & 0.2923 & 0.2982 \\
+        F1-score & 0.4427 & 0.4518 \\
+        AUC-ROC & 0.8796 & 0.9187 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de clasificación de Random Forest, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:rf_primario_clasificacion}
+\end{table}
+
+La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_rf}) evidencia una mejora sustancial respecto a ARIMA (Ecuación \ref{eq:confusion_arima}, Sección 5.3): de los 275 eventos de congestión reales, el modelo detectó correctamente 82.
+
+\begin{equation}
+    \begin{pmatrix} \text{VN}=10341 & \text{FP}=6 \\ \text{FN}=193 & \text{VP}=82 \end{pmatrix}
+    \label{eq:confusion_rf}
+\end{equation}
+
+Las Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test} ilustran este comportamiento, donde es visible cómo la predicción del modelo (línea discontinua) reacciona y cruza el umbral $U_{th}$ (línea punteada) con mayor frecuencia que ARIMA durante los eventos de congestión presentes en la serie sintética.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_val.png}
+    \caption{Random Forest: predicción vs. valor real, validación de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:rf_primario_clasificacion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
+    \caption{Random Forest: predicción vs. valor real, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:rf_primario_clasificacion_test}
+\end{figure}
+
+\subsubsection*{Importancia de variables}
+
+La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_importancia} presentan la importancia relativa de cada variable de entrada sobre el dataset primario.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Variable} & \textbf{Importancia relativa} \\
+        \hline
+        $U_{lag1}$ & 0.6644 \\
+        $U_{\text{media\_movil}}$ & 0.1249 \\
+        $U_{lag5}$ & 0.1171 \\
+        $U_{lag2}$ & 0.0320 \\
+        $U_{lag3}$ & 0.0315 \\
+        $U_{lag4}$ & 0.0301 \\
+        \hline
+    \end{tabular}
+    \caption{Importancia relativa de variables, Random Forest, dataset primario.}
+    \label{tab:rf_primario_importancia}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{rf_primario_importancia.png}
+    \caption{Importancia relativa de variables, Random Forest, dataset primario.}
+    \label{fig:rf_primario_importancia}
+\end{figure}
+
+Resulta notable que el patrón de importancia obtenido sobre el dataset primario \textbf{se invierte} respecto al observado en la fase piloto (Sección 5.4), donde la media móvil concentraba el 66.2\% de la importancia total frente a apenas 13.9\% del rezago inmediato. Sobre el dataset primario, en cambio, $U_{lag1}$ concentra el 66.4\% de la importancia, mientras que la media móvil desciende al 12.5\%. Una explicación plausible de esta inversión radica en la diferencia de granularidad entre ambos escenarios: a granularidad de 1 segundo (dataset piloto), el valor inmediatamente anterior es propenso al ruido de alta frecuencia, por lo que la media móvil aporta una señal más estable; a granularidad de 1 minuto (dataset primario, granularidad oficial establecida en la Sección \ref{sec:preprocesamiento}), cada observación ya integra una unidad de tiempo mayor, reduciendo el ruido de muestra a muestra y haciendo que el valor más reciente sea, por sí solo, más informativo sobre el estado inmediato de la red.
+
+\subsubsection*{Síntesis comparativa piloto vs. dataset primario}
+
+La Tabla \ref{tab:comparativa_rf_piloto_primario} contrasta el desempeño de clasificación de Random Forest entre ambas fases.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        Recall (clasificación) & N/A\footnotemark & 0.2982 \\
+        F1-score (clasificación) & N/A\footnotemark[\value{footnote}] & 0.4518 \\
+        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.9187 \\
+        Variable más importante & $U_{\text{media\_movil}}$ (66.2\%) & $U_{lag1}$ (66.4\%) \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de Random Forest entre la fase piloto y el dataset primario.}
+    \label{tab:comparativa_rf_piloto_primario}
+\end{table}
+\footnotetext{No aplicable: el dataset piloto de MAWI no contuvo casos naturales de congestión (Sección 5.1), por lo que la formulación de clasificación no pudo evaluarse en esa fase.}
+
 \section{Construcción del modelo LSTM}
 
 Conforme a la justificación topológica de la Sección \ref{sec:modelos_justificacion}, se implementó una red neuronal recurrente (LSTM) como representante del paradigma de Deep Learning, orquestada mediante la API de \texttt{Keras/TensorFlow}. El modelo consumió los tensores tridimensionales construidos mediante la función de ventana deslizante en el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}, Ecuación \ref{eq:ventaneo_instanciada_mawi}), explotando la secuencialidad inherente de los datos.
@@ -2375,6 +2686,122 @@ La Tabla \ref{tab:sintesis_modelos_piloto} consolida el desempeño transversal d
 La evidencia recabada en esta iteración de prueba confirma estructuralmente la hipótesis algorítmica: mientras que la regresión estadística (ARIMA) es funcional como línea base reactiva, el incremento en la complejidad topológica hacia modelos de ensamble (Random Forest) y estructuras neuronales profundas (LSTM) se traduce en ganancias no lineales para el alertamiento preventivo (pasando de 1.2 a 3.9 minutos de anticipación). 
 
 Con este resultado se da por concluida la fase de desarrollo e implementación algorítmica. El \textit{pipeline} de software —desde la decodificación de telemetría hasta el dictamen tensorial— ha demostrado ser numéricamente estable y metodológicamente congruente. La evaluación de rendimiento definitiva, orientada a demostrar la utilidad general del prototipo sobre un entorno de producción, será ejecutada en el Capítulo 6 al someter esta arquitectura al volumen longitudinal de NUMEROFINAL días de recolección proveniente de la infraestructura primaria RouterOS.
+
+\subsection*{Entrenamiento sobre el dataset primario}
+
+La red LSTM se reentrenó con la arquitectura validada en la fase piloto (Tabla \ref{tab:arquitectura_lstm}: capa LSTM de 32 unidades, capa densa de 16 unidades con activación ReLU, capa de salida de una unidad; 4,897 parámetros entrenables), sobre las 46,582 secuencias de entrenamiento del dataset primario (Sección \ref{sec:preprocesamiento_desarrollo}), bajo el mismo criterio de \textit{early stopping} (paciencia de 10 épocas, restauración de los mejores pesos).
+
+El entrenamiento convergió en la época 16 de 100 configuradas —ligeramente más tardío que en la fase piloto (época 12)—, resultado esperable dado el volumen considerablemente mayor de datos de entrenamiento del dataset primario (46,582 secuencias frente a 1,026 del piloto). La Figura \ref{fig:lstm_primario_curva} presenta la evolución de la función de pérdida.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{lstm_primario_curva_aprendizaje.png}
+    \caption{Curva de aprendizaje de la red LSTM, dataset primario.}
+    \label{fig:lstm_primario_curva}
+\end{figure}
+
+Ambas curvas —entrenamiento y validación— se mantienen próximas entre sí a lo largo del proceso, sin divergencia sustancial, descartando un sobreajuste severo pese al incremento de escala respecto a la fase piloto.
+
+\subsubsection*{Evaluación de regresión (datos reales)}
+
+La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas de regresión sobre las particiones reales de validación y prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
+        \hline
+        Validación (real) & 0.000131 & 0.000019 \\
+        Prueba (real) & 0.001036 & 0.000125 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de LSTM sobre el dataset primario (escala normalizada).}
+    \label{tab:lstm_primario_regresion}
+\end{table}
+
+Estos resultados constituyen, por un margen considerable, el mejor desempeño de regresión entre los tres modelos evaluados sobre el dataset primario (RMSE de prueba casi dos órdenes de magnitud inferior al de ARIMA y Random Forest, Secciones 5.3 y 5.4). Las Figuras \ref{fig:lstm_primario_regresion_val} y \ref{fig:lstm_primario_regresion_test} contrastan visualmente las predicciones contra los valores reales observados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
+    \caption{LSTM: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \label{fig:lstm_primario_regresion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
+    \caption{LSTM: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \label{fig:lstm_primario_regresion_test}
+\end{figure}
+
+Una explicación plausible de esta ventaja sustancial reside en la capacidad de la red para reconocer el patrón de bajo tráfico característico del régimen real de la red del Cliente (Sección 5.1) directamente a partir de la secuencia completa de entrada, en lugar de depender de una media incondicional aprendida durante el entrenamiento —como ocurre con ARIMA— o de particiones discretas del espacio de variables —como ocurre con Random Forest—, ambas influenciadas por la proporción de eventos de congestión sintéticos presentes en el conjunto de entrenamiento combinado.
+
+\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
+
+La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasificación.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
+        \hline
+        Accuracy & 0.9742 & 0.9750 \\
+        Precision & 0.7619 & 0.7778 \\
+        Recall & 0.0563 & 0.0509 \\
+        F1-score & 0.1049 & 0.0956 \\
+        AUC-ROC & 0.8783 & 0.9000 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:lstm_primario_clasificacion}
+\end{table}
+
+La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_lstm}) revela un desempeño de clasificación \textbf{intermedio} entre ARIMA y Random Forest: de los 275 eventos de congestión reales, LSTM detectó correctamente 14, una cifra sustancialmente inferior a los 82 detectados por Random Forest (Sección 5.4), aunque superior al único evento detectado por ARIMA (Sección 5.3).
+
+\begin{equation}
+    \begin{pmatrix} \text{VN}=10314 & \text{FP}=4 \\ \text{FN}=261 & \text{VP}=14 \end{pmatrix}
+    \label{eq:confusion_lstm}
+\end{equation}
+
+Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test} ilustran las predicciones del modelo sobre las particiones sintéticas de clasificación, evidenciando que, a pesar de su desempeño sobresaliente en regresión, la red LSTM tiende a producir predicciones conservadoras que rara vez cruzan el umbral $U_{th}$ (línea punteada).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_val.png}
+    \caption{LSTM: predicción, validación de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:lstm_primario_clasificacion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
+    \caption{LSTM: predicción, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:lstm_primario_clasificacion_test}
+\end{figure}
+
+Este resultado, aparentemente contraintuitivo —el modelo con mejor desempeño de regresión no es el de mejor desempeño de clasificación—, resulta congruente con la función objetivo empleada durante el entrenamiento: al minimizar el error cuadrático medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección 5.1), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. Este hallazgo se retoma con mayor profundidad en la discusión comparativa del Capítulo 6.
+
+\subsubsection*{Síntesis comparativa piloto vs. dataset primario}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        RMSE (regresión) & 0.0891 & 0.001036 \\
+        Recall (clasificación) & N/A\footnotemark & 0.0509 \\
+        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.9000 \\
+        Épocas hasta convergencia & 12 & 16 \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de LSTM entre la fase piloto y el dataset primario.}
+    \label{tab:comparativa_lstm_piloto_primario}
+\end{table}
+\footnotetext{No aplicable: el dataset piloto de MAWI no contuvo casos naturales de congestión (Sección 5.1), por lo que la formulación de clasificación no pudo evaluarse en esa fase.}
 
 
 \chapter{Resultados y Discusión}
