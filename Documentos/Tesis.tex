@@ -852,22 +852,21 @@ La Tabla \ref{tab:datasets_literatura} sintetiza los conjuntos de datos empleado
     \label{tab:datasets_literatura}
 \end{table}
 
-Dos observaciones se desprenden de esta comparación. En primer lugar, la duración adoptada para el dataset primario de esta tesis es del mismo orden de magnitud que la empleada por Santos et al. \cite{santos2022}, uno de los trabajos más metodológicamente cercanos revisados en este capítulo, 
-lo cual respalda la suficiencia de dicho periodo para capturar patrones cíclicos diarios y semanales de tráfico. En segundo lugar, se observa que una proporción considerable de los trabajos revisados —particularmente aquellos enfocados en ML clásico— recurren a datos simulados en 
-lugar de tráfico real, una decisión metodológica que facilita el control experimental pero que limita la validez de los hallazgos frente a condiciones de operación reales. Esta observación refuerza el valor diferencial del enfoque híbrido adoptado en esta tesis, que combina datos reales 
-de dos naturalezas y escalas distintas en lugar de recurrir a tráfico simulado o a una única fuente.
+Dos observaciones se desprenden de esta comparación. En primer lugar, la duración adoptada para el dataset primario de esta tesis es del mismo orden de magnitud que la empleada por Santos et al. \cite{santos2022}, uno de los trabajos más metodológicamente cercanos revisados en este capítulo, lo cual respalda la suficiencia de dicho periodo para capturar patrones cíclicos diarios y semanales de tráfico. En segundo lugar, se observa que una proporción 
+considerable de los trabajos revisados —particularmente aquellos enfocados en ML clásico— recurren a datos simulados en lugar de tráfico real, una decisión metodológica que facilita el control experimental pero que limita la validez de los hallazgos frente a condiciones de operación reales. Esta observación refuerza el valor diferencial del enfoque híbrido adoptado en esta tesis, que combina datos reales de dos naturalezas y escalas distintas en lugar 
+de recurrir a tráfico simulado o a una única fuente.
+\newpage
 
 \section{Síntesis del estado del arte y brecha a cubrir}
+\label{sec:estado_brecha}
 
-Las secciones anteriores de este capítulo revisaron nueve trabajos distintos, organizados cronológica y metodológicamente en tres grandes familias: métodos estadísticos clásicos (Sección 3.1), Machine Learning clásico (Sección 3.2) y Deep Learning (Sección 3.3), complementados con 
-una revisión de las herramientas de instrumentación y los datasets empleados por dichos trabajos (Sección 3.4). El propósito de esta sección final es triple: primero, consolidar en un solo lugar los hallazgos dispersos a lo largo del capítulo; segundo, analizar de manera sistemática 
-el \textit{qué}, \textit{por qué}, \textit{cómo}, \textit{para qué} y \textit{cuándo} de la literatura revisada, con el fin de identificar patrones que no resultan evidentes al leer cada trabajo de manera aislada; y tercero —y más importante—, delimitar con precisión la brecha específica 
-que esta tesis busca cubrir, así como el aporte concreto que este trabajo ofrece de vuelta a la comunidad académica.
+Las secciones anteriores de este capítulo revisaron nueve trabajos distintos, organizados cronológica y metodológicamente en tres grandes familias: métodos estadísticos clásicos (Sección \ref{sec:estado_estadistica}), \textit{Machine Learning} clásico (Sección \ref{sec:estado_ml}) y \textit{Deep Learning} (Sección \ref{sec:estado_dl}), complementados con una revisión de las herramientas de instrumentación y los \textit{datasets} empleados por dichos 
+trabajos (Sección \ref{sec:estado_datos}). El propósito de esta sección final es triple: primero, consolidar en un solo lugar los hallazgos dispersos a lo largo del capítulo; segundo, analizar de manera sistemática el \textit{qué}, \textit{por qué}, \textit{cómo}, \textit{para qué} y \textit{cuándo} de la literatura revisada, con el fin de identificar patrones que no resultan evidentes al leer cada trabajo de manera aislada; y tercero ---y más 
+importante---, delimitar con precisión la brecha específica que esta tesis busca cubrir, así como el aporte concreto que este trabajo ofrece de vuelta a la comunidad académica.
 
 \subsection*{Tabla maestra de trabajos revisados}
 
-La Tabla \ref{tab:sintesis_maestra} reúne los nueve trabajos citados en este capítulo, contrastando su enfoque metodológico, la naturaleza de los datos empleados, su aporte principal, y —el elemento más relevante para los fines de esta síntesis— la limitación específica que, 
-desde la perspectiva de esta tesis, dicho trabajo deja abierta.
+La Tabla \ref{tab:sintesis_maestra} reúne los nueve trabajos citados en este capítulo, contrastando su enfoque metodológico, la naturaleza de los datos empleados, su aporte principal y ---el elemento más relevante para los fines de esta síntesis--- la limitación específica que, desde la perspectiva de esta tesis, dicho trabajo deja abierta.
 
 \begin{table}[H]
     \centering
@@ -876,23 +875,23 @@ desde la perspectiva de esta tesis, dicho trabajo deja abierta.
         \hline
         \textbf{Trabajo} & \textbf{Año} & \textbf{Enfoque} & \textbf{Aporte principal} & \textbf{Limitación relevante} \\
         \hline
-        Moayedi \& Masnadi-Shirazi \cite{moayedi2008} & 2008 & ARIMA & Detección de anomalías vía residuos de predicción & No captura no linealidades; congestión inferida indirectamente \\
+        Moayedi \& Masnadi-Shirazi \cite{moayedi2008} & 2008 & ARIMA & Detección de anomalías vía residuos de predicción & No captura no linealidades; congestión inferida indirectamente. \\
         \hline
-        Tian \cite{tian2021} & 2021 & ARIMA + Volterra & Mejora de ARIMA con componente no lineal & Sigue centrado en volumen de tráfico, no en congestión como evento \\
+        Tian \cite{tian2021} & 2021 & ARIMA + Volterra & Mejora de ARIMA con componente no lineal & Sigue centrado en volumen de tráfico, no en congestión como evento. \\
         \hline
-        Kochetkova et al. \cite{kochetkova2023} & 2023 & SARIMA / Holt-Winters & Explota estacionalidad en redes 5G & Sin comparación contra ML/DL en el mismo estudio \\
+        Kochetkova et al. \cite{kochetkova2023} & 2023 & SARIMA / Holt-Winters & Explota estacionalidad en redes 5G & Sin comparación contra ML/DL en el mismo estudio. \\
         \hline
-        Sneha et al. \cite{sneha2020} & 2020 & Random Forest, KNN, GB, DT & Predicción de congestión a nivel de enrutador & Datos simulados; sin validación en tráfico real \\
+        Sneha et al. \cite{sneha2020} & 2020 & \textit{Random Forest}, KNN, GB, DT & Predicción de congestión a nivel de enrutador & Datos simulados; sin validación en tráfico real. \\
         \hline
-        Qian et al. \cite{qian2016} & 2016 & SVR & Modelado de latencia basado en colas & Dominio distinto (NoC, no redes IP) \\
+        Qian et al. \cite{qian2016} & 2016 & SVR & Modelado de latencia basado en colas & Dominio distinto (NoC, no redes IP tradicionales). \\
         \hline
-        Labonne et al. \cite{labonne2021} & 2021 & ARIMA, MLP, LSTM & Framework completo de generación y predicción de utilización & Red simulada; sin validación externa \\
+        Labonne et al. \cite{labonne2021} & 2021 & ARIMA, MLP, LSTM & \textit{Framework} completo de generación y predicción de utilización & Red simulada; sin validación externa. \\
         \hline
-        Oliveira et al. \cite{oliveira2016} & 2016 & MLP, RNN, SAE & Comparación de arquitecturas de red neuronal & Mayor complejidad (SAE) no garantiza mejor desempeño \\
+        Oliveira et al. \cite{oliveira2016} & 2016 & MLP, RNN, SAE & Comparación de arquitecturas de red neuronal & Mayor complejidad (SAE) no garantiza mejor desempeño. \\
         \hline
-        Saha et al. \cite{saha2024} & 2024 & LSTM + Transfer Learning & Aborda datasets pequeños en ISPs & No compara contra modelos estadísticos ni ML clásico \\
+        Saha et al. \cite{saha2024} & 2024 & LSTM + \textit{Transfer Learning} & Aborda \textit{datasets} pequeños en ISPs & No compara contra modelos estadísticos ni ML clásico. \\
         \hline
-        Santos et al. \cite{santos2022} & 2022 & LSTM vs. GRU & Comparación directa LSTM/GRU en tráfico real (2 meses) & Un solo paradigma (DL); sin ARIMA ni ML clásico \\
+        Santos et al. \cite{santos2022} & 2022 & LSTM vs. GRU & Comparación directa LSTM/GRU en tráfico real (2 meses) & Un solo paradigma (DL); sin ARIMA ni ML clásico. \\
         \hline
     \end{tabular}
     \caption{Síntesis comparativa de los trabajos revisados en el Estado del Arte.}
@@ -901,8 +900,7 @@ desde la perspectiva de esta tesis, dicho trabajo deja abierta.
 
 \subsection*{Evolución cronológica y metodológica}
 
-La Figura \ref{fig:linea_tiempo} presenta una línea de tiempo que sitúa los trabajos revisados —junto con los hitos teóricos fundamentales presentados en el Marco Teórico de esta tesis (Capítulo 2)— dentro de la evolución histórica del campo, permitiendo visualizar de manera 
-inmediata la transición gradual de los métodos estadísticos hacia el Machine Learning clásico y, finalmente, hacia el Deep Learning.
+La Figura \ref{fig:linea_tiempo} presenta una línea de tiempo que sitúa los trabajos revisados ---junto con los hitos teóricos fundamentales presentados en el Marco Teórico de esta tesis (Capítulo 2)--- dentro de la evolución histórica del campo, permitiendo visualizar de manera inmediata la transición gradual de los métodos estadísticos hacia el \textit{Machine Learning} clásico y, finalmente, hacia el \textit{Deep Learning}.
 
 \begin{figure}[H]
     \centering
@@ -911,7 +909,6 @@ inmediata la transición gradual de los métodos estadísticos hacia el Machine 
         dot/.style={circle, fill=black!70, minimum size=6pt, inner sep=0pt}
     ]
     \draw[thick, -{Latex[length=3mm]}] (0,0) -- (14.5,0);
-
     
     \node[dot] at (0.5,0) {};
     \node[align=center, text width=2cm] at (0.5,-1) {\textbf{1988}\\ Jacobson\\ (Control TCP)};
@@ -923,7 +920,7 @@ inmediata la transición gradual de los métodos estadísticos hacia el Machine 
     \node[align=center, text width=2.2cm] at (4.5,-1) {\textbf{2016}\\ Oliveira et al. /\\ Qian et al.\\ (RNN / SVR)};
 
     \node[dot] at (6.5,0) {};
-    \node[align=center, text width=2.2cm] at (6.5,1) {\textbf{2020}\\ Sneha et al.\\ (Random Forest)};
+    \node[align=center, text width=2.2cm] at (6.5,1) {\textbf{2020}\\ Sneha et al.\\ (\textit{Random Forest})};
 
     \node[dot] at (8.5,0) {};
     \node[align=center, text width=2.4cm] at (8.5,-1) {\textbf{2021}\\ Tian / Labonne\\ et al.\\ (Híbridos)};
@@ -932,56 +929,48 @@ inmediata la transición gradual de los métodos estadísticos hacia el Machine 
     \node[align=center, text width=2.2cm] at (10.5,1) {\textbf{2022--23}\\ Santos et al. /\\ Kochetkova\\ et al.};
 
     \node[dot] at (12.5,0) {};
-    \node[align=center, text width=2.2cm] at (12.5,-1) {\textbf{2024}\\ Saha et al.\\ (Transfer\\ Learning)};
+    \node[align=center, text width=2.2cm] at (12.5,-1) {\textbf{2024}\\ Saha et al.\\ (\textit{Transfer}\\ \textit{Learning})};
 
     \node[dot, fill=black!20, draw=black, thick] at (14.5,0) {};
     \node[align=center, text width=2.4cm, font=\sffamily\footnotesize\bfseries] at (14.5,1.2) {2026\\ \textbf{Esta tesis}};
 
     \end{tikzpicture}
-    \caption{Línea de tiempo de la evolución metodológica en predicción de tráfico/congestión de red.}
+    \caption{Línea de tiempo de la evolución metodológica en predicción de tráfico y congestión de red.}
     \label{fig:linea_tiempo}
 \end{figure}
 
-Esta visualización revela un patrón claro: durante casi dos décadas (1988--2008) predominaron los métodos estadísticos; a partir de 2016 comienza una transición gradual y simultánea hacia el ML clásico y las primeras arquitecturas de Deep Learning; y a partir de 2020 los tres 
-paradigmas coexisten activamente en la literatura, sin que ninguno haya desplazado por completo a los anteriores. Esta coexistencia —más que una sustitución progresiva— es, como se argumentará más adelante, uno de los elementos que justifica el diseño comparativo de esta tesis.
+Esta visualización revela un patrón claro: durante casi dos décadas (1988--2008) predominaron los métodos estadísticos; a partir de 2016 comienza una transición gradual y simultánea hacia el ML clásico y las primeras arquitecturas de \textit{Deep Learning}; y a partir de 2020 los tres paradigmas coexisten activamente en la literatura, sin que ninguno haya desplazado por completo a los anteriores. Esta coexistencia ---más que una sustitución progresiva--- 
+es, como se argumentará más adelante, uno de los elementos que justifica el diseño comparativo de esta tesis.
 
 \subsection*{Análisis por dimensiones}
 
-\paragraph{¿Qué se ha investigado?} La literatura revisada se ha concentrado abrumadoramente en la predicción del \textbf{volumen de tráfico} como una serie temporal continua (Moayedi \& Masnadi-Shirazi \cite{moayedi2008}; Tian \cite{tian2021}; Kochetkova et al. \cite{kochetkova2023}; 
-Oliveira et al. \cite{oliveira2016}; Santos et al. \cite{santos2022}), tratando la congestión como una consecuencia implícita de dicho volumen más que como un evento a predecir de manera directa y explícita. Solo dos de los nueve trabajos revisados —Sneha et al. \cite{sneha2020} y, 
-de manera indirecta, Qian et al. \cite{qian2016}— abordan la congestión como una variable de interés discreta y directamente accionable, más cercana al enfoque de clasificación binaria establecido en la definición operativa de esta tesis (Ecuación \ref{eq:congestion_def}).
+\paragraph{¿Qué se ha investigado?} La literatura revisada se ha concentrado abrumadoramente en la predicción del \textbf{volumen de tráfico} como una serie temporal continua (Moayedi \& Masnadi-Shirazi \cite{moayedi2008}; Tian \cite{tian2021}; Kochetkova et al. \cite{kochetkova2023}; Oliveira et al. \cite{oliveira2016}; Santos et al. \cite{santos2022}), tratando la congestión como una consecuencia implícita de dicho volumen más que como un evento a 
+predecir de manera directa y explícita. Solo dos de los nueve trabajos revisados ---Sneha et al. \cite{sneha2020} y, de manera indirecta, Qian et al. \cite{qian2016}--- abordan la congestión como una variable de interés discreta y directamente accionable, más cercana al enfoque de clasificación binaria establecido en la definición operativa de esta tesis (Ecuación \ref{eq:congestion_def}).
 
-\paragraph{¿Por qué se ha investigado de esta manera?} La motivación predominante en la literatura revisada es la optimización de la gestión de recursos de red —asignación dinámica de ancho de banda, planeación de capacidad, mejora de la Calidad de Servicio (QoS)— más que la prevención 
-proactiva de eventos específicos de degradación del servicio. Esta orientación explica por qué la mayoría de los trabajos evalúan sus modelos mediante métricas de error continuo (RMSE, MAE, MAPE) en lugar de métricas propias de un problema de clasificación (precisión, exhaustividad, F1-score), 
-a pesar de que estas últimas resultarían más informativas para un caso de uso de alertamiento temprano como el que plantea esta tesis.
+\paragraph{¿Por qué se ha investigado de esta manera?} La motivación predominante en la literatura revisada es la optimización de la gestión de recursos de red (asignación dinámica de ancho de banda, planeación de capacidad, mejora de la Calidad de Servicio o QoS) más que la prevención proactiva de eventos específicos de degradación del servicio. Esta orientación explica por qué la mayoría de los trabajos evalúan sus modelos mediante métricas de error 
+continuo (RMSE, MAE, MAPE) en lugar de métricas propias de un problema de clasificación (precisión, exhaustividad, \textit{F1-score}), a pesar de que estas últimas resultarían más informativas para un caso de uso de alertamiento temprano como el que plantea esta tesis.
 
-\paragraph{¿Cómo se ha investigado?} Metodológicamente, se observa una fragmentación notable: cada trabajo revisado evalúa típicamente \textbf{un solo paradigma} de modelado —o, en el mejor de los casos, variantes dentro de un mismo paradigma, como Santos et al. \cite{santos2022} comparando LSTM 
-contra GRU, ambos de Deep Learning—. Ningún trabajo de los revisados en este capítulo compara de manera simultánea, sobre el mismo conjunto de datos y bajo las mismas condiciones experimentales, representantes de los tres paradigmas (estadístico, ML clásico y Deep Learning), lo cual dificulta 
-extraer conclusiones comparativas robustas a partir de la literatura existente de forma aislada. Asimismo, como se documentó en la Tabla \ref{tab:datasets_literatura} de la Sección 3.4, una proporción considerable de los trabajos de ML clásico recurre a datos simulados (Sneha et al. \cite{sneha2020}; 
-Labonne et al. \cite{labonne2021}), mientras que los trabajos con datos reales rara vez validan sus hallazgos en más de un escenario de red.
+\paragraph{¿Cómo se ha investigado?} Metodológicamente, se observa una fragmentación notable: cada trabajo revisado evalúa típicamente \textbf{un solo paradigma} de modelado ---o, en el mejor de los casos, variantes dentro de un mismo paradigma, como Santos et al. \cite{santos2022} comparando LSTM contra GRU, ambos de \textit{Deep Learning}---. Ningún trabajo de los revisados en este capítulo compara de manera simultánea, sobre el mismo conjunto de 
+datos y bajo las mismas condiciones experimentales, representantes de los tres paradigmas (estadístico, ML clásico y \textit{Deep Learning}), lo cual dificulta extraer conclusiones comparativas robustas a partir de la literatura existente de forma aislada. Asimismo, como se documentó en la Tabla \ref{tab:herramientas_monitoreo} de la Sección \ref{sec:estado_datos}, una proporción considerable de los trabajos de ML clásico recurre a datos simulados 
+(Sneha et al. \cite{sneha2020}; Labonne et al. \cite{labonne2021}), mientras que los trabajos con datos reales rara vez validan sus hallazgos en más de un escenario de red.
 
-\paragraph{¿Para qué se ha investigado?} La finalidad última declarada por la mayoría de los trabajos revisados es habilitar una gestión de red proactiva en lugar de reactiva, alineada con la motivación general de esta tesis expuesta en el Planteamiento del Problema (Sección 1.1). Sin embargo, 
-pocos trabajos —con la notable excepción de Sneha et al. \cite{sneha2020}— formulan explícitamente un umbral operativo o un mecanismo de alertamiento accionable; la mayoría se detiene en la demostración de la capacidad predictiva del modelo, la mayoría se detiene en la demostración de la capacidad 
-predictiva del modelo, sin traducir dicha capacidad en un criterio de decisión concreto. En contraste, contar con un umbral predictivo accionable como $U_{th}$ permite a un administrador o sistema automatizado tomar medidas preventivas reales en la infraestructura, tales como la inyección dinámica 
-de reglas de \textit{firewall} para limitar tráfico no esencial, el ajuste de métricas en protocolos de enrutamiento para desviar flujos, o la redirección de tráfico crítico a través de túneles seguros alternativos antes de que la saturación provoque la caída de servicios esenciales como el monitoreo 
-remoto.
+\paragraph{¿Para qué se ha investigado?} La finalidad última declarada por la mayoría de los trabajos revisados es habilitar una gestión de red proactiva en lugar de reactiva, alineada con la motivación general de esta tesis expuesta en el Planteamiento del Problema (Sección \ref{sec:planteamiento}). Sin embargo, pocos trabajos ---con la notable excepción de Sneha et al. \cite{sneha2020}--- formulan explícitamente un umbral operativo o un mecanismo 
+de alertamiento accionable; la mayoría se detiene en la demostración de la capacidad predictiva del modelo, sin traducir dicha capacidad en un criterio de decisión concreto. En contraste, contar con un umbral predictivo accionable como $U_{th}$ permite a un administrador o sistema automatizado tomar medidas preventivas reales en la infraestructura, tales como la inyección dinámica de reglas de \textit{firewall} para limitar tráfico no esencial, el 
+ajuste de métricas en protocolos de enrutamiento para desviar flujos, o la redirección de tráfico crítico a través de túneles seguros alternativos antes de que la saturación provoque la caída de servicios esenciales.
 
-\paragraph{¿Cuándo se ha investigado y hacia dónde se dirige el campo?} Como se ilustra en la Figura \ref{fig:linea_tiempo}, la investigación más reciente (2022--2024) muestra dos tendencias emergentes particularmente relevantes para esta tesis: por un lado, una preocupación creciente por la aplicabilidad 
-práctica de estos modelos en escenarios de datos limitados (Saha et al. \cite{saha2024}), reconociendo que gran parte de la literatura previa asume la disponibilidad de conjuntos de datos extensos poco representativos de redes pequeñas o medianas; y por otro, comparaciones cada vez más rigurosas entre 
-arquitecturas específicas de Deep Learning (Santos et al. \cite{santos2022}) que evidencian que la superioridad de un modelo sobre otro no es universal, sino dependiente del contexto de red particular.
+\paragraph{¿Cuándo se ha investigado y hacia dónde se dirige el campo?} Como se ilustra en la Figura \ref{fig:linea_tiempo}, la investigación más reciente (2022--2024) muestra dos tendencias emergentes particularmente relevantes para esta tesis: por un lado, una preocupación creciente por la aplicabilidad práctica de estos modelos en escenarios de datos limitados (Saha et al. \cite{saha2024}), reconociendo que gran parte de la literatura previa asume 
+la disponibilidad de conjuntos de datos extensos poco representativos de redes pequeñas o medianas; y por otro, comparaciones cada vez más rigurosas entre arquitecturas específicas de \textit{Deep Learning} (Santos et al. \cite{santos2022}) que evidencian que la superioridad de un modelo sobre otro no es universal, sino dependiente del contexto de red particular.
 
 A partir del análisis anterior es posible formular con precisión la brecha que esta tesis busca cubrir, articulada en tres componentes específicos:
 
 \begin{enumerate}
-    \item \textbf{Brecha conceptual}: la literatura revisada predice predominantemente el \textit{volumen} de tráfico como serie continua, mientras que esta tesis predice la \textit{congestión} como evento discreto y accionable, mediante la definición operativa formalizada en la Ecuación \ref{eq:congestion_def} 
-    (Sección \ref{sec:congestion}), permitiendo abordar el problema tanto desde la regresión como desde la clasificación (Sección 2.2.1).
-    \item \textbf{Brecha metodológica}: ningún trabajo revisado compara de manera simultánea y bajo condiciones experimentales controladas representantes de los tres paradigmas de modelado —estadístico (ARIMA), ML clásico (Random Forest) y Deep Learning (LSTM/GRU)—, tal como se plantea en el diseño metodológico de 
-    esta tesis (Capítulo 4).
-    \item \textbf{Brecha de validación}: la mayoría de los trabajos revisados se apoyan en un único dataset, ya sea real o simulado, sin contrastar sus hallazgos frente a escenarios de red de naturaleza o escala distinta. Esta tesis, mediante el enfoque híbrido descrito en la Sección \ref{sec:fuente_datos} —combinando 
-    la red real de escala reducida de un cliente con el archivo de tráfico de gran escala MAWI—, aborda directamente esta limitación, en línea con la recomendación implícita de trabajos como el de Saha et al. \cite{saha2024} respecto a la necesidad de validar modelos más allá de un único escenario de datos.
+    \item \textbf{Brecha conceptual}: la literatura revisada predice predominantemente el \textit{volumen} de tráfico como serie continua, mientras que esta tesis predice la \textbf{congestión} como evento discreto y accionable, mediante la definición operativa formalizada en la Ecuación \ref{eq:congestion_def} (Sección \ref{sec:congestion}), permitiendo abordar el problema tanto desde la regresión como desde la clasificación (Sección \ref{subsec:supervisado}).
+    \item \textbf{Brecha metodológica}: ningún trabajo revisado compara de manera simultánea y bajo condiciones experimentales controladas representantes de los tres paradigmas de modelado ---estadístico (ARIMA), ML clásico (\textit{Random Forest}) y \textit{Deep Learning} (LSTM/GRU)---, tal como se plantea en el diseño metodológico de esta tesis (Capítulo 4).
+    \item \textbf{Brecha de validación}: la mayoría de los trabajos revisados se apoyan en un único \textit{dataset}, ya sea real o simulado, sin contrastar sus hallazgos frente a escenarios de red de naturaleza o escala distinta. Esta tesis, mediante el enfoque híbrido descrito en la Sección \ref{sec:fuente_datos} ---combinando la red privada de escala reducida bajo estudio con el archivo de tráfico de gran escala MAWI---, aborda directamente esta limitación, 
+    en línea con la recomendación implícita de trabajos como el de Saha et al. \cite{saha2024} respecto a la necesidad de validar modelos más allá de un único escenario de datos.
 \end{enumerate}
 
-La Tabla \ref{tab:posicionamiento_tesis} sintetiza visualmente este posicionamiento, contrastando las características metodológicas predominantes en la literatura revisada frente al diseño adoptado en esta tesis.
+La Tabla \ref{tab:posicionamiento_tesis} sintetiza visualmente este posicionamiento, contrastando las características metodológicas predominantes en la literatura revisada frente al diseño adoptado en esta investigación.
 
 \begin{table}[H]
     \centering
@@ -991,13 +980,13 @@ La Tabla \ref{tab:posicionamiento_tesis} sintetiza visualmente este posicionamie
         \hline
         Variable objetivo & Volumen de tráfico (continuo) & Congestión (discreta, vía $U_{th}$) \\
         \hline
-        Paradigmas comparados & Uno solo, o variantes de uno solo & Tres (estadístico, ML clásico, DL) simultáneamente \\
+        Paradigmas comparados & Uno solo, o variantes de uno solo & Tres (estadístico, ML clásico, DL) simultáneamente. \\
         \hline
-        Naturaleza de los datos & Real \textit{o} simulado, una sola fuente & Real, dos fuentes complementarias (híbrido) \\
+        Naturaleza de los datos & Real o simulado, una sola fuente & Real, dos fuentes complementarias (híbrido). \\
         \hline
-        Escala de validación & Una sola escala de red & Dos escalas contrastantes (PYME y tránsito de gran escala) \\
+        Escala de validación & Una sola escala de red & Dos escalas contrastantes (privada reducida y tránsito de gran escala). \\
         \hline
-        Umbral accionable & Raramente explícito & Definido formalmente ($U_{th}$, Ecuación \ref{eq:congestion_def}) \\
+        Umbral accionable & Raramente explícito & Definido formalmente ($U_{th}$, Ecuación \ref{eq:congestion_def}). \\
         \hline
     \end{tabular}
     \caption{Posicionamiento metodológico de esta tesis frente a la literatura revisada.}
@@ -1006,58 +995,55 @@ La Tabla \ref{tab:posicionamiento_tesis} sintetiza visualmente este posicionamie
 
 \subsection*{Aporte de esta tesis a la literatura existente}
 
-En correspondencia con las tres brechas identificadas, esta tesis ofrece tres aportes concretos a la comunidad académica. Primero, aporta evidencia empírica comparativa entre los tres paradigmas de modelado revisados en este capítulo, evaluados bajo condiciones experimentales controladas y sobre los mismos conjuntos de 
-datos —un tipo de comparación ausente en la literatura revisada, donde cada paradigma suele evaluarse de manera aislada—. Segundo, aporta un caso de estudio de recolección de datos reales en una red heterogénea de pequeña escala (residencial/PYME con videovigilancia, servicios en la nube y tráfico de ISP coexistiendo 
-en el mismo enlace), un escenario significativamente menos representado en la literatura que las redes troncales de gran escala o los entornos simulados de laboratorio. Tercero, aporta una definición operativa explícita y formalizada de congestión (Ecuación \ref{eq:congestion_def}), que traduce directamente la salida 
-de los modelos predictivos en un criterio accionable para la toma de decisiones, respondiendo a la limitación de "umbral accionable raramente explícito" identificada en la Tabla \ref{tab:posicionamiento_tesis}.
+En correspondencia con las tres brechas identificadas, esta tesis ofrece tres aportes concretos a la comunidad académica. Primero, aporta evidencia empírica comparativa entre los tres paradigmas de modelado revisados en este capítulo, evaluados bajo condiciones experimentales controladas y sobre los mismos conjuntos de datos ---un tipo de comparación ausente en la literatura revisada, donde cada paradigma suele evaluarse de manera aislada---. Segundo, aporta un caso 
+de estudio de recolección de datos reales en una red heterogénea de pequeña escala (residencial/PYME con videovigilancia, servicios en la nube y tráfico de ISP coexistiendo en el mismo enlace), un escenario significativamente menos representado en la literatura que las redes troncales de gran escala o los entornos simulados de laboratorio. Tercero, aporta una definición operativa explícita y formalizada de congestión (Ecuación \ref{eq:congestion_def}), que traduce 
+directamente la salida de los modelos predictivos en un criterio accionable para la toma de decisiones, respondiendo a la limitación de "umbral accionable raramente explícito" identificada en la Tabla \ref{tab:posicionamiento_tesis}.
 
-Recíprocamente, esta tesis también reconoce su deuda con la literatura revisada: la definición del umbral operativo $U_{th}$ se apoya en la evidencia de estacionalidad documentada por Kochetkova et al. \cite{kochetkova2023}; el diseño de la comparación LSTM/GRU replica la metodología validada por Santos et al. \cite{santos2022} 
-sobre un periodo de recolección equivalente; y la estrategia de mitigación ante datasets de tamaño reducido, en caso de ser necesaria, se apoyaría directamente en el precedente de \textit{transfer learning} establecido por Saha et al. \cite{saha2024}. De esta manera, el capítulo de Metodología que sigue a continuación (Capítulo 4) 
-no parte de cero, sino que se construye deliberadamente sobre las fortalezas identificadas y en respuesta directa a las limitaciones documentadas a lo largo de esta revisión del estado del arte.
+Recíprocamente, esta tesis también reconoce su deuda con la literatura revisada: la definición del umbral operativo $U_{th}$ se apoya en la evidencia de estacionalidad documentada por Kochetkova et al. \cite{kochetkova2023}; el diseño de la comparación LSTM/GRU replica la metodología validada por Santos et al. \cite{santos2022} sobre un periodo de recolección equivalente; y la estrategia de mitigación ante \textit{datasets} de tamaño reducido, en caso de ser necesaria, 
+se apoyaría directamente en el precedente de \textit{transfer learning} establecido por Saha et al. \cite{saha2024}. De esta manera, el capítulo de Metodología que sigue a continuación (Capítulo 4) no parte de cero, sino que se construye deliberadamente sobre las fortalezas identificadas y en respuesta directa a las limitaciones documentadas a lo largo de esta revisión del estado del arte.
 
 \chapter{Metodología}
+\label{cap:metodologia}
 
-Los capítulos anteriores construyeron el fundamento conceptual de esta tesis: se definió formalmente qué se entiende por congestión de red (Capítulo 2, Ecuación \ref{eq:congestion_def}), y se identificaron, mediante la revisión sistemática de la literatura, tres brechas específicas que este trabajo busca cubrir (Capítulo 3, Sección 3.5). 
-Corresponde ahora al presente capítulo dar el paso de la revisión a la ejecución: traducir esas definiciones y esa brecha identificada en un plan de trabajo preciso, replicable y justificado en cada una de sus decisiones.
+Los capítulos anteriores construyeron el fundamento conceptual de esta tesis: se definió formalmente qué se entiende por congestión de red (Capítulo 2, Ecuación \ref{eq:congestion_def}), y se identificaron, mediante la revisión sistemática de la literatura, tres brechas específicas que este trabajo busca cubrir (Capítulo 3, Sección \ref{sec:estado_brecha}). Corresponde ahora al presente capítulo dar el paso de la revisión a la ejecución: traducir esas definiciones y las 
+brechas identificadas en un plan de trabajo preciso, replicable y justificado en cada una de sus decisiones.
 
-A diferencia de los capítulos precedentes, en los que el objeto de estudio era la producción académica de terceros, este capítulo describe exclusivamente decisiones propias del autor: qué tipo de investigación se está realizando, cómo se define y mide operativamente cada variable, de dónde provienen los datos, cómo se procesan, qué modelos 
-se implementan y con qué criterios se evalúan. Cada una de estas decisiones no es arbitraria, sino que responde directamente a lo establecido en capítulos anteriores —la definición operativa de congestión, el dataset híbrido descrito en la Sección \ref{sec:fuente_datos}, y los tres paradigmas de modelado comparados en la Sección 2.2— por 
-lo que el lector encontrará a lo largo de este capítulo referencias constantes hacia atrás, cerrando el círculo argumentativo abierto desde el planteamiento del problema.
+A diferencia de los capítulos precedentes, en los que el objeto de estudio era la producción académica de terceros, este capítulo describe exclusivamente decisiones metodológicas propias de esta investigación: qué tipo de investigación se está realizando, cómo se define y mide operativamente cada variable, de dónde provienen los datos, cómo se procesan, qué modelos se implementan y con qué criterios se evalúan. Cada una de estas decisiones no es arbitraria, sino que 
+responde directamente a lo establecido en los capítulos anteriores ---la definición operativa de congestión, el \textit{dataset} híbrido descrito en la Sección \ref{sec:fuente_datos}, y los tres paradigmas de modelado comparados en la Sección \ref{sec:tecnicas_ml}---, por lo que el lector encontrará a lo largo de este capítulo referencias constantes hacia atrás, cerrando el círculo argumentativo abierto desde el planteamiento del problema.
 
-Es importante señalar que las decisiones metodológicas aquí documentadas no necesariamente se tomaron en un único momento ni de manera lineal; muchas de ellas —como la elección del dataset híbrido o la definición del umbral de congestión— fueron resultado de un proceso iterativo de análisis y ajuste. Sin embargo, este capítulo las 
-presenta de manera ordenada y sistemática, tal como corresponde a un documento metodológico formal, comenzando por la caracterización general del tipo de investigación que enmarca a esta tesis.
+Es importante señalar que las decisiones metodológicas aquí documentadas no necesariamente se tomaron en un único momento ni de manera lineal; muchas de ellas ---como la elección del \textit{dataset} híbrido o la definición del umbral de congestión--- fueron resultado de un proceso iterativo de análisis y ajuste. Sin embargo, este capítulo las presenta de manera ordenada y sistemática, tal como corresponde a un documento metodológico formal, comenzando por la caracterización 
+general del tipo de investigación que enmarca a esta tesis.
 
 \section{Tipo de investigación}
+\label{sec:tipo_investigacion}
 
-La presente investigación se clasifica, de acuerdo con los criterios propuestos por Hernández-Sampieri \cite{hernandez2023}, en cuatro dimensiones complementarias: su finalidad, su enfoque, su diseño y su alcance. Esta caracterización no es un mero formalismo, sino que determina directamente las decisiones metodológicas que se detallan 
-en el resto de este capítulo, desde la forma en que se recolectan los datos hasta los criterios empleados para evaluar los modelos desarrollados.
+La presente investigación se clasifica, de acuerdo con los criterios propuestos por Hernández-Sampieri \cite{hernandez2023}, en cuatro dimensiones complementarias: su finalidad, su enfoque, su diseño y su alcance. Esta caracterización no es un mero formalismo, sino que determina directamente las decisiones metodológicas que se detallan en el resto de este capítulo, desde la forma en que se recolectan los datos hasta los criterios empleados para evaluar los modelos desarrollados.
 
 \subsection*{Según su finalidad: investigación aplicada}
 
-Esta tesis constituye una investigación de tipo \textbf{aplicada} (también denominada tecnológica), en tanto que su propósito no es generar conocimiento teórico nuevo sobre las técnicas de Machine Learning empleadas —ARIMA, Random Forest y LSTM/GRU, cuyos fundamentos matemáticos ya se encuentran plenamente establecidos y fueron revisados 
-en la Sección 2.2—, sino aplicar dicho conocimiento existente a la resolución de un problema práctico y delimitado: la predicción de congestión en un escenario real de red, tal como se planteó en la Sección 1.1. El criterio de éxito de esta investigación, por tanto, no reside en la novedad matemática de los modelos empleados, sino en la 
-evidencia empírica que se obtenga sobre su viabilidad y desempeño comparativo al resolver el problema planteado.
+Esta tesis constituye una investigación de tipo \textbf{aplicada} (también denominada tecnológica), en tanto que su propósito no es generar conocimiento teórico nuevo sobre las técnicas de \textit{Machine Learning} empleadas ---ARIMA, \textit{Random Forest} y LSTM/GRU, cuyos fundamentos matemáticos ya se encuentran plenamente establecidos y fueron revisados en la Sección \ref{sec:tecnicas_ml}---, sino aplicar dicho conocimiento existente a la resolución de un problema práctico y 
+delimitado: la predicción de congestión en un escenario real de red, tal como se planteó en la Sección \ref{sec:planteamiento}. El criterio de éxito de esta investigación, por tanto, no reside en la novedad matemática de los modelos empleados, sino en la evidencia empírica que se obtenga sobre su viabilidad y desempeño comparativo al resolver el problema planteado.
 
 \subsection*{Según su enfoque: investigación cuantitativa}
 
-El enfoque adoptado es \textbf{cuantitativo}, ya que la totalidad de las variables involucradas —utilización del enlace, latencia, pérdida de paquetes (Sección \ref{sec:metricas})— se expresan como magnitudes numéricas susceptibles de medición directa. El análisis de los resultados se apoya estrictamente en las métricas estadísticas de error 
-(RMSE, MAE, MAPE) y en las métricas de clasificación (Precisión, Exhaustividad, F1-Score) definidas y fundamentadas teóricamente en el Capítulo 2. No se contempla, en ningún punto del desarrollo de esta tesis, la recolección o el análisis de datos de naturaleza cualitativa.
+El enfoque adoptado es \textbf{cuantitativo}, ya que la totalidad de las variables involucradas ---utilización del enlace, latencia, pérdida de paquetes (Sección \ref{sec:metricas})--- se expresan como magnitudes numéricas susceptibles de medición directa. El análisis de los resultados se apoya estrictamente en las métricas estadísticas de error (RMSE, MAE, MAPE) y en las métricas de clasificación (Precisión, Exhaustividad, \textit{F1-Score}) definidas y fundamentadas teóricamente 
+en el Capítulo 2. No se contempla, en ningún punto del desarrollo de esta tesis, la recolección o el análisis de datos de naturaleza cualitativa.
 
 \subsection*{Según su diseño: mixto secuencial (observacional y experimental)}
 
 Desde la perspectiva de su diseño, esta investigación adopta un enfoque \textbf{mixto secuencial}, compuesto por dos fases distintas que reflejan la dualidad del problema abordado:
 
-En su primera fase (Recolección de Datos), el diseño es predominantemente \textbf{no experimental y longitudinal}. Se observa y registra el comportamiento de la red a lo largo de un periodo extendido de NUMEROFINAL días para capturar la evolución y estacionalidad del tráfico. Si bien se emplea instrumentación híbrida —incluyendo sondeos 
-activos ligeros (ICMP) como se documentará en la Sección 4.X—, no se manipulan artificialmente las cargas de trabajo de los usuarios ni se induce deliberadamente la congestión en la infraestructura del cliente corporativo.
+En su primera fase (Recolección de datos), el diseño es predominantemente \textbf{no experimental y longitudinal}. Se observa y registra el comportamiento de la red a lo largo de un periodo extendido de 30 días para capturar la evolución y estacionalidad del tráfico. Si bien se emplea instrumentación híbrida ---incluyendo sondeos activos ligeros (ICMP) como se documentará en la Sección \ref{sec:fuente_datos}---, no se manipulan artificialmente las cargas de trabajo de los usuarios 
+ni se induce deliberadamente la congestión en la infraestructura de la red privada bajo estudio.
 
-En su segunda fase (Modelado Predictivo), el diseño transita hacia un enfoque \textbf{experimental computacional}. El desarrollo, entrenamiento y evaluación de los modelos de Machine Learning (ARIMA, Random Forest, LSTM/GRU) requiere la manipulación sistemática y controlada de variables independientes —tales como hiperparámetros, 
-arquitecturas de red y ventanas de rezago (\textit{lags})— para medir su efecto sobre las variables dependientes, representadas por las métricas de error predictivo. Esta fase se ejecuta en un entorno de trabajo aislado, garantizando que la experimentación algorítmica no impacte la red de producción.
+En su segunda fase (Modelado predictivo), el diseño transita hacia un enfoque \textbf{experimental computacional}. El desarrollo, entrenamiento y evaluación de los modelos de \textit{Machine Learning} (ARIMA, \textit{Random Forest}, LSTM/GRU) requiere la manipulación sistemática y controlada de variables independientes ---tales como hiperparámetros, arquitecturas de red y ventanas de rezago (\textit{lags})--- para medir su efecto sobre las variables dependientes, representadas por 
+las métricas de error predictivo. Esta fase se ejecuta en un entorno de trabajo aislado, garantizando que la experimentación algorítmica no impacte la red de producción.
 
 \subsection*{Según su alcance: comparativo y explicativo}
 
-Finalmente, esta investigación posee un alcance \textbf{comparativo}, en tanto que su objetivo central no se limita a describir el comportamiento del tráfico de red, sino a contrastar sistemáticamente el desempeño de tres paradigmas de modelado predictivo —estadístico, Machine Learning clásico y Deep Learning— evaluados bajo las mismas 
-condiciones experimentales, tal como se estableció en la brecha metodológica identificada en la Sección 3.5. Este alcance comparativo se complementa con un componente \textbf{explicativo}, en la medida en que no basta con determinar \textit{cuál} modelo ofrece el mejor desempeño, sino que se busca argumentar \textit{por qué} dicho modelo 
-se desempeña mejor —por ejemplo, si su ventaja se debe a la naturaleza no lineal del tráfico, a la presencia de dependencias temporales de largo plazo, o a la escala del conjunto de datos empleado—, apoyándose para ello en los fundamentos teóricos desarrollados en el Capítulo 2 y en la evidencia comparativa documentada en el Capítulo 3.
+Finalmente, esta investigación posee un alcance \textbf{comparativo}, en tanto que su objetivo central no se limita a describir el comportamiento del tráfico de red, sino a contrastar sistemáticamente el desempeño de tres paradigmas de modelado predictivo ---estadístico, \textit{Machine Learning} clásico y \textit{Deep Learning}--- evaluados bajo las mismas condiciones experimentales, tal como se estableció en la brecha metodológica identificada en la Sección \ref{sec:estado_brecha}. 
+Este alcance comparativo se complementa con un componente \textbf{explicativo}, en la medida en que no basta con determinar \textit{cuál} modelo ofrece el mejor desempeño, sino que se busca argumentar \textit{por qué} dicho modelo se desempeña mejor ---por ejemplo, si su ventaja se debe a la naturaleza no lineal del tráfico, a la presencia de dependencias temporales de largo plazo, o a la escala del conjunto de datos empleado---, apoyándose para ello en los fundamentos teóricos 
+desarrollados en el Capítulo 2 y en la evidencia comparativa documentada en el Capítulo 3.
 
 La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera esquemática.
 
@@ -1067,13 +1053,13 @@ La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera es
         \hline
         \textbf{Dimensión} & \textbf{Clasificación} & \textbf{Justificación breve} \\
         \hline
-        Finalidad & Aplicada / tecnológica & Aplica técnicas de ML existentes a un problema práctico de redes \\
+        Finalidad & Aplicada / tecnológica & Aplica técnicas de \textit{Machine Learning} existentes a un problema práctico de redes. \\
         \hline
-        Enfoque & Cuantitativa & Variables numéricas; análisis estadístico de error \\
+        Enfoque & Cuantitativa & Variables numéricas; análisis estadístico de error. \\
         \hline
-        Diseño & No experimental, longitudinal & Observación pasiva de la red durante NUMEROFINAL días, sin manipulación \\
+        Diseño & No experimental, longitudinal & Observación pasiva de la red durante 30 días, sin manipulación. \\
         \hline
-        Alcance & Comparativo-explicativo & Contrasta tres paradigmas de modelado y explica sus diferencias de desempeño \\
+        Alcance & Comparativo-explicativo & Contrasta tres paradigmas de modelado y explica sus diferencias de desempeño. \\
         \hline
     \end{tabular}
     \caption{Clasificación del tipo de investigación de esta tesis.}
@@ -1083,54 +1069,49 @@ La Tabla \ref{tab:tipo_investigacion} sintetiza esta clasificación de manera es
 \section{Definición operativa de congestión}
 \label{sec:def_operativa_metodologia}
 
-De acuerdo con la Ecuación \ref{eq:congestion_def} establecida en el Marco Teórico, la operacionalización de la variable objetivo exige definir valores numéricos precisos para el umbral crítico de utilización ($U_{th}$) y la ventana temporal sostenida ($\Delta t$). Esta sección establece los parámetros base que gobernarán el etiquetado 
-(\textit{labeling}) del conjunto de datos antes de su ingesta en los modelos de Machine Learning.
+De acuerdo con la Ecuación \ref{eq:congestion_def} establecida en el Marco Teórico, la operacionalización de la variable objetivo exige definir valores numéricos precisos para el umbral crítico de utilización ($U_{th}$) y la ventana temporal sostenida ($\Delta t$). Esta sección establece los parámetros base que gobernarán el etiquetado (\textit{labeling}) del conjunto de datos antes de su ingesta en los modelos de \textit{Machine Learning}.
 
 \subsection*{Justificación del umbral $U_{th}$}
 
-Se adopta como valor inicial $U_{th} = 0.80$ (80\% de utilización), por dos razones convergentes. En primer lugar, desde la perspectiva teórica desarrollada en la Sección \ref{sec:congestion}, la teoría de colas aplicada a redes de datos establece que el tiempo de espera promedio en un sistema de colas crece de manera proporcional a 
-$\frac{1}{1-\rho}$, donde $\rho$ representa la utilización del recurso \cite{kleinrock1976}; esta expresión matemática diverge conforme $\rho \to 1$, y su crecimiento deja de ser marginal precisamente en la vecindad de $\rho = 0.8$, punto a partir del cual pequeños incrementos adicionales en la utilización producen incrementos 
-desproporcionadamente grandes en el tiempo de encolado. En segundo lugar, desde la perspectiva de la práctica de la industria, un umbral de utilización entre el 70\% y el 80\% constituye una referencia ampliamente adoptada en la operación de redes empresariales para la activación de mecanismos de gestión de colas y alertamiento temprano, 
-un criterio que se refleja, por ejemplo, en los valores por defecto de mecanismos de descarte temprano como WRED (\textit{Weighted Random Early Detection}) en equipos de la industria, los cuales suelen configurarse con umbrales iniciales de descarte alrededor del 80\% de ocupación de buffer.
+Se adopta como valor inicial $U_{th} = 0.80$ (80\,\% de utilización), por dos razones convergentes. En primer lugar, desde la perspectiva teórica desarrollada en la Sección \ref{sec:congestion}, la teoría de colas aplicada a redes de datos establece que el tiempo de espera promedio en un sistema de colas crece de manera proporcional a $\frac{1}{1-\rho}$, donde $\rho$ representa la utilización del recurso \cite{kleinrock1976}. Esta expresión matemática diverge conforme $\rho \to 1$, 
+y su crecimiento deja de ser marginal precisamente en la vecindad de $\rho = 0.8$, punto a partir del cual pequeños incrementos adicionales en la utilización producen incrementos desproporcionadamente grandes en el tiempo de encolado. En segundo lugar, desde la perspectiva práctica de la industria, un umbral de utilización entre el 70\,\% y el 80\,\% constituye una referencia ampliamente adoptada en la operación de redes empresariales para la activación de mecanismos de gestión de 
+colas y alertamiento temprano; un criterio que se refleja, por ejemplo, en los valores por defecto de mecanismos de descarte preventivo como WRED (\textit{Weighted Random Early Detection}) en equipos comerciales, los cuales suelen configurarse con umbrales iniciales de descarte alrededor del 80\,\% de ocupación del \textit{buffer}.
 
-Este valor de $U_{th} = 0.80$ funge como parámetro de control inicial (línea base) derivado de la literatura. Sin embargo, para garantizar que el modelo predictivo se ajuste a la realidad topológica de la red bajo estudio, este umbral será sometido a validación empírica durante el Análisis Exploratorio de Datos. 
-El valor definitivo para el etiquetado del algoritmo de clasificación se fijará matemáticamente identificando el percentil exacto donde la distribución de utilización histórica comience a correlacionarse con fluctuaciones anómalas en la red.
+Este valor de $U_{th} = 0.80$ funge como parámetro de control inicial (línea base) derivado de la literatura. Sin embargo, para garantizar que el modelo predictivo se ajuste a la realidad topológica de la red bajo estudio, este umbral será sometido a validación empírica durante el Análisis Exploratorio de Datos. El valor definitivo para el etiquetado del algoritmo de clasificación se fijará matemáticamente identificando el percentil exacto donde la distribución de utilización histórica 
+comience a correlacionarse con fluctuaciones anómalas en la red.
 
 \subsection*{Justificación de la ventana temporal $\Delta t$}
 
-En congruencia con la granularidad de muestreo establecida para la recolección de datos (Sección \ref{sec:fuente_datos}), se define $\Delta t = 5$ minutos como el intervalo mínimo sostenido durante el cual la condición $U(t) \geq U_{th}$ debe cumplirse para que un periodo se etiquete como congestión. Esta ventana, equivalente a cinco muestras 
-consecutivas bajo una granularidad de muestreo de un minuto, responde a un balance deliberado entre dos riesgos opuestos: una ventana demasiado corta (por ejemplo, una única muestra) resulta susceptible a ráfagas instantáneas y transitorias de tráfico que no representan una congestión sostenida ni operacionalmente relevante —generando así falsos 
-positivos que degradarían la utilidad práctica del sistema de predicción—; mientras que una ventana demasiado larga podría pasar por alto episodios de saturación breves pero significativos para aplicaciones sensibles a la latencia, como las cámaras de videovigilancia o las videollamadas mencionadas en la Sección \ref{sec:fuente_datos}. 
-Al igual que con $U_{th}$, este valor podrá ser ajustado tras el análisis exploratorio del dataset primario si la evidencia empírica así lo sugiere.
+En congruencia con la granularidad de muestreo establecida para la recolección de datos (Sección \ref{sec:fuente_datos}), se define $\Delta t = 5$ minutos como el intervalo mínimo sostenido durante el cual la condición $U(t) \geq U_{th}$ debe cumplirse para que un periodo se etiquete como congestión. Esta ventana, equivalente a cinco muestras consecutivas bajo una granularidad de muestreo de un minuto, responde a un balance deliberado entre dos riesgos opuestos: una ventana demasiado 
+corta (por ejemplo, una única muestra) resulta susceptible a ráfagas instantáneas y transitorias de tráfico que no representan una congestión sostenida ni operacionalmente relevante ---generando así falsos positivos que degradarían la utilidad práctica del sistema de predicción---; mientras que una ventana demasiado larga podría pasar por alto episodios de saturación breves pero significativos para aplicaciones sensibles a la latencia, como las cámaras de videovigilancia o las 
+videollamadas mencionadas en la Sección \ref{sec:fuente_datos}. Al igual que con $U_{th}$, este valor podrá ser ajustado tras el análisis exploratorio del \textit{dataset} primario si la evidencia empírica así lo sugiere.
 
 \subsection*{Formulación instanciada para la etapa de preprocesamiento}
 
-Tomando como base los parámetros iniciales, la lógica de etiquetado binario que se programará en el pipeline de preprocesamiento de datos se define como:
+Tomando como base los parámetros iniciales, la lógica de etiquetado binario que se programará en el \textit{pipeline} de preprocesamiento de datos se define como:
 
 \begin{equation}
-    \text{Congestión} \iff U(t) \geq 0.80 \quad \text{durante al menos 5 minutos consecutivos}
+    \mbox{Congestión} \iff U(t) \geq 0.80 \quad \mbox{durante al menos 5 minutos consecutivos}
     \label{eq:congestion_instanciada}
 \end{equation}
 
 \section{Descripción de las métricas a utilizar}
 \label{sec:metricas_utilizar}
 
-Habiendo definido en la Sección \ref{sec:metricas} el fundamento teórico de las métricas de rendimiento de red, y en la Sección \ref{sec:def_operativa_metodologia} el criterio operativo de congestión, corresponde ahora precisar qué subconjunto específico de esas métricas se empleará como variables de entrada (\textit{features}) de los modelos 
-predictivos, cuál constituye la variable objetivo, y qué variables adicionales derivadas se incorporarán para enriquecer la capacidad predictiva del sistema.
+Habiendo definido en la Sección \ref{sec:metricas} el fundamento teórico de las métricas de rendimiento de red, y en la Sección \ref{sec:def_operativa_metodologia} el criterio operativo de congestión, corresponde ahora precisar qué subconjunto específico de estas métricas se empleará como variables de entrada (\textit{features}) de los modelos predictivos, cuál constituye la variable objetivo y qué variables adicionales derivadas se incorporarán para enriquecer la capacidad predictiva del sistema.
 
 \subsection*{Variable objetivo}
 
-La variable objetivo (\textit{target}) de esta tesis es, en todos los casos, el factor de utilización futuro del enlace, $U(t+h)$, donde $h$ representa el horizonte de predicción. Dicha variable se emplea de dos formas distintas según el paradigma de modelado, conforme a lo establecido en la Sección 2.2.1:
+La variable objetivo (\textit{target}) de esta tesis es, en todos los casos, el factor de utilización futuro del enlace, $U(t+h)$, donde $h$ representa el horizonte de predicción. Dicha variable se emplea de dos formas distintas según el paradigma de modelado, conforme a lo establecido en la Sección \ref{subsec:supervisado}:
 
 \begin{itemize}
-    \item Como variable \textbf{continua} (tarea de regresión), para los modelos ARIMA, Random Forest/SVR y LSTM/GRU en su formulación de regresión.
+    \item Como variable \textbf{continua} (tarea de regresión), para los modelos ARIMA, \textit{Random Forest}, SVR y LSTM/GRU en su formulación de regresión.
     \item Como variable \textbf{binaria derivada} (tarea de clasificación), aplicando la Ecuación \ref{eq:congestion_instanciada} sobre $U(t+h)$, para la formulación de clasificación de los mismos modelos.
 \end{itemize}
 
-\subsection*{Variables de entrada (features)}
+\subsection*{Variables de entrada (\textit{features})}
 
-La Tabla \ref{tab:features_entrada} enumera las variables de entrada consideradas para el entrenamiento de los modelos, clasificadas en tres grupos: métricas directas (obtenidas mediante los mecanismos de instrumentación descritos en la Sección \ref{sec:fuente_datos}), variables temporales derivadas (que capturan patrones cíclicos sin necesidad 
-de instrumentación adicional), y variables de rezago/ventana (que explicitan la dependencia temporal de la serie, necesaria para modelos que no procesan secuencias de manera nativa, como Random Forest y SVR).
+La Tabla \ref{tab:features_entrada} enumera las variables de entrada consideradas para el entrenamiento de los modelos, clasificadas en tres grupos: métricas directas (obtenidas mediante los mecanismos de instrumentación descritos en la Sección \ref{sec:fuente_datos}), variables temporales derivadas (que capturan patrones cíclicos sin necesidad de instrumentación adicional) y variables de rezago o ventana (que explicitan la dependencia temporal de la serie, necesaria para modelos que no procesan secuencias de manera nativa, como \textit{Random Forest} y SVR).
 
 \begin{table}[H]
     \centering
@@ -1147,69 +1128,66 @@ de instrumentación adicional), y variables de rezago/ventana (que explicitan la
             & Pérdida de paquetes & Continua & \% & SNMP / ICMP \\
         \hline
         \multirow{4}{*}{Temporales derivadas}
-            & Hora del día & Categórica cíclica & 0--23 (codificada seno/coseno) & Timestamp \\
+            & Hora del día & Categórica cíclica & 0--23 (seno/coseno) & \textit{Timestamp} \\
             \cline{2-5}
-            & Día de la semana & Categórica cíclica & 0--6 (codificada seno/coseno) & Timestamp \\
+            & Día de la semana & Categórica cíclica & 0--6 (seno/coseno) & \textit{Timestamp} \\
             \cline{2-5}
-            & Indicador fin de semana & Binaria & \{0, 1\} & Timestamp \\
+            & Indicador fin de semana & Binaria & \{0, 1\} & \textit{Timestamp} \\
             \cline{2-5}
-            & Indicador horario laboral & Binaria & \{0, 1\} & Timestamp \\
+            & Indicador horario laboral & Binaria & \{0, 1\} & \textit{Timestamp} \\
         \hline
         \multirow{2}{*}{Rezago / ventana}
             & $U(t-1), U(t-2), \dots, U(t-k)$ & Continua & Adimensional [0,1] & Derivada de $U(t)$ \\
             \cline{2-5}
-            & Media móvil de $U$ (ventana de 15 min) & Continua & Adimensional [0,1] & Derivada de $U(t)$ \\
+            & Media móvil de $U$ (15 min) & Continua & Adimensional [0,1] & Derivada de $U(t)$ \\
         \hline
     \end{tabular}
     \caption{Variables de entrada consideradas para los modelos predictivos.}
     \label{tab:features_entrada}
 \end{table}
 
-Conviene justificar dos decisiones reflejadas en la Tabla \ref{tab:features_entrada}. Primero, las variables temporales cíclicas (hora del día, día de la semana) se codifican mediante transformaciones seno/coseno, en lugar de emplearse directamente como enteros, con el fin de preservar su naturaleza cíclica —evitando, por ejemplo, que el modelo 
-interprete que la hora 23 y la hora 0 se encuentran lejanas entre sí, cuando en realidad son consecutivas—:
+Conviene justificar dos decisiones reflejadas en la Tabla \ref{tab:features_entrada}. Primero, las variables temporales cíclicas (hora del día, día de la semana) se codifican mediante transformaciones seno y coseno en lugar de emplearse directamente como enteros numéricos. Esto se realiza con el fin de preservar su naturaleza cíclica, evitando, por ejemplo, que el modelo interprete que la hora 23 y la hora 0 se encuentran algebraicamente lejanas entre sí, cuando en la realidad temporal son consecutivas:
 
 \begin{equation}
-    x_{\text{seno}} = \sin\left(\frac{2\pi \cdot x}{x_{\max}}\right), \qquad x_{\text{coseno}} = \cos\left(\frac{2\pi \cdot x}{x_{\max}}\right)
+    x_{\mbox{\scriptsize seno}} = \sin\left(\frac{2\pi \cdot x}{x_{\max}}\right), \qquad x_{\mbox{\scriptsize coseno}} = \cos\left(\frac{2\pi \cdot x}{x_{\max}}\right)
     \label{eq:codificacion_ciclica}
 \end{equation}
 
-Segundo, las variables de rezago ($U(t-1)$ hasta $U(t-k)$) resultan indispensables para los modelos que no poseen una noción arquitectónica intrínseca de secuencia temporal —Random Forest y SVR—, ya que estos modelos tratan cada observación como independiente y requieren que la dependencia temporal se les proporcione de manera explícita como parte 
-del vector de entrada. En contraste, las arquitecturas LSTM y GRU procesan la secuencia de observaciones de manera nativa, por lo que estas variables de rezago, si bien pueden incluirse, no resultan estrictamente necesarias para dichos modelos.
+Segundo, las variables de rezago ($U(t-1)$ hasta $U(t-k)$) resultan indispensables para los modelos que no poseen una noción arquitectónica intrínseca de secuencia temporal (\textit{Random Forest} y SVR), ya que estos algoritmos tratan cada observación como independiente y requieren que la dependencia temporal se proporcione de manera explícita en el vector de entrada. En contraste, las arquitecturas LSTM y GRU procesan la secuencia de observaciones de manera nativa, por lo que estas variables de rezago, si bien pueden incluirse, no resultan estrictamente 
+necesarias para dichos modelos.
 
 \subsection*{Disponibilidad de métricas por fuente de datos}
 
-Dado que esta tesis emplea dos fuentes de datos de naturaleza distinta (Sección \ref{sec:fuente_datos}), no todas las métricas de la Tabla \ref{tab:features_entrada} se encuentran disponibles de la misma forma en ambos casos. La Tabla \ref{tab:disponibilidad_metricas} contrasta la disponibilidad y el método de obtención de cada métrica en el dataset 
-primario frente al dataset de validación (MAWI).
+Dado que esta tesis emplea dos fuentes de datos de naturaleza distinta (Sección \ref{sec:fuente_datos}), no todas las métricas de la Tabla \ref{tab:features_entrada} se encuentran disponibles de la misma forma en ambos casos. La Tabla \ref{tab:disponibilidad_metricas} contrasta la disponibilidad y el método de obtención de cada métrica en el \textit{dataset} primario frente al \textit{dataset} de validación (MAWI).
 
 \begin{table}[H]
     \centering
     \begin{tabular}{|l|p{4.5cm}|p{4.5cm}|}
         \hline
-        \textbf{Métrica} & \textbf{Dataset primario} & \textbf{Dataset de validación (MAWI)} \\
+        \textbf{Métrica} & \textbf{\textit{Dataset} primario} & \textbf{\textit{Dataset} de validación (MAWI)} \\
         \hline
         Utilización & Directa, vía SNMP en tiempo real & Derivada de trazas \texttt{.pcap} agregando bytes por ventana de tiempo \\
         \hline
-        Latencia (RTT) & Directa, vía sondas ICMP activas & No disponible directamente; se aproxima mediante el tiempo entre paquetes de un mismo flujo TCP \\
+        Latencia (RTT) & Directa, vía sondas ICMP activas & No disponible directamente; se aproxima mediante el tiempo entre paquetes de un flujo TCP \\
         \hline
         Pérdida de paquetes & Directa, vía contadores SNMP de descarte & Estimada indirectamente mediante retransmisiones TCP detectadas en la traza \\
         \hline
-        Variables temporales & Directas, timestamp del muestreo & Directas, timestamp de captura de cada traza diaria \\
+        Variables temporales & Directas, \textit{timestamp} del muestreo & Directas, \textit{timestamp} de captura de cada traza diaria \\
         \hline
     \end{tabular}
     \caption{Disponibilidad y método de obtención de métricas según la fuente de datos.}
     \label{tab:disponibilidad_metricas}
 \end{table}
 
-Esta asimetría no invalida el enfoque híbrido adoptado, pero sí implica que, para el dataset de validación, algunas variables de entrada requieren un paso adicional de derivación durante el preprocesamiento, el cual se detalla en la Sección 4.5.
-Es fundamental advertir que esta diferencia en los métodos de recolección —particularmente entre la latencia limpia obtenida mediante sondeos ICMP en la red privada y la latencia ruidosa inferida a través de flujos TCP en el archivo MAWI— introduce un 
-desafío estadístico conocido como cambio de dominio (\textit{domain shift}). Si los algoritmos de Machine Learning asimilan directamente las magnitudes crudas de estas métricas, el desempeño predictivo colapsará durante la fase de validación debido al 
-desajuste de escalas y distribuciones. Para mitigar esta divergencia estructural, se aplicará un proceso de escalado y normalización independiente (por ejemplo, mediante \textit{StandardScaler} o \textit{MinMaxScaler}) a cada conjunto de datos de 
-manera aislada. Esta transformación, que se formaliza en la etapa de preprocesamiento (Sección 4.5), garantiza que los modelos aprendan la varianza relativa y los patrones de degradación de las métricas, independientemente de la magnitud absoluta que 
-dicten las herramientas de monitoreo subyacentes.
+Esta asimetría no invalida el enfoque híbrido adoptado, pero sí implica que, para el \textit{dataset} de validación, algunas variables de entrada requieren un paso adicional de derivación durante el preprocesamiento, el cual se detalla en la Sección \ref{sec:preprocesamiento}. Es fundamental advertir que esta diferencia en los métodos de recolección ---particularmente entre la latencia limpia obtenida mediante sondeos ICMP en la red privada y la latencia ruidosa inferida a través de flujos TCP en el archivo MAWI--- introduce un desafío estadístico conocido 
+como cambio de dominio (\textit{domain shift}). 
 
-\subsection*{Pipeline de construcción de variables}
+Si los algoritmos de \textit{Machine Learning} asimilan directamente las magnitudes crudas de estas métricas, el desempeño predictivo colapsará durante la fase de validación debido al desajuste de escalas y distribuciones. Para mitigar esta divergencia estructural, se aplicará un proceso de escalado y normalización independiente (por ejemplo, mediante \textit{StandardScaler} o \textit{MinMaxScaler}) a cada conjunto de datos de manera aislada. Esta transformación, formalizada en la etapa de preprocesamiento (Sección \ref{sec:preprocesamiento}), 
+garantiza que los modelos aprendan la varianza relativa y los patrones de degradación de las métricas, independientemente de la magnitud absoluta dictada por las herramientas de monitoreo subyacentes.
 
-La Figura \ref{fig:pipeline_features} ilustra de manera esquemática el flujo mediante el cual las métricas crudas, obtenidas directamente de la instrumentación descrita en la Sección \ref{sec:fuente_datos}, se transforman en el vector final de variables de entrada empleado por cada modelo.
+\subsection*{\textit{Pipeline} de construcción de variables}
+
+La Figura \ref{fig:pipeline_features} ilustra esquemáticamente el flujo mediante el cual las métricas crudas, obtenidas directamente de la instrumentación descrita en la Sección \ref{sec:fuente_datos}, se transforman en el vector final de variables de entrada empleado por cada modelo.
 
 \begin{figure}[H]
     \centering
@@ -1223,82 +1201,77 @@ La Figura \ref{fig:pipeline_features} ilustra de manera esquemática el flujo me
     \node[box, right=1.1cm of clean] (feat) {Ingeniería de\\ variables\\ \footnotesize (rezagos, cíclicas)};
     \node[box, right=1.1cm of feat, fill=black!10] (target) {Etiquetado\\ \footnotesize (Ec. \ref{eq:congestion_instanciada})};
 
-    \node[box, below=0.9cm of feat, fill=black!15] (models) {Dataset final\\ estructurado ($X, Y$)};
+    \node[box, below=0.9cm of feat, fill=black!15] (models) {\textit{Dataset} final\\ estructurado ($X, Y$)};
     \draw[arrow] (raw) -- (clean);
     \draw[arrow] (clean) -- (feat);
     \draw[arrow] (feat) -- (target);
     \draw[arrow] (feat) -- (models);
     \draw[arrow] (target) |- (models);
     \end{tikzpicture}
-    \caption{Pipeline de transformación de métricas crudas en variables de entrada y variable objetivo.}
+    \caption{\textit{Pipeline} de transformación de métricas crudas en variables de entrada y variable objetivo.}
     \label{fig:pipeline_features}
 \end{figure}
 
-Este pipeline se aplica de manera independiente sobre cada una de las dos fuentes de datos, garantizando que el vector final de variables tenga una estructura equivalente entre ambas, condición necesaria para poder evaluar un mismo modelo entrenado sobre el dataset primario contra el conjunto de validación MAWI, tal como se planteó en el diseño comparativo 
-de esta tesis (Sección 3.5). El detalle específico de cada etapa de este pipeline —en particular, la limpieza de datos faltantes y el resampleo de las trazas MAWI— se desarrolla con mayor profundidad en la Sección 4.5 (Preprocesamiento de datos).
+Este \textit{pipeline} se aplica de manera independiente sobre cada una de las dos fuentes de datos, garantizando que el vector final de variables tenga una estructura equivalente entre ambas, condición necesaria para poder evaluar un mismo modelo entrenado sobre el \textit{dataset} primario contra el conjunto de validación MAWI, tal como se planteó en el diseño comparativo de esta tesis (Sección \ref{sec:estado_brecha}). El detalle específico de cada etapa de este flujo ---en particular, la limpieza de datos faltantes y el resampleo de las trazas MAWI--- 
+se desarrolla con mayor profundidad en la Sección \ref{sec:preprocesamiento} (Preprocesamiento de datos).
 
 \section{Fuente de datos}
 \label{sec:fuente_datos}
 
-Para el desarrollo de esta tesis se adoptó una estrategia híbrida de recolección de datos, combinando una fuente primaria de tráfico real capturado de forma pasiva en una red administrada directamente por el autor, con una fuente secundaria de validación externa proveniente de un archivo académico de tráfico de Internet ampliamente reconocido. Esta combinación 
-busca equilibrar dos necesidades que, de manera aislada, ningún dataset por sí solo podría satisfacer plenamente: por un lado, la posibilidad de definir con precisión el proceso de recolección, las métricas capturadas y el contexto operativo del enlace bajo estudio; y por otro, la necesidad de validar que los modelos desarrollados no se sobreajustan a las particularidades 
-de un único escenario, sino que son capaces de generalizar su capacidad predictiva a condiciones de tráfico distintas en naturaleza y escala.
+Para el desarrollo de esta tesis se adoptó una estrategia híbrida de recolección de datos, combinando una fuente primaria de tráfico real capturado de forma pasiva en una red administrada directamente por el autor, con una fuente secundaria de validación externa proveniente de un archivo académico de tráfico de Internet ampliamente reconocido. Esta combinación busca equilibrar dos necesidades que, de manera aislada, ningún \textit{dataset} por sí solo podría satisfacer plenamente: por un lado, la posibilidad de definir con precisión el proceso de recolección, 
+las métricas capturadas y el contexto operativo del enlace bajo estudio; y por otro, la necesidad de validar que los modelos desarrollados no se sobreajusten a las particularidades de un único escenario, sino que sean capaces de generalizar su capacidad predictiva a condiciones de tráfico distintas en naturaleza y escala.
 
-\subsection*{Dataset primario: Red Privada PYME}
+\subsection*{Dataset primario: Red privada PYME}
 
-La fuente primaria de datos proviene de una red privada PYME sobre la cual el autor tiene acceso administrativo completo, en el contexto de un proyecto de despliegue de infraestructura. Dicha red opera bajo un enrutador MikroTik que concentra y gestiona simultáneamente múltiples servicios que compiten por el mismo enlace de salida a Internet. Es fundamental delimitar 
-la topología física de este acceso: el tráfico hacia el exterior se enruta a través de una interfaz, lo cual condiciona intrínsecamente el perfil base de latencia, \textit{jitter} y variabilidad estocástica del canal. Sobre esta infraestructura coexisten un sistema de videovigilancia con transmisión continua (NVR), tráfico de uso corporativo/residencial cotidiano, y un servicio 
-de almacenamiento en la nube (Nextcloud) accesible de forma remota mediante una VPN SSTP.
+La fuente primaria de datos proviene de una red privada PYME sobre la cual el autor tiene acceso administrativo completo, en el contexto de un proyecto de despliegue de infraestructura. Dicha red opera bajo un enrutador MikroTik que concentra y gestiona simultáneamente múltiples servicios que compiten por el mismo enlace de salida a Internet. Es fundamental delimitar la topología física de este acceso: el tráfico hacia el exterior se enruta a través de una única interfaz WAN (como un enlace LTE), lo cual condiciona intrínsecamente el perfil base de latencia, 
+\textit{jitter} y variabilidad estocástica del canal. Sobre esta infraestructura coexisten un sistema de videovigilancia con transmisión continua (NVR), tráfico de uso corporativo/residencial cotidiano, y un servicio de almacenamiento en la nube (Nextcloud) accesible de forma remota mediante una VPN SSTP.
 
-Esta arquitectura de servicios genera un escenario de estrés operativo altamente propicio para la investigación de congestión. En particular, la encapsulación de tráfico TCP (como el generado por Nextcloud) dentro de un túnel VPN que también opera sobre TCP (SSTP) introduce una susceptibilidad arquitectónica al fenómeno conocido como \textit{TCP Meltdown}. Bajo esta condición, 
-si el enlace físico experimenta una ligera pérdida de paquetes por saturación, tanto la capa de aplicación como la capa del túnel intentan retransmitir la información de manera simultánea y descoordinada. Esta redundancia de retransmisiones amplifica la congestión original, colapsando rápidamente la capacidad del enlace mediante un patrón no lineal. La captura de estas dinámicas 
-complejas convierte a este conjunto de datos en un entorno de validación excepcional para evaluar si los modelos de Machine Learning logran anticipar el colapso con mayor precisión que los modelos estadísticos tradicionales.s importante señalar que, dado que los datos provienen de la infraestructura de un tercero, se obtuvo la autorización explícita del propietario de la red para 
-realizar el monitoreo pasivo de metadatos de tráfico con fines exclusivamente académicos, en línea con buenas prácticas de investigación en redes de computadoras que involucran datos de operación reales %\cite{boukerche2021}.
+Esta arquitectura de servicios genera un escenario de estrés operativo altamente propicio para la investigación de congestión. En particular, la encapsulación de tráfico TCP (como el generado por Nextcloud) dentro de un túnel VPN que también opera sobre TCP (SSTP) introduce una susceptibilidad arquitectónica al fenómeno conocido como \textit{TCP Meltdown}. Bajo esta condición, si el enlace físico experimenta una ligera pérdida de paquetes por saturación, tanto la capa de aplicación como la capa del túnel intentan retransmitir la información de manera 
+simultánea y descoordinada. Esta redundancia de retransmisiones amplifica la congestión original, colapsando rápidamente la capacidad del enlace mediante un patrón no lineal. La captura de estas dinámicas complejas convierte a este conjunto de datos en un entorno de validación excepcional para evaluar si los modelos de \textit{Machine Learning} logran anticipar el colapso con mayor precisión que los modelos estadísticos tradicionales. 
+
+Es importante señalar que, dado que los datos provienen de la infraestructura de un tercero, se obtuvo la autorización explícita del propietario de la red para realizar el monitoreo pasivo de metadatos de tráfico con fines exclusivamente académicos, en línea con las buenas prácticas de investigación en redes de computadoras que involucran datos de operación reales \cite{boukerche2021}.
 
 \subsection*{Dataset secundario: MAWI Working Group Traffic Archive}
 
-Como fuente de validación externa se empleará el \textbf{MAWI Working Group Traffic Archive}, un repositorio de trazas de tráfico mantenido de forma continua desde 2006 por el proyecto WIDE, que captura de manera diaria el tráfico del enlace de tránsito entre la red académica WIDE y su proveedor ascendente en Tokio, Japón \cite{mawi}. A diferencia del dataset primario, que corresponde a 
-una red de escala reducida con un puñado de servicios concurrentes, las trazas de MAWI capturan tráfico agregado de un enlace de tránsito de gran escala (entre 1 y 10 Gbps), compuesto por miles de flujos simultáneos provenientes de múltiples organizaciones y aplicaciones. Las direcciones IP contenidas en estas trazas se encuentran anonimizadas mediante un esquema que preserva la estructura 
-de prefijos de red (\textit{prefix-preserving anonymization}, mediante el algoritmo Crypto-PAn), lo cual elimina cualquier posibilidad de identificar usuarios individuales sin comprometer la utilidad analítica de los datos para el estudio de patrones agregados de tráfico.
+Como fuente de validación externa se empleará el \textbf{MAWI Working Group Traffic Archive}, un repositorio de trazas de tráfico mantenido de forma continua desde 2006 por el proyecto WIDE, que captura de manera diaria el tráfico del enlace de tránsito entre la red académica WIDE y su proveedor ascendente en Tokio, Japón \cite{mawi}. A diferencia del \textit{dataset} primario, que corresponde a una red de escala reducida con un puñado de servicios concurrentes, las trazas de MAWI capturan tráfico agregado de un enlace de tránsito de gran escala 
+(entre 1 y 10 Gbps), compuesto por miles de flujos simultáneos provenientes de múltiples organizaciones y aplicaciones. Las direcciones IP contenidas en estas trazas se encuentran anonimizadas mediante un esquema que preserva la estructura de prefijos de red (\textit{prefix-preserving anonymization}, empleando el algoritmo Crypto-PAn), lo cual elimina cualquier posibilidad de identificar usuarios individuales sin comprometer la utilidad analítica de los datos para el estudio de patrones agregados de tráfico.
 
-La incorporación de este segundo dataset responde a una limitación reconocida en la literatura sobre predicción de tráfico de red: los modelos entrenados y evaluados sobre una única fuente de datos tienden a mostrar un desempeño optimista que no necesariamente se sostiene cuando se exponen a condiciones de tráfico distintas a las observadas durante el entrenamiento %\cite{zhang2020}
-. Al validar los modelos desarrollados en esta tesis sobre las trazas de MAWI —de una naturaleza y escala sustancialmente distinta a la del dataset primario—, es posible obtener evidencia más robusta sobre la capacidad de generalización de los enfoques de Machine Learning propuestos, más allá de las particularidades de un único escenario de red.
+La incorporación de este segundo \textit{dataset} responde a una limitación reconocida en la literatura sobre predicción de tráfico de red: los modelos entrenados y evaluados sobre una única fuente de datos tienden a mostrar un desempeño optimista que no necesariamente se sostiene cuando se exponen a condiciones de tráfico distintas a las observadas durante el entrenamiento \cite{zhang2020}. Al validar los modelos desarrollados en esta tesis sobre las trazas de MAWI ---de una naturaleza y escala sustancialmente distinta a la del \textit{dataset} 
+primario---, es posible obtener evidencia más robusta sobre la capacidad de generalización de los enfoques de \textit{Machine Learning} propuestos, más allá de las particularidades de un único escenario de red.
 
-Dado que las trazas de MAWI se distribuyen en formato de captura de paquetes (\texttt{.pcap}) y no como series temporales de utilización previamente agregadas, fue necesario un procesamiento adicional para derivar de ellas las mismas métricas empleadas en el dataset primario. Este procesamiento se describe con mayor detalle en la Sección \ref{sec:preprocesamiento} (Preprocesamiento de datos).
+Dado que las trazas de MAWI se distribuyen en formato de captura de paquetes (\texttt{.pcap}) y no como series temporales de utilización previamente agregadas, fue necesario un procesamiento adicional para derivar de ellas las mismas métricas empleadas en el \textit{dataset} primario. Este procesamiento se describe con mayor detalle en la Sección \ref{sec:preprocesamiento} (Preprocesamiento de datos).
 
 \subsection*{Consideraciones éticas y de privacidad}
 
-En ambos casos, la recolección y el procesamiento de los datos se rigen por un principio de minimización: se capturan y almacenan únicamente los metadatos estrictamente necesarios para el análisis de utilización, latencia y pérdida de paquetes, sin acceder en ningún momento al contenido de las comunicaciones transportadas. En el caso del dataset primario, se cuenta con la autorización expresa del 
-propietario de la infraestructura; en el caso de MAWI, el uso de los datos se limita a fines de investigación, en cumplimiento con los términos de uso establecidos por el propio archivo, los cuales explícitamente restringen su empleo a propósitos académicos y prohíben cualquier acción que comprometa la privacidad de los usuarios cuyo tráfico fue originalmente capturado.
+En ambos casos, la recolección y el procesamiento de los datos se rigen por un principio de minimización: se capturan y almacenan únicamente los metadatos estrictamente necesarios para el análisis de utilización, latencia y pérdida de paquetes, sin acceder en ningún momento al contenido de las comunicaciones transportadas. En el caso del \textit{dataset} primario, se cuenta con la autorización expresa del propietario de la infraestructura; en el caso de MAWI, el uso de los datos se limita a fines de investigación, en estricto cumplimiento con los 
+términos de uso establecidos por el propio archivo, los cuales restringen su empleo a propósitos académicos y prohíben cualquier acción que comprometa la privacidad de los usuarios cuyo tráfico fue originalmente capturado.
 
 \section{Preprocesamiento de datos}
 \label{sec:preprocesamiento}
 
-El pipeline esquematizado en la Figura \ref{fig:pipeline_features} (Sección \ref{sec:metricas_utilizar}) identificó cuatro grandes etapas de transformación entre las métricas crudas y el vector final de variables de entrada. Esta sección detalla técnicamente cada una de dichas etapas, prestando especial atención a los puntos en los que el tratamiento del dataset primario y el dataset 
-de validación (MAWI) difiere, dada la naturaleza distinta de ambas fuentes descrita en la Sección \ref{sec:fuente_datos}.
+El \textit{pipeline} esquematizado en la Figura \ref{fig:pipeline_features} (Sección \ref{sec:metricas_utilizar}) identificó cuatro grandes etapas de transformación entre las métricas crudas y el vector final de variables de entrada. Esta sección detalla técnicamente cada una de dichas etapas, prestando especial atención a los puntos en los que el tratamiento del \textit{dataset} primario y el \textit{dataset} de validación (MAWI) difiere, dada la naturaleza distinta de ambas fuentes descrita en la Sección \ref{sec:fuente_datos}.
 
 \subsection*{Limpieza de datos}
 
 La limpieza de datos aborda dos problemas recurrentes en la recolección de series temporales de red: valores faltantes y valores atípicos (\textit{outliers}).
 
-Los \textbf{valores faltantes} pueden originarse por interrupciones temporales del proceso de monitoreo, fallos de conectividad hacia el propio dispositivo de consulta SNMP, o reinicios del equipo de red. Para intervalos faltantes de corta duración (hasta 3 muestras consecutivas, equivalente a 3 minutos bajo la granularidad establecida), se aplicará interpolación lineal entre el último valor observado y 
-el siguiente valor disponible. Para intervalos de mayor duración, el criterio adoptado es descartar dicho segmento de la serie por completo en lugar de imputarlo, ya que una interpolación extendida introduciría patrones artificiales que no reflejan el comportamiento real de la red, contaminando potencialmente el proceso de entrenamiento de los modelos.
+Los \textbf{valores faltantes} pueden originarse por interrupciones temporales del proceso de monitoreo, fallos de conectividad hacia el propio dispositivo de consulta SNMP, o reinicios del equipo de red. Para intervalos faltantes de corta duración (hasta 3 muestras consecutivas, equivalente a 3 minutos bajo la granularidad establecida), se aplicará interpolación lineal entre el último valor observado y el siguiente valor disponible. Para intervalos de mayor duración, el criterio adoptado es descartar dicho segmento de la serie por completo en lugar 
+de imputarlo, ya que una interpolación extendida introduciría patrones artificiales que no reflejan el comportamiento real de la red, contaminando potencialmente el proceso de entrenamiento de los modelos.
 
 Los \textbf{valores atípicos} se identifican mediante el criterio del rango intercuartílico (IQR), marcando como atípico cualquier observación que se encuentre fuera del rango:
 
 \begin{equation}
-    \left[Q_1 - 1.5 \cdot \text{IQR},\; Q_3 + 1.5 \cdot \text{IQR}\right]
+    \left[Q_1 - 1.5 \cdot \mbox{IQR},\; Q_3 + 1.5 \cdot \mbox{IQR}\right]
     \label{eq:iqr}
 \end{equation}
 
-donde $Q_1$ y $Q_3$ son el primer y tercer cuartil de la variable analizada, e IQR $= Q_3 - Q_1$. Es importante señalar que, a diferencia de otros contextos de análisis de datos donde los atípicos se eliminan sistemáticamente, en esta tesis dichos valores \textbf{no se descartan de manera automática}: un pico súbito y extremo de utilización podría constituir precisamente el tipo de evento de congestión 
-que se busca predecir, y no un error de medición. Por ello, cada valor marcado como atípico se contrasta manualmente contra las otras métricas disponibles en el mismo instante (por ejemplo, si un pico de utilización coincide con un aumento simultáneo de latencia y pérdida de paquetes, se conserva como evento genuino; si ocurre de manera aislada y sin correlato en las demás métricas, se trata como posible 
-error de instrumentación y se interpola).
+donde $Q_1$ y $Q_3$ son el primer y tercer cuartil de la variable analizada, e $\mbox{IQR} = Q_3 - Q_1$. Es importante señalar que, a diferencia de otros contextos de análisis de datos donde los atípicos se eliminan sistemáticamente, en esta tesis dichos valores \textbf{no se descartan de manera automática}: un pico súbito y extremo de utilización podría constituir precisamente el tipo de evento de congestión que se busca predecir, y no un error de medición. Por ello, cada valor marcado como atípico se contrasta manualmente contra las otras métricas 
+disponibles en el mismo instante (por ejemplo, si un pico de utilización coincide con un aumento simultáneo de latencia y pérdida de paquetes, se conserva como evento genuino; si ocurre de manera aislada y sin correlato en las demás métricas, se trata como un posible error de instrumentación y se interpola).
 
 \subsection*{Resampleo y agregación temporal}
 
-Como se documentó en la Tabla \ref{tab:disponibilidad_metricas} (Sección \ref{sec:metricas_utilizar}), el dataset primario se obtiene ya en forma de serie temporal muestreada directamente a la granularidad deseada (1 minuto), mientras que el dataset MAWI se distribuye como capturas de paquetes individuales (\texttt{.pcap}). Por tanto, este último requiere un proceso adicional de \textbf{agregación temporal}: 
-mediante herramientas de análisis de tráfico (\texttt{tshark}/\texttt{tstat}), los paquetes capturados se agrupan en ventanas no traslapadas de 1 minuto, calculando para cada ventana el total de bytes transmitidos, a partir de lo cual se deriva la utilización $U(t)$ mediante la Ecuación \ref{eq:throughput}, empleando como ancho de banda nominal la capacidad conocida del enlace de tránsito capturado por MAWI.
+Como se documentó en la Tabla \ref{tab:disponibilidad_metricas} (Sección \ref{sec:metricas_utilizar}), el \textit{dataset} primario se obtiene ya en forma de serie temporal muestreada directamente a la granularidad deseada (1 minuto), mientras que el \textit{dataset} MAWI se distribuye como capturas de paquetes individuales (\texttt{.pcap}). Por tanto, este último requiere un proceso adicional de \textbf{agregación temporal}: mediante herramientas de análisis de tráfico (\texttt{tshark} / \texttt{tstat}), los paquetes capturados se agrupan en ventanas 
+no traslapadas de 1 minuto, calculando para cada ventana el total de bytes transmitidos, a partir de lo cual se deriva la utilización $U(t)$ mediante la Ecuación \ref{eq:throughput}, empleando como ancho de banda nominal la capacidad conocida del enlace de tránsito capturado por MAWI.
 
 La Tabla \ref{tab:resampleo_fuentes} resume este contraste entre ambas fuentes.
 
@@ -1306,13 +1279,13 @@ La Tabla \ref{tab:resampleo_fuentes} resume este contraste entre ambas fuentes.
     \centering
     \begin{tabular}{|l|p{4.3cm}|p{4.3cm}|}
         \hline
-        \textbf{Aspecto} & \textbf{Dataset primario} & \textbf{Dataset de validación (MAWI)} \\
+        \textbf{Aspecto} & \textbf{\textit{Dataset} primario} & \textbf{\textit{Dataset} de validación (MAWI)} \\
         \hline
         Formato original & Serie temporal (SNMP/ICMP) & Captura de paquetes (\texttt{.pcap}) \\
         \hline
         Granularidad original & 1 minuto (ya muestreada) & Por paquete individual (microsegundos) \\
         \hline
-        Proceso requerido & Ninguno (uso directo) & Agregación mediante \texttt{tshark}/\texttt{tstat} \\
+        Proceso requerido & Ninguno (uso directo) & Agregación mediante \texttt{tshark} / \texttt{tstat} \\
         \hline
         Granularidad final & 1 minuto & 1 minuto (tras agregación) \\
         \hline
@@ -1323,32 +1296,30 @@ La Tabla \ref{tab:resampleo_fuentes} resume este contraste entre ambas fuentes.
 
 \subsection*{Normalización de variables}
 
-Dado que los modelos de Deep Learning (LSTM, GRU) son sensibles a la escala de las variables de entrada —un gradiente calculado sobre variables de magnitudes muy dispares puede converger de manera inestable durante el entrenamiento—, todas las variables continuas de la Tabla \ref{tab:features_entrada} se normalizan mediante escalamiento Min-Max al rango $[0,1]$:
+Dado que los modelos de \textit{Deep Learning} (LSTM, GRU) son sensibles a la escala de las variables de entrada ---un gradiente calculado sobre variables de magnitudes muy dispares puede converger de manera inestable durante el entrenamiento---, todas las variables continuas de la Tabla \ref{tab:features_entrada} se normalizan mediante escalamiento Min-Max al rango $[0,1]$:
 
 \begin{equation}
-    x_{\text{norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
+    x_{\mbox{\scriptsize norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
     \label{eq:minmax}
 \end{equation}
 
-Se opta por escalamiento Min-Max en lugar de estandarización Z-score porque la variable de mayor interés, la utilización $U(t)$, posee un rango natural acotado $[0,1]$ (Sección \ref{sec:congestion}). Un punto metodológico crítico: para el dataset primario, los valores $x_{\min}$ y $x_{\max}$ se calculan \textbf{estrictamente} a partir del conjunto de entrenamiento, 
-aplicándose posteriormente sobre los conjuntos de validación y prueba para evitar la fuga de información (\textit{data leakage}). 
+Se opta por escalamiento Min-Max en lugar de estandarización Z-score porque la variable de mayor interés, la utilización $U(t)$, posee un rango natural acotado $[0,1]$ (Sección \ref{sec:congestion}). Un punto metodológico crítico: para el \textit{dataset} primario, los valores $x_{\min}$ y $x_{\max}$ se calculan \textbf{estrictamente} a partir del conjunto de entrenamiento, aplicándose posteriormente sobre los conjuntos de validación y prueba para evitar la fuga de información (\textit{data leakage}). 
 
-Sin embargo, como se advirtió en la Sección 4.3, el dataset de validación externa (MAWI) presenta un cambio de dominio (\textit{domain shift}) significativo, particularmente en las distribuciones de latencia inferida. Por consiguiente, MAWI es sometido a un proceso de escalado independiente, ajustando sus propios parámetros de normalización para homologar las varianzas 
-relativas antes de someterlo a los modelos preentrenados, garantizando así una evaluación justa de la capacidad de generalización algorítmica.
+Sin embargo, como se advirtió en la Sección \ref{sec:metricas_utilizar}, el \textit{dataset} de validación externa (MAWI) presenta un cambio de dominio (\textit{domain shift}) significativo, particularmente en las distribuciones de latencia inferida. Por consiguiente, MAWI es sometido a un proceso de escalado independiente, ajustando sus propios parámetros de normalización para homologar las varianzas relativas antes de someterlo a los modelos preentrenados, garantizando así una evaluación justa de la capacidad de generalización algorítmica.
 
 \subsection*{Ventaneo y construcción de rezagos (\textit{Lags})}
 
 Para que los algoritmos de aprendizaje automático puedan predecir a partir de series temporales, es necesario transformar la serie lineal en conjuntos de variables estructuradas mediante una \textbf{ventana deslizante} (\textit{sliding window}). Este proceso aplica para todos los modelos, pero difiere en la topología de los datos generados:
 
-Para los modelos clásicos (Random Forest, SVR), que carecen de memoria interna (Sección 2.2.3), la ventana aplana el historial temporal en un vector tabular de características (2D), donde cada observación pasada se convierte en una variable independiente. Por el contrario, para las arquitecturas LSTM y GRU (Sección 2.2.4), el ventaneo preserva 
-la estructura tridimensional (3D) de secuencias temporales que la red recurrente consume de manera nativa. Dada una longitud de ventana $w$, cada bloque de entrada se construye como:
+Para los modelos clásicos (\textit{Random Forest}, SVR), que carecen de memoria interna (Sección \ref{subsec:ml_clasico}), la ventana aplana el historial temporal en un vector tabular de características (2D), donde cada observación pasada se convierte en una variable independiente. Por el contrario, para las arquitecturas LSTM y GRU (Sección \ref{subsec:deep_learning}), el ventaneo preserva la estructura tridimensional (3D) de secuencias temporales que la red recurrente consume de manera nativa. Dada una longitud de ventana $w$, cada bloque de 
+entrada se construye como:
 
 \begin{equation}
     X_t = \left[U(t-w), U(t-w+1), \dots, U(t-1)\right] \longrightarrow y_t = U(t+h)
     \label{eq:ventaneo}
 \end{equation}
 
-donde $w$ es el número de observaciones pasadas consideradas (análogo, aunque no idéntico en propósito, al orden $p$ del modelo ARIMA presentado en la Sección 2.2.2) y $h$ es el horizonte de predicción. La Figura \ref{fig:ventaneo} ilustra este proceso de manera esquemática.
+donde $w$ es el número de observaciones pasadas consideradas (análogo, aunque no idéntico en propósito, al orden $p$ del modelo ARIMA presentado en la Sección \ref{subsec:arima}) y $h$ es el horizonte de predicción. La Figura \ref{fig:ventaneo} ilustra este proceso de manera esquemática.
 
 \begin{figure}[H]
     \centering
@@ -1373,23 +1344,20 @@ donde $w$ es el número de observaciones pasadas consideradas (análogo, aunque 
     \label{fig:ventaneo}
 \end{figure}
 
-El valor específico de $w$ (longitud de la ventana) y $h$ (horizonte de predicción) se determinará experimentalmente en el Capítulo 5, evaluando el desempeño del modelo bajo distintas configuraciones, si bien como punto de partida se contemplan ventanas equivalentes a periodos de 30 a 60 minutos de historia (es decir, $w = 30$ a $60$ bajo la granularidad de 1 minuto establecida), y 
-horizontes de predicción de $h = 5$ a $15$ minutos, congruentes con el propósito de alertamiento temprano planteado en el Capítulo 1.
+El valor específico de $w$ (longitud de la ventana) y $h$ (horizonte de predicción) se determinará experimentalmente en el Capítulo 5, evaluando el desempeño del modelo bajo distintas configuraciones, si bien como punto de partida se contemplan ventanas equivalentes a periodos de 30 a 60 minutos de historia (es decir, $w = 30$ a $60$ bajo la granularidad de 1 minuto establecida), y horizontes de predicción de $h = 5$ a $15$ minutos, congruentes con el propósito de alertamiento temprano planteado en el Capítulo 1.
 
 \subsection*{División de datos: entrenamiento, validación y prueba}
 
-Un error metodológico común al trabajar con series temporales —y que esta tesis evita deliberadamente— es dividir los datos en conjuntos de entrenamiento y prueba mediante muestreo aleatorio, tal como se acostumbra en problemas de aprendizaje supervisado convencionales. Este enfoque resulta inadecuado en el presente contexto porque violaría el orden temporal de la serie: permitiría, 
-por ejemplo, que el modelo se entrene con datos de un instante posterior y sea evaluado sobre un instante anterior, lo cual no solo carece de sentido práctico —un sistema de predicción real jamás tendría acceso a datos del futuro—, sino que produciría estimaciones de desempeño artificialmente optimistas por fuga de información temporal.
+Un error metodológico común al trabajar con series temporales ---y que esta tesis evita deliberadamente--- es dividir los datos en conjuntos de entrenamiento y prueba mediante muestreo aleatorio, tal como se acostumbra en problemas de aprendizaje supervisado convencionales. Este enfoque resulta inadecuado en el presente contexto porque violaría el orden temporal de la serie: permitiría, por ejemplo, que el modelo se entrene con datos de un instante posterior y sea evaluado sobre un instante anterior, lo cual no solo carece de sentido práctico 
+---un sistema de predicción real jamás tendría acceso a datos del futuro---, sino que produciría estimaciones de desempeño artificialmente optimistas por fuga de información temporal.
 
-Por esta razón, la división de los datos se realiza de manera estrictamente \textbf{cronológica}, tal como se ilustra en la Figura \ref{fig:division_temporal}: el segmento más antiguo de la serie se destina a entrenamiento, el segmento intermedio a validación (empleado para el ajuste de hiperparámetros), y el segmento más reciente a prueba (empleado exclusivamente para la evaluación 
-final reportada en el Capítulo 6).
+Por esta razón, la división de los datos se realiza de manera estrictamente \textbf{cronológica}, tal como se ilustra en la Figura \ref{fig:division_temporal}: el segmento más antiguo de la serie se destina a entrenamiento, el segmento intermedio a validación (empleado para el ajuste de hiperparámetros) y el segmento más reciente a prueba (empleado exclusivamente para la evaluación final reportada en el Capítulo 6).
 
 \begin{figure}[H]
     \centering
     \begin{tikzpicture}[every node/.style={font=\sffamily\footnotesize}]
     \draw[thick, -{Latex[length=3mm]}] (0,0) -- (12.5,0) node[right] {tiempo};
 
-    
     \fill[black!10] (0,0.15) rectangle (7.2,0.65);
     \fill[black!25] (7.2,0.15) rectangle (9.6,0.65);
     \fill[black!45] (9.6,0.15) rectangle (12,0.65);
@@ -1397,21 +1365,21 @@ final reportada en el Capítulo 6).
     \draw[thick] (7.2,0.15) -- (7.2,0.65);
     \draw[thick] (9.6,0.15) -- (9.6,0.65);
 
-    \node at (3.6,0.9) {\textbf{Entrenamiento (60\%)}};
-    \node at (8.4,0.9) {\textbf{Validación (20\%)}};
-    \node at (10.8,0.9) {\textbf{Prueba (20\%)}};
+    % Etiquetas divididas en dos líneas para evitar superposición
+    \node[align=center] at (3.6,1.05) {\textbf{Entrenamiento}\\\textbf{(60\,\%)}};
+    \node[align=center] at (8.4,1.05) {\textbf{Validación}\\\textbf{(20\,\%)}};
+    \node[align=center] at (10.8,1.05) {\textbf{Prueba}\\\textbf{(20\,\%)}};
 
     \node[below=0.15cm] at (0,0) {inicio};
     \node[below=0.15cm] at (12,0) {fin};
     \end{tikzpicture}
-    \caption{División cronológica del dataset primario en conjuntos de entrenamiento, validación y prueba.}
+    \caption{División cronológica del \textit{dataset} primario en conjuntos de entrenamiento, validación y prueba.}
     \label{fig:division_temporal}
 \end{figure}
 
-Esta división se aplica de manera independiente sobre el dataset primario (proporciones 60/20/20 sobre los NUMEROFINAL días de recolección continua). El dataset MAWI, en cambio, se emplea íntegramente como un segundo conjunto de prueba externo —no se divide en entrenamiento/validación/prueba—, ya que su función metodológica, como se estableció en la Sección \ref{sec:fuente_datos}, es 
-evaluar la capacidad de generalización de los modelos ya entrenados sobre el dataset primario, y no proveer datos adicionales de entrenamiento.
+Esta división se aplica de manera independiente sobre el \textit{dataset} primario (proporciones 60/20/20 sobre los 30 días de recolección continua). El \textit{dataset} MAWI, en cambio, se emplea íntegramente como un segundo conjunto de prueba externo ---no se divide en entrenamiento, validación y prueba---, ya que su función metodológica, como se estableció en la Sección \ref{sec:fuente_datos}, es evaluar la capacidad de generalización de los modelos ya entrenados sobre el \textit{dataset} primario, y no proveer datos adicionales de entrenamiento.
 
-La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de preprocesamiento descritas en esta sección, como cierre de este apartado y transición hacia la implementación concreta de los modelos, que se aborda en el Capítulo 5.
+La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de preprocesamiento descritas en esta sección, sirviendo como cierre de este apartado y transición hacia la implementación concreta de los modelos, que se abordará en el Capítulo 5.
 
 \begin{table}[H]
     \centering
@@ -1419,15 +1387,15 @@ La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de prepro
         \hline
         \textbf{Etapa} & \textbf{Descripción} \\
         \hline
-        1. Limpieza & Interpolación de faltantes cortos; tratamiento contextual de atípicos (Ec. \ref{eq:iqr}) \\
+        1. Limpieza & Interpolación de faltantes cortos; tratamiento contextual de atípicos (Ec. \ref{eq:iqr}). \\
         \hline
-        2. Resampleo & Agregación de MAWI a ventanas de 1 min; uso directo del dataset primario \\
+        2. Resampleo & Agregación de MAWI a ventanas de 1 min; uso directo del \textit{dataset} primario. \\
         \hline
-        3. Normalización & Escalamiento Min-Max (Ec. \ref{eq:minmax}), ajustado solo sobre entrenamiento \\
+        3. Normalización & Escalamiento Min-Max (Ec. \ref{eq:minmax}), ajustado solo sobre entrenamiento. \\
         \hline
-        4. Ventaneo & Construcción de secuencias para LSTM/GRU (Ec. \ref{eq:ventaneo}) \\
+        4. Ventaneo & Construcción de secuencias para LSTM/GRU (Ec. \ref{eq:ventaneo}). \\
         \hline
-        5. División temporal & 60/20/20 cronológico sobre dataset primario; MAWI como prueba externa \\
+        5. División temporal & 60/20/20 cronológico sobre el \textit{dataset} primario; MAWI como prueba externa. \\
         \hline
     \end{tabular}
     \caption{Resumen de las etapas de preprocesamiento de datos.}
@@ -1437,38 +1405,33 @@ La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de prepro
 \section{Modelos a implementar y justificación de su elección}
 \label{sec:modelos_justificacion}
 
-Con base en los tres paradigmas de modelado presentados en el Marco Teórico (Sección 2.2) y en la brecha metodológica identificada en la síntesis del Estado del Arte (Sección 3.5) —la ausencia, en la literatura revisada, de una comparación simultánea entre modelos estadísticos, de Machine Learning clásico y de Deep Learning bajo condiciones experimentales controladas—, esta 
-tesis contempla la implementación y evaluación comparativa de cinco modelos específicos: ARIMA, Random Forest, SVR, LSTM y GRU. Esta sección justifica la elección de cada uno, así como la exclusión deliberada de otras alternativas que un lector familiarizado con el campo podría razonablemente esperar encontrar aquí.
+Con base en los tres paradigmas de modelado presentados en el Marco Teórico (Sección \ref{sec:tecnicas_ml}) y en la brecha metodológica identificada en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}) ---la ausencia, en la literatura revisada, de una comparación simultánea entre modelos estadísticos, de \textit{Machine Learning} clásico y de \textit{Deep Learning} bajo condiciones experimentales controladas---, esta tesis contempla la implementación y evaluación comparativa de cinco modelos específicos: ARIMA, \textit{Random Forest}, 
+SVR, LSTM y GRU. Esta sección justifica la elección de cada uno, así como la exclusión deliberada de otras alternativas que un lector familiarizado con el campo podría razonablemente esperar encontrar aquí.
 
-\subsection*{ARIMA: modelo de referencia (baseline)}
+\subsection*{ARIMA: modelo de referencia (\textit{baseline})}
 
-ARIMA se incluye no como un candidato a ofrecer el mejor desempeño absoluto, sino como \textbf{línea base de referencia} contra la cual contrastar el desempeño de los modelos subsiguientes, conforme a su rol descrito en la Sección 2.2.2. Su justificación no depende de una expectativa de alto desempeño, sino de un principio metodológico: sin un punto de comparación estadístico 
-simple, cualquier ganancia de desempeño reportada por los modelos de ML clásico o Deep Learning carecería de un marco de referencia contra el cual dimensionar su magnitud real. Adicionalmente, como se documentó en la Sección 3.1, ARIMA y sus variantes continúan siendo objeto de investigación vigente en la literatura reciente \cite{kochetkova2023}, lo que respalda su pertinencia 
-como punto de comparación actual y no meramente histórico.
+ARIMA se incluye no como un candidato a ofrecer el mejor desempeño absoluto, sino como \textbf{línea base de referencia} contra la cual contrastar el desempeño de los modelos subsiguientes, conforme a su rol descrito en la Sección \ref{subsec:arima}. Su justificación no depende de una expectativa de alto desempeño, sino de un principio metodológico: sin un punto de comparación estadístico simple, cualquier ganancia de desempeño reportada por los modelos de ML clásico o \textit{Deep Learning} carecería de un marco de referencia contra el cual 
+dimensionar su magnitud real. Adicionalmente, como se documentó en la Sección \ref{sec:estado_estadistica}, ARIMA y sus variantes continúan siendo objeto de investigación vigente en la literatura reciente \cite{kochetkova2023}, lo que respalda su pertinencia como punto de comparación actual y no meramente histórico.
 
-\subsection*{Random Forest y SVR: Machine Learning clásico}
+\subsection*{\textit{Random Forest} y SVR: \textit{Machine Learning} clásico}
 
-La elección de Random Forest se fundamenta directamente en la evidencia reportada por Sneha et al. \cite{sneha2020} (Sección 3.2), quienes encontraron que este modelo ofreció el mejor desempeño entre cuatro algoritmos clásicos evaluados para la predicción de congestión a nivel de enrutador. A esta evidencia empírica se suma una ventaja metodológica relevante para esta tesis: 
-la capacidad de Random Forest de calcular la importancia relativa de cada variable de entrada (Sección 2.2.3), lo cual permitirá —una vez ejecutado el entrenamiento en el Capítulo 5— determinar cuáles de las variables descritas en la Tabla \ref{tab:features_entrada} (Sección \ref{sec:metricas_utilizar}) resultan más informativas para anticipar la congestión, aportando así 
-evidencia adicional más allá de la mera precisión predictiva.
+La elección de \textit{Random Forest} se fundamenta directamente en la evidencia reportada por Sneha et al. \cite{sneha2020} (Sección \ref{sec:estado_ml}), quienes encontraron que este modelo ofreció el mejor desempeño entre cuatro algoritmos clásicos evaluados para la predicción de congestión a nivel de enrutador. A esta evidencia empírica se suma una ventaja metodológica relevante para esta tesis: la capacidad de \textit{Random Forest} de calcular la importancia relativa de cada variable de entrada (Sección \ref{subsec:ml_clasico}), lo cual 
+permitirá ---una vez ejecutado el entrenamiento en el Capítulo 5--- determinar cuáles de las variables descritas en la Tabla \ref{tab:features_entrada} (Sección \ref{sec:metricas_utilizar}) resultan más informativas para anticipar la congestión, aportando así evidencia adicional más allá de la mera precisión predictiva.
 
-SVR se incorpora como segundo representante del ML clásico con base en el precedente de Qian et al. \cite{qian2016} (Sección 3.2), quienes demostraron su viabilidad para modelar fenómenos de saturación fundamentados en teoría de colas —el mismo marco teórico que sustenta la definición operativa de congestión adoptada en esta tesis (Sección \ref{sec:congestion})—, aun cuando 
-dicho precedente provenga de un dominio de red distinto (Redes en Chip). Su inclusión permite, además, contrastar dos filosofías distintas dentro del propio paradigma de ML clásico: los métodos de ensamble basados en árboles (Random Forest) frente a los métodos basados en márgenes y funciones kernel (SVR).
+SVR se incorpora como segundo representante del ML clásico con base en el precedente de Qian et al. \cite{qian2016} (Sección \ref{sec:estado_ml}), quienes demostraron su viabilidad para modelar fenómenos de saturación fundamentados en la teoría de colas ---el mismo marco teórico que sustenta la definición operativa de congestión adoptada en esta tesis (Sección \ref{sec:congestion})---, aun cuando dicho precedente provenga de un dominio de red distinto (Redes en Chip). Su inclusión permite, además, contrastar dos filosofías distintas dentro del 
+propio paradigma de ML clásico: los métodos de ensamble basados en árboles (\textit{Random Forest}) frente a los métodos basados en márgenes y funciones \textit{kernel} (SVR).
 
-\subsection*{LSTM y GRU: Deep Learning}
+\subsection*{LSTM y GRU: \textit{Deep Learning}}
 
-La justificación de estos dos modelos se apoya directamente en el trabajo de Santos et al. \cite{santos2022} (Sección 3.3), quienes realizaron la comparación más metodológicamente cercana a la planteada en esta tesis —LSTM contra GRU, sobre tráfico de Internet real, con un periodo de recolección del mismo orden de magnitud que el establecido para el dataset primario de esta 
-investigación (Sección \ref{sec:fuente_datos})—. A diferencia de dicho trabajo, sin embargo, esta tesis no asume de antemano la superioridad de uno sobre el otro: como se discutió en la síntesis del Estado del Arte (Sección 3.5), los propios autores encontraron que el desempeño relativo entre LSTM y GRU varió según la zona geográfica analizada, lo cual, para los fines de 
-esta tesis, se interpreta como evidencia de que dicha superioridad depende del contexto particular de la red bajo estudio y debe, por tanto, evaluarse empíricamente sobre el dataset primario y de validación propios de este trabajo, en lugar de asumirse a priori.
+La justificación de estos dos modelos se apoya directamente en el trabajo de Santos et al. \cite{santos2022} (Sección \ref{sec:estado_dl}), quienes realizaron la comparación más metodológicamente cercana a la planteada en esta tesis ---LSTM contra GRU, sobre tráfico de Internet real, con un periodo de recolección del mismo orden de magnitud que el establecido para el \textit{dataset} primario de esta investigación (Sección \ref{sec:fuente_datos})---. A diferencia de dicho trabajo, sin embargo, esta tesis no asume de antemano la superioridad 
+de uno sobre el otro: como se discutió en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}), los propios autores encontraron que el desempeño relativo entre LSTM y GRU varió según la zona geográfica analizada, lo cual, para los fines de esta tesis, se interpreta como evidencia de que dicha superioridad depende del contexto particular de la red bajo estudio y debe, por tanto, evaluarse empíricamente sobre los \textit{datasets} primario y de validación propios de este trabajo, en lugar de asumirse \textit{a priori}.
 
-La inclusión conjunta de ambas arquitecturas obedece también a una consideración práctica señalada en la Sección 2.2.4: GRU posee una estructura interna más simple que LSTM (al prescindir de un estado de celda independiente), lo que podría traducirse en un menor costo computacional y un entrenamiento más eficiente sobre un conjunto de datos de tamaño moderado como el 
-dataset primario de esta tesis. De confirmarse esta hipótesis durante la fase experimental (Capítulo 5), ello constituiría evidencia relevante para escenarios de redes de pequeña escala similares al aquí estudiado, donde los recursos computacionales disponibles para el entrenamiento pueden ser más limitados que en los grandes centros de datos donde suele evaluarse la 
-literatura de Deep Learning.
+La inclusión conjunta de ambas arquitecturas obedece también a una consideración práctica señalada en la Sección \ref{subsec:deep_learning}: GRU posee una estructura interna más simple que LSTM (al prescindir de un estado de celda independiente), lo que podría traducirse en un menor costo computacional y un entrenamiento más eficiente sobre un conjunto de datos de tamaño moderado como el \textit{dataset} primario de esta tesis. De confirmarse esta hipótesis durante la fase experimental (Capítulo 5), ello constituiría evidencia relevante para 
+escenarios de redes de pequeña escala similares al aquí estudiado, donde los recursos computacionales disponibles para el entrenamiento pueden ser más limitados que en los grandes centros de datos donde suele evaluarse la literatura de \textit{Deep Learning}.
 
 \subsection*{Modelos considerados y no incluidos}
 
-Es previsible que, ante la elección de los cinco modelos anteriores, surja la pregunta de por qué no se incluyeron otras alternativas frecuentemente mencionadas en la literatura de predicción de series temporales, como XGBoost, Prophet o arquitecturas basadas en mecanismos de atención (\textit{Transformers}). La Tabla \ref{tab:modelos_excluidos} explicita esta decisión 
-y su justificación.
+Es previsible que, ante la elección de los cinco modelos anteriores, surja la pregunta de por qué no se incluyeron otras alternativas frecuentemente mencionadas en la literatura de predicción de series temporales, como XGBoost, Prophet o arquitecturas basadas en mecanismos de atención (\textit{Transformers}). La Tabla \ref{tab:modelos_excluidos} explicita esta decisión y su justificación.
 
 \begin{table}[H]
     \centering
@@ -1476,11 +1439,12 @@ y su justificación.
         \hline
         \textbf{Modelo no incluido} & \textbf{Justificación de exclusión} \\
         \hline
-        XGBoost & Si bien supera frecuentemente a Random Forest, XGBoost se basa en \textit{Boosting} (reducción secuencial de sesgo), lo que lo hace altamente susceptible al sobreajuste (\textit{overfitting}) en conjuntos de datos pequeños o con métricas ruidosas (como la latencia TCP inferida), a menos que se realice una sintonización de hiperparámetros exhaustiva. Se optó por Random Forest (\textit{Bagging}) por su mayor robustez inherente al ruido operativo como representante del ML clásico, dejando a XGBoost como línea de trabajo futuro. \\
+        XGBoost & Si bien supera frecuentemente a \textit{Random Forest}, XGBoost se basa en \textit{Boosting} (reducción secuencial de sesgo), lo que lo hace altamente susceptible al sobreajuste (\textit{overfitting}) en conjuntos de datos pequeños o con métricas ruidosas (como la latencia TCP inferida), a menos que se realice una sintonización de hiperparámetros exhaustiva. Se optó por \textit{Random Forest} (\textit{Bagging}) por su mayor robustez inherente al ruido operativo como representante del ML clásico, dejando a XGBoost como línea de 
+        trabajo futuro. \\
         \hline
-        Prophet & Diseñado principalmente para series con estacionalidad y tendencia de negocio (ventas, demanda), con supuestos que no necesariamente se ajustan al comportamiento de tráfico de red a la granularidad de minutos empleada en esta tesis. \\
+        Prophet & Diseñado principalmente para series con estacionalidad y tendencia de negocio (ventas, demanda), con supuestos que no necesariamente se ajustan al comportamiento del tráfico de red a la granularidad de minutos empleada en esta tesis. \\
         \hline
-        Transformers / modelos de atención & Si bien representan el estado del arte más reciente (Sección 3.5), su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el dataset primario de esta tesis (NUMEROFINAL días) de una red de escala reducida), por lo que su evaluación rigurosa excede el alcance y los recursos de este trabajo. \\
+        \textit{Transformers} / Modelos de atención & Si bien representan el estado del arte más reciente (Sección \ref{sec:estado_brecha}), su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el \textit{dataset} primario de esta tesis (30 días en una red de escala reducida), por lo que su evaluación rigurosa excede el alcance y los recursos de este trabajo. \\
         \hline
     \end{tabular}
     \caption{Modelos considerados durante la planeación de esta tesis y justificación de su exclusión del alcance experimental.}
@@ -1489,9 +1453,8 @@ y su justificación.
 
 \subsection*{Diseño experimental general}
 
-La Figura \ref{fig:diseno_experimental} sintetiza el diseño experimental completo que resulta de las decisiones justificadas en esta sección. Los cinco modelos se evaluarán bajo las dos formulaciones del problema (regresión y clasificación). Es importante precisar una distinción operativa: mientras que los modelos de ML clásico y Deep Learning pueden entrenarse explícitamente para clasificar 
-(optimizando funciones de pérdida binarias como \textit{Binary Cross-Entropy}), el modelo ARIMA operará estrictamente como regresor continuo. Su evaluación en tareas de clasificación se realizará de manera derivada, aplicando el umbral $U_{th}$ (Ecuación \ref{eq:congestion_instanciada}) sobre su predicción numérica final. Una vez evaluados sobre el dataset primario, se validará su capacidad 
-de generalización sobre el dataset MAWI.
+La Figura \ref{fig:diseno_experimental} sintetiza el diseño experimental completo que resulta de las decisiones justificadas en esta sección. Los cinco modelos se evaluarán bajo las dos formulaciones del problema (regresión y clasificación). Es importante precisar una distinción operativa: mientras que los modelos de ML clásico y \textit{Deep Learning} pueden entrenarse explícitamente para clasificar (optimizando funciones de pérdida binarias como \textit{Binary Cross-Entropy}), el modelo ARIMA operará estrictamente como regresor continuo. 
+Su evaluación en tareas de clasificación se realizará de manera derivada, aplicando el umbral $U_{th}$ (Ecuación \ref{eq:congestion_instanciada}) sobre su predicción numérica final. Una vez evaluados sobre el \textit{dataset} primario, se validará su capacidad de generalización sobre el \textit{dataset} MAWI.
 
 \begin{figure}[H]
     \centering
@@ -1500,18 +1463,18 @@ de generalización sobre el dataset MAWI.
         box/.style={rectangle, draw=black!70, thick, rounded corners=3pt, align=center, minimum height=1cm, fill=gray!5},
         arrow/.style={-{Latex[length=2.5mm]}, thick}
     ]
-    \node[box, minimum width=3.4cm] (data) {Dataset primario\\ \footnotesize (red privada PYME)};
+    \node[box, minimum width=3.4cm] (data) {\textit{Dataset} primario\\ \footnotesize (red privada PYME)};
     \node[box, right=1.4cm of data, minimum width=2.6cm, fill=black!10] (train) {Entrenamiento\\ y validación\\ \footnotesize (Sección \ref{sec:preprocesamiento})};
 
     \node[box, right=1.8cm of train, minimum width=2.2cm] (arima) {ARIMA};
-    \node[box, below=0.25cm of arima, minimum width=2.2cm] (rf) {Random Forest};
+    \node[box, below=0.25cm of arima, minimum width=2.2cm] (rf) {\textit{Random Forest}};
     \node[box, below=0.25cm of rf, minimum width=2.2cm] (svr) {SVR};
     \node[box, below=0.25cm of svr, minimum width=2.2cm] (lstm) {LSTM};
     \node[box, below=0.25cm of lstm, minimum width=2.2cm] (gru) {GRU};
 
     \node[box, right=1.8cm of rf, minimum width=2.6cm, fill=black!15] (eval) {Evaluación\\ \footnotesize (Sección \ref{sec:evaluacion})};
 
-    \node[box, below=2.6cm of data, minimum width=3.4cm] (mawi) {Dataset MAWI\\ \footnotesize (validación externa)};
+    \node[box, below=2.6cm of data, minimum width=3.4cm] (mawi) {\textit{Dataset} MAWI\\ \footnotesize (validación externa)};
 
     \draw[arrow] (data) -- (train);
     \draw[arrow] (train) -- (arima);
@@ -1526,23 +1489,20 @@ de generalización sobre el dataset MAWI.
     \draw[arrow] (gru) -- (eval);
     \draw[arrow] (mawi) -| (eval);
     \end{tikzpicture}
-    \caption{Diseño experimental general: entrenamiento sobre el dataset primario y validación cruzada de fuentes contra MAWI.}
+    \caption{Diseño experimental general: entrenamiento sobre el \textit{dataset} primario y validación cruzada contra MAWI.}
     \label{fig:diseno_experimental}
 \end{figure}
 
-Es importante subrayar que las afirmaciones planteadas en esta sección —respecto a qué modelo podría desempeñarse mejor y bajo qué condiciones— constituyen hipótesis de trabajo fundamentadas en la evidencia de la literatura revisada, y no conclusiones anticipadas de esta tesis. La confirmación, matización o refutación de dichas hipótesis, con base en evidencia 
-empírica propia, se presenta en los Capítulos 5 y 6.
+Es importante subrayar que las afirmaciones planteadas en esta sección ---respecto a qué modelo podría desempeñarse mejor y bajo qué condiciones--- constituyen hipótesis de trabajo fundamentadas en la evidencia de la literatura revisada, y no conclusiones anticipadas de esta tesis. La confirmación, matización o refutación de dichas hipótesis, con base en evidencia empírica propia, se presentará en los Capítulos 5 y 6.
 
 \section{Métricas de evaluación del modelo}
 \label{sec:evaluacion}
 
-Como se estableció en la Sección \ref{sec:metricas_utilizar}, el problema de predicción de congestión abordado en esta tesis se formula bajo dos paradigmas complementarios: regresión (predicción del valor continuo $U(t+h)$) y clasificación (predicción binaria de congestión mediante la Ecuación \ref{eq:congestion_instanciada}). En congruencia con esta doble 
-formulación, esta sección define dos conjuntos de métricas de evaluación independientes, así como los criterios bajo los cuales se compararán los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}.
+Como se estableció en la Sección \ref{sec:metricas_utilizar}, el problema de predicción de congestión abordado en esta tesis se formula bajo dos paradigmas complementarios: regresión (predicción del valor continuo $U(t+h)$) y clasificación (predicción binaria de congestión mediante la Ecuación \ref{eq:congestion_instanciada}). En congruencia con esta doble formulación, esta sección define dos conjuntos de métricas de evaluación independientes, así como los criterios bajo los cuales se compararán los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}.
 
 \subsection*{Métricas para la tarea de regresión}
 
-Para evaluar el desempeño de los modelos en su formulación de regresión se emplearán las tres métricas presentadas formalmente en la Sección 2.2.5: RMSE (Ecuación \ref{eq:rmse}), MAE (Ecuación \ref{eq:mae}) y MAPE (Ecuación \ref{eq:mape}). La Tabla \ref{tab:criterio_regresion} resume el propósito específico que cada una cumple dentro del análisis comparativo 
-de esta tesis, evitando así que su inclusión conjunta se perciba como una simple acumulación de métricas sin criterio.
+Para evaluar el desempeño de los modelos en su formulación de regresión se emplearán las tres métricas presentadas formalmente en el Capítulo 2: RMSE (Ecuación \ref{eq:rmse}), MAE (Ecuación \ref{eq:mae}) y MAPE (Ecuación \ref{eq:mape}). La Tabla \ref{tab:criterio_regresion} resume el propósito específico que cada una cumple dentro del análisis comparativo de esta tesis, evitando así que su inclusión conjunta se perciba como una simple acumulación de métricas sin criterio.
 
 \begin{table}[H]
     \centering
@@ -1550,11 +1510,11 @@ de esta tesis, evitando así que su inclusión conjunta se perciba como una simp
         \hline
         \textbf{Métrica} & \textbf{Sensibilidad} & \textbf{Rol en esta tesis} \\
         \hline
-        RMSE & Penaliza fuertemente errores grandes & Detectar modelos que fallan de forma severa ante picos de congestión \\
+        RMSE & Penaliza fuertemente errores grandes & Detectar modelos que fallan de forma severa ante picos de congestión. \\
         \hline
-        MAE & Pondera todos los errores por igual & Interpretación directa del error típico esperado, en las mismas unidades que $U$ \\
+        MAE & Pondera todos los errores por igual & Interpretación directa del error típico esperado, en las mismas unidades que $U$. \\
         \hline
-        MAPE & Expresa el error como porcentaje relativo & Comparar el desempeño de un mismo modelo entre el dataset primario y MAWI, a pesar de operar a escalas de tráfico distintas \\
+        MAPE & Expresa el error como porcentaje relativo & Comparar el desempeño de un mismo modelo entre el \textit{dataset} primario y MAWI, a pesar de operar a escalas de tráfico distintas. \\
         \hline
     \end{tabular}
     \caption{Rol de cada métrica de regresión en el análisis comparativo de esta tesis.}
@@ -1563,8 +1523,7 @@ de esta tesis, evitando así que su inclusión conjunta se perciba como una simp
 
 \subsection*{Métricas para la tarea de clasificación}
 
-Para la formulación de clasificación binaria (congestión / no congestión), las métricas de error continuo de la subsección anterior resultan insuficientes, ya que no capturan directamente el tipo de aciertos y errores más relevantes para un sistema de alertamiento. Se requiere, en su lugar, un conjunto de métricas derivadas de la \textbf{matriz de confusión}, 
-ilustrada en la Figura \ref{fig:matriz_confusion}, que clasifica cada predicción en una de cuatro categorías según la coincidencia entre el valor predicho y el valor real observado.
+Para la formulación de clasificación binaria (congestión / no congestión), las métricas de error continuo de la subsección anterior resultan insuficientes, ya que no capturan directamente el tipo de aciertos y errores más relevantes para un sistema de alertamiento. Se requiere, en su lugar, un conjunto de métricas derivadas de la \textbf{matriz de confusión}, ilustrada en la Figura \ref{fig:matriz_confusion}, que clasifica cada predicción en una de cuatro categorías según la coincidencia entre el valor predicho y el valor real observado.
 
 \begin{figure}[H]
     \centering
@@ -1592,34 +1551,29 @@ ilustrada en la Figura \ref{fig:matriz_confusion}, que clasifica cada predicció
     \label{fig:matriz_confusion}
 \end{figure}
 
-A partir de estas cuatro cantidades se calculan la \textbf{Exactitud}, \textbf{Precisión}, \textbf{Exhaustividad (Recall)} y el \textbf{F1-Score}, cuyas formulaciones matemáticas ya fueron establecidas rigurosamente en el Marco Teórico (Sección 2.4).
+A partir de estas cuatro cantidades se calculan la \textbf{Exactitud}, \textbf{Precisión}, \textbf{Exhaustividad (\textit{Recall})} y el \textbf{\textit{F1-Score}}, cuyas formulaciones matemáticas ya fueron establecidas rigurosamente en el Marco Teórico (Capítulo 2).
 
-Es necesario justificar, en el contexto específico de esta tesis, por qué estas métricas no deben ponderarse de manera equivalente.
-
-Es necesario justificar, en el contexto específico de esta tesis, por qué estas métricas no deben ponderarse de manera equivalente. Como se señala en la Figura \ref{fig:matriz_confusion}, un \textbf{falso negativo} —un episodio real de congestión que el modelo no logra anticipar— resulta considerablemente más costoso, desde la perspectiva del problema planteado 
-en el Capítulo 1, que un \textbf{falso positivo} —una alerta emitida ante una situación que finalmente no deriva en congestión—. Esto se debe a que un falso positivo implica, en el peor de los casos, una revisión innecesaria por parte de un administrador de red o una medida preventiva no estrictamente requerida, mientras que un falso negativo implica exactamente 
-el escenario que esta tesis busca evitar: la degradación del servicio sin ningún tipo de anticipación, replicando la limitación reactiva señalada en el Planteamiento del Problema (Sección 1.1). En consecuencia, esta tesis prioriza la \textbf{exhaustividad (Recall)} sobre la exactitud general como criterio principal de comparación entre modelos, sin descuidar la 
-precisión, para lo cual el \textbf{F1-score} —que balancea ambas— se reporta como métrica de síntesis. Adicionalmente, dado que la exactitud simple puede resultar engañosa cuando la clase de interés (congestión) es minoritaria dentro del conjunto de datos —una condición previsible dado que se espera que la red bajo estudio opere por debajo del umbral $U_{th}$ la 
-mayor parte del tiempo—, esta métrica se reportará únicamente como referencia general y no como criterio determinante de comparación.
+Es necesario justificar, en el contexto específico de esta tesis, por qué estas métricas no deben ponderarse de manera equivalente. Como se señala en la Figura \ref{fig:matriz_confusion}, un \textbf{falso negativo} ---un episodio real de congestión que el modelo no logra anticipar--- resulta considerablemente más costoso, desde la perspectiva del problema planteado en el Capítulo 1, que un \textbf{falso positivo} ---una alerta emitida ante una situación que finalmente no deriva en congestión---. Esto se debe a que un falso positivo implica, 
+en el peor de los casos, una revisión innecesaria por parte de un administrador de red o una medida preventiva no estrictamente requerida, mientras que un falso negativo implica exactamente el escenario que esta tesis busca evitar: la degradación del servicio sin ningún tipo de anticipación, replicando la limitación reactiva señalada en el Planteamiento del Problema (Sección \ref{sec:planteamiento}). En consecuencia, esta tesis prioriza la \textbf{exhaustividad (\textit{Recall})} sobre la exactitud general como criterio principal de comparación 
+entre modelos, sin descuidar la precisión, para lo cual el \textbf{\textit{F1-score}} ---que balancea ambas--- se reporta como métrica de síntesis. Adicionalmente, dado que la exactitud simple puede resultar engañosa cuando la clase de interés (congestión) es minoritaria dentro del conjunto de datos ---una condición previsible dado que se espera que la red bajo estudio opere por debajo del umbral $U_{th}$ la mayor parte del tiempo---, esta métrica se reportará únicamente como referencia general y no como criterio determinante de comparación.
 
 Complementariamente, se reportará también la curva ROC (\textit{Receiver Operating Characteristic}) y el área bajo dicha curva (AUC), que permiten evaluar el desempeño del clasificador de manera independiente al umbral de decisión específico empleado, ofreciendo una visión más completa de su capacidad discriminativa entre los estados de congestión y no congestión.
 
 \subsection*{Una métrica adicional propia de esta tesis: tiempo de anticipación efectivo}
 
-Más allá de las métricas convencionales descritas anteriormente, y en congruencia con el propósito de alertamiento temprano planteado desde el Capítulo 1, esta tesis propone evaluar una métrica adicional, definida específicamente para este trabajo: el \textbf{tiempo de anticipación efectivo} ($TAE$), que mide, para cada verdadero positivo correctamente detectado, 
-cuántos minutos antes de que la congestión real ocurriera el modelo emitió la alerta correspondiente:
+Más allá de las métricas convencionales descritas anteriormente, y en congruencia con el propósito de alertamiento temprano planteado desde el Capítulo 1, esta tesis propone evaluar una métrica adicional, definida específicamente para este trabajo: el \textbf{tiempo de anticipación efectivo} ($TAE$), que mide, para cada verdadero positivo correctamente detectado, cuántos minutos antes de que la congestión real ocurriera el modelo emitió la alerta correspondiente:
 
 \begin{equation}
-    TAE_i = t_{\text{congestión real}, i} - t_{\text{predicción}, i}
+    TAE_i = t_{\mbox{\scriptsize congestión real}, i} - t_{\mbox{\scriptsize predicción}, i}
     \label{eq:tae}
 \end{equation}
 
-Esta métrica no sustituye a las anteriores, sino que las complementa: un modelo podría, en principio, alcanzar valores aceptables de Recall y F1-score prediciendo la congestión con muy poca antelación (por ejemplo, un minuto antes de que ocurra), lo cual tendría escasa utilidad práctica para que un administrador de red o un sistema automatizado tome medidas 
-correctivas a tiempo. El $TAE$ promedio, reportado junto con su desviación estándar, permitirá evaluar si los horizontes de predicción $h$ explorados en la Sección \ref{sec:preprocesamiento} (entre 5 y 15 minutos) resultan, en la práctica, suficientes para el propósito de anticipación planteado en esta investigación.
+Esta métrica no sustituye a las anteriores, sino que las complementa: un modelo podría, en principio, alcanzar valores aceptables de \textit{Recall} y \textit{F1-score} prediciendo la congestión con muy poca antelación (por ejemplo, un minuto antes de que ocurra), lo cual tendría escasa utilidad práctica para que un administrador de red o un sistema automatizado tome medidas correctivas a tiempo. El $TAE$ promedio, reportado junto con su desviación estándar, permitirá evaluar si los horizontes de predicción $h$ explorados en la Sección 
+\ref{sec:preprocesamiento} (entre 5 y 15 minutos) resultan, en la práctica, suficientes para el propósito de anticipación planteado en esta investigación.
 
 \subsection*{Síntesis del esquema de evaluación}
 
-La Tabla \ref{tab:resumen_evaluacion} sintetiza el esquema completo de evaluación que se aplicará de manera uniforme a los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}, tanto sobre el conjunto de prueba del dataset primario como sobre el conjunto de validación externa MAWI, conforme al diseño experimental ilustrado en la Figura \ref{fig:diseno_experimental}.
+La Tabla \ref{tab:resumen_evaluacion} sintetiza el esquema completo de evaluación que se aplicará de manera uniforme a los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}, tanto sobre el conjunto de prueba del \textit{dataset} primario como sobre el conjunto de validación externa MAWI, conforme al diseño experimental ilustrado en la Figura \ref{fig:diseno_experimental}.
 
 \begin{table}[H]
     \centering
@@ -1629,27 +1583,25 @@ La Tabla \ref{tab:resumen_evaluacion} sintetiza el esquema completo de evaluaci�
         \hline
         Regresión & RMSE, MAE, MAPE & RMSE (penaliza errores severos) \\
         \hline
-        Clasificación & Exactitud, Precisión, Recall, F1, AUC-ROC & Recall, sintetizado con F1 \\
+        Clasificación & Exactitud, Precisión, \textit{Recall}, F1, AUC-ROC & \textit{Recall}, sintetizado con F1 \\
         \hline
-        Utilidad práctica & Tiempo de Anticipación Efectivo (TAE) & Máximo TAE con Recall aceptable \\
+        Utilidad práctica & Tiempo de Anticipación Efectivo (TAE) & Máximo TAE con \textit{Recall} aceptable \\
         \hline
     \end{tabular}
     \caption{Síntesis del esquema de evaluación aplicado a los modelos de esta tesis.}
     \label{tab:resumen_evaluacion}
 \end{table}
 
-Al igual que en la Sección \ref{sec:modelos_justificacion}, es importante reiterar que las prioridades establecidas en esta sección —privilegiar Recall sobre exactitud, complementar con el TAE propuesto— constituyen decisiones de diseño metodológico justificadas por la naturaleza del problema planteado, y no resultados obtenidos. Los valores concretos que estas métricas arrojen para 
-cada modelo se presentarán y discutirán en el Capítulo 6.
+Al igual que en la Sección \ref{sec:modelos_justificacion}, es importante reiterar que las prioridades establecidas en esta sección ---privilegiar \textit{Recall} sobre exactitud, complementar con el TAE propuesto--- constituyen decisiones de diseño metodológico justificadas por la naturaleza del problema planteado, y no resultados obtenidos. Los valores concretos que estas métricas arrojen para cada modelo se presentarán y discutirán en el Capítulo 6.
 
 \section{Herramientas y entorno}
 \label{sec:herramientas_entorno}
 
-Esta sección final del capítulo de Metodología documenta el conjunto de herramientas de software, bibliotecas y el entorno de cómputo que se emplearán a lo largo del desarrollo experimental descrito en el Capítulo 5, organizadas según la etapa del pipeline metodológico a la que corresponden (Figura \ref{fig:pipeline_features}, Sección \ref{sec:metricas_utilizar}). Esta documentación 
-responde a un criterio de reproducibilidad: cualquier lector con acceso a un entorno equivalente debería poder replicar, al menos en sus aspectos esenciales, el procedimiento aquí descrito.
+Esta sección final del capítulo de Metodología documenta el conjunto de herramientas de \textit{software}, bibliotecas y el entorno de cómputo que se emplearán a lo largo del desarrollo experimental descrito en el Capítulo 5, organizadas según la etapa del \textit{pipeline} metodológico a la que corresponden (Figura \ref{fig:pipeline_features}, Sección \ref{sec:metricas_utilizar}). Esta documentación responde a un criterio de reproducibilidad: cualquier lector con acceso a un entorno equivalente debería poder replicar, al menos en sus aspectos esenciales, el procedimiento aquí descrito.
 
 \subsection*{Herramientas de recolección e instrumentación}
 
-Para la obtención de las métricas del dataset primario, descritas en la Sección \ref{sec:fuente_datos}, se empleará el conjunto de herramientas resumido en la Tabla \ref{tab:herramientas_recoleccion}, congruente con la estrategia de monitoreo híbrido establecida previamente.
+Para la obtención de las métricas del \textit{dataset} primario, descritas en la Sección \ref{sec:fuente_datos}, se empleará el conjunto de herramientas resumido en la Tabla \ref{tab:herramientas_recoleccion}, congruente con la estrategia de monitoreo híbrido establecida previamente.
 
 \begin{table}[H]
     \centering
@@ -1659,26 +1611,24 @@ Para la obtención de las métricas del dataset primario, descritas en la Secci�
         \hline
         RouterOS (MikroTik) & Exposición de contadores SNMP nativos de la interfaz WAN & Utilización (Ec. \ref{eq:throughput}) \\
         \hline
-        Net-SNMP / \texttt{pysnmp} & Consulta periódica de contadores SNMP desde un script externo & Utilización, descartes \\
+        Net-SNMP / \texttt{pysnmp} & Consulta periódica de contadores SNMP desde un \textit{script} externo & Utilización, descartes \\
         \hline
         \texttt{ping} (ICMP) & Medición activa de latencia y pérdida de paquetes & RTT, pérdida (Ecs. \ref{eq:rtt}, \ref{eq:packet_loss}) \\
         \hline
-        Script de recolección en Python & Orquestación de las consultas anteriores y almacenamiento a intervalos de 1 minuto & Todas \\
+        \textit{Script} de recolección (Python) & Orquestación de las consultas anteriores y almacenamiento a intervalos de 1 minuto & Todas \\
         \hline
     \end{tabular}
-    \caption{Herramientas empleadas para la recolección del dataset primario.}
+    \caption{Herramientas empleadas para la recolección del \textit{dataset} primario.}
     \label{tab:herramientas_recoleccion}
 \end{table}
 
 \subsection*{Herramientas de procesamiento del dataset de validación}
 
-Para el procesamiento de las trazas del dataset MAWI (Sección \ref{sec:fuente_datos}), distribuidas en formato \texttt{.pcap}, se empleará \texttt{tshark} (la utilidad de línea de comandos de Wireshark) y/o \texttt{tstat}, herramientas especializadas en el análisis de capturas de tráfico, con el fin de realizar la agregación temporal descrita en la Sección \ref{sec:preprocesamiento} y 
-derivar de ellas las métricas equivalentes a las obtenidas de forma directa en el dataset primario (Tabla \ref{tab:disponibilidad_metricas}).
+Para el procesamiento de las trazas del \textit{dataset} MAWI (Sección \ref{sec:fuente_datos}), distribuidas en formato \texttt{.pcap}, se empleará \texttt{tshark} (la utilidad de línea de comandos de Wireshark) y/o \texttt{tstat}, herramientas especializadas en el análisis de capturas de tráfico, con el fin de realizar la agregación temporal descrita en la Sección \ref{sec:preprocesamiento} y derivar de ellas las métricas equivalentes a las obtenidas de forma directa en el \textit{dataset} primario (Tabla \ref{tab:disponibilidad_metricas}).
 
-\subsection*{Entorno de desarrollo y bibliotecas de Machine Learning}
+\subsection*{Entorno de desarrollo y bibliotecas de \textit{Machine Learning}}
 
-Todo el desarrollo del prototipo se realizará en el lenguaje de programación \textbf{Python}, dada su ecosistema maduro de bibliotecas especializadas en ciencia de datos y aprendizaje automático. La Tabla \ref{tab:bibliotecas_modelos} detalla la biblioteca específica que se empleará para la implementación de cada uno de los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}, 
-así como para las etapas de preprocesamiento y evaluación.
+Todo el desarrollo del prototipo se realizará en el lenguaje de programación \textbf{Python}, dado su ecosistema maduro de bibliotecas especializadas en ciencia de datos y aprendizaje automático. La Tabla \ref{tab:bibliotecas_modelos} detalla la biblioteca específica que se empleará para la implementación de cada uno de los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}, así como para las etapas de preprocesamiento y evaluación.
 
 \begin{table}[H]
     \centering
@@ -1692,11 +1642,11 @@ así como para las etapas de preprocesamiento y evaluación.
         \hline
         ARIMA & \texttt{statsmodels} \\
         \hline
-        Random Forest, SVR & \texttt{scikit-learn} \\
+        \textit{Random Forest}, SVR & \texttt{scikit-learn} \\
         \hline
         LSTM, GRU & \texttt{TensorFlow} / \texttt{Keras} \\
         \hline
-        Métricas de evaluación (Sección \ref{sec:metricas_evaluacion}) & \texttt{scikit-learn} (\texttt{metrics}) \\
+        Métricas de evaluación (Sección \ref{sec:evaluacion}) & \texttt{scikit-learn} (\texttt{metrics}) \\
         \hline
         Visualización de resultados & \texttt{matplotlib}, \texttt{seaborn} \\
         \hline
@@ -1707,11 +1657,9 @@ así como para las etapas de preprocesamiento y evaluación.
 
 \subsection*{Entorno de cómputo}
 
-En estricta congruencia con lo establecido en los Alcances y Limitaciones de la investigación (Sección 1.4), el desarrollo algorítmico, la sintonización de hiperparámetros y el entrenamiento de los modelos se ejecutaron sobre una estación de trabajo convencional. La plataforma de modelado consistió en una estación de trabajo portátil Dell Precision 7540, provista de un procesador Intel Core i7-9850H 
-(12 núcleos lógicos a 2.60 GHz), 32 GB de memoria RAM y sistema operativo Ubuntu 26.04.1 LTS.
+En estricta congruencia con lo establecido en los Alcances y Limitaciones de la investigación (Sección \ref{sec:alcances}), el desarrollo algorítmico, la sintonización de hiperparámetros y el entrenamiento de los modelos se ejecutaron sobre una estación de trabajo convencional. La plataforma de modelado consistió en una estación de trabajo portátil Dell Precision 7540, provista de un procesador Intel Core i7-9850H (12 núcleos lógicos a 2.60 GHz), 32 GB de memoria RAM y sistema operativo Ubuntu 26.04.1 LTS.
 
-Esta restricción de hardware se mantuvo deliberadamente a lo largo de toda la fase experimental para garantizar que la viabilidad del \textit{pipeline} predictivo no dependa de clústeres de cómputo distribuido ni requiera aceleración especializada mediante unidades de procesamiento gráfico (GPU). Con ello se demuestra empíricamente que el sistema resultante es apto para ser desplegado en la infraestructura 
-de propósito general típicamente disponible en una Red Privada Corporativa.
+Esta restricción de \textit{hardware} se mantuvo deliberadamente a lo largo de toda la fase experimental para garantizar que la viabilidad del \textit{pipeline} predictivo no dependa de clústeres de cómputo distribuido ni requiera aceleración especializada mediante unidades de procesamiento gráfico (GPU). Con ello se demuestra empíricamente que el sistema resultante es apto para ser desplegado en la infraestructura de propósito general típicamente disponible en una Red Privada Corporativa.
 
 \subsection*{Control de versiones y documentación}
 
