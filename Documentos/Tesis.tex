@@ -1021,7 +1021,7 @@ La presente investigación se clasifica, de acuerdo con los criterios propuestos
 
 \subsection*{Según su finalidad: investigación aplicada}
 
-Esta tesis constituye una investigación de tipo \textbf{aplicada} (también denominada tecnológica), en tanto que su propósito no es generar conocimiento teórico nuevo sobre las técnicas de \textit{Machine Learning} empleadas ---ARIMA, \textit{Random Forest} y LSTM/GRU, cuyos fundamentos matemáticos ya se encuentran plenamente establecidos y fueron revisados en la Sección \ref{sec:tecnicas_ml}---, sino aplicar dicho conocimiento existente a la resolución de un problema práctico y 
+Esta tesis constituye una investigación de tipo \textbf{aplicada} (también denominada tecnológica), en tanto que su propósito no es generar conocimiento teórico nuevo sobre las técnicas de \textit{Machine Learning} empleadas ---ARIMA, \textit{Random Forest} y LSTM, cuyos fundamentos matemáticos ya se encuentran plenamente establecidos y fueron revisados en la Sección \ref{sec:tecnicas_ml}---, sino aplicar dicho conocimiento existente a la resolución de un problema práctico y 
 delimitado: la predicción de congestión en un escenario real de red, tal como se planteó en la Sección \ref{sec:planteamiento}. El criterio de éxito de esta investigación, por tanto, no reside en la novedad matemática de los modelos empleados, sino en la evidencia empírica que se obtenga sobre su viabilidad y desempeño comparativo al resolver el problema planteado.
 
 \subsection*{Según su enfoque: investigación cuantitativa}
@@ -1105,13 +1105,13 @@ Habiendo definido en la Sección \ref{sec:metricas} el fundamento teórico de la
 La variable objetivo (\textit{target}) de esta tesis es, en todos los casos, el factor de utilización futuro del enlace, $U(t+h)$, donde $h$ representa el horizonte de predicción. Dicha variable se emplea de dos formas distintas según el paradigma de modelado, conforme a lo establecido en la Sección \ref{subsec:supervisado}:
 
 \begin{itemize}
-    \item Como variable \textbf{continua} (tarea de regresión), para los modelos ARIMA, \textit{Random Forest}, SVR y LSTM/GRU en su formulación de regresión.
+    \item Como variable \textbf{continua} (tarea de regresión), para los modelos ARIMA, \textit{Random Forest}, SVR y LSTM en su formulación de regresión.
     \item Como variable \textbf{binaria derivada} (tarea de clasificación), aplicando la Ecuación \ref{eq:congestion_instanciada} sobre $U(t+h)$, para la formulación de clasificación de los mismos modelos.
 \end{itemize}
 
 \subsection*{Variables de entrada (\textit{features})}
 
-La Tabla \ref{tab:features_entrada} enumera las variables de entrada consideradas para el entrenamiento de los modelos, clasificadas en tres grupos: métricas directas (obtenidas mediante los mecanismos de instrumentación descritos en la Sección \ref{sec:fuente_datos}), variables temporales derivadas (que capturan patrones cíclicos sin necesidad de instrumentación adicional) y variables de rezago o ventana (que explicitan la dependencia temporal de la serie, necesaria para modelos que no procesan secuencias de manera nativa, como \textit{Random Forest} y SVR).
+La Tabla \ref{tab:features_entrada} enumera las variables de entrada consideradas para el entrenamiento de los modelos, clasificadas en tres grupos: métricas directas (obtenidas mediante los mecanismos de instrumentación descritos en la Sección \ref{sec:fuente_datos}), variables temporales derivadas (que capturan patrones cíclicos sin necesidad de instrumentación adicional) y variables de rezago o ventana (que explicitan la dependencia temporal de la serie, necesaria para modelos que no procesan secuencias de manera nativa, como \textit{Random Forest}).
 
 \begin{table}[H]
     \centering
@@ -1153,7 +1153,7 @@ Conviene justificar dos decisiones reflejadas en la Tabla \ref{tab:features_entr
     \label{eq:codificacion_ciclica}
 \end{equation}
 
-Segundo, las variables de rezago ($U(t-1)$ hasta $U(t-k)$) resultan indispensables para los modelos que no poseen una noción arquitectónica intrínseca de secuencia temporal (\textit{Random Forest} y SVR), ya que estos algoritmos tratan cada observación como independiente y requieren que la dependencia temporal se proporcione de manera explícita en el vector de entrada. En contraste, las arquitecturas LSTM y GRU procesan la secuencia de observaciones de manera nativa, por lo que estas variables de rezago, si bien pueden incluirse, no resultan estrictamente 
+Segundo, las variables de rezago ($U(t-1)$ hasta $U(t-k)$) resultan indispensables para los modelos que no poseen una noción arquitectónica intrínseca de secuencia temporal (\textit{Random Forest} y SVR), ya que estos algoritmos tratan cada observación como independiente y requieren que la dependencia temporal se proporcione de manera explícita en el vector de entrada. En contraste, la arquitectura LSTM procesa la secuencia de observaciones de manera nativa, por lo que estas variables de rezago, si bien pueden incluirse, no resultan estrictamente 
 necesarias para dichos modelos.
 
 \subsection*{Disponibilidad de métricas por fuente de datos}
@@ -1296,7 +1296,7 @@ La Tabla \ref{tab:resampleo_fuentes} resume este contraste entre ambas fuentes.
 
 \subsection*{Normalización de variables}
 
-Dado que los modelos de \textit{Deep Learning} (LSTM, GRU) son sensibles a la escala de las variables de entrada ---un gradiente calculado sobre variables de magnitudes muy dispares puede converger de manera inestable durante el entrenamiento---, todas las variables continuas de la Tabla \ref{tab:features_entrada} se normalizan mediante escalamiento Min-Max al rango $[0,1]$:
+Dado que los modelos de \textit{Deep Learning} (LSTM) son sensibles a la escala de las variables de entrada ---un gradiente calculado sobre variables de magnitudes muy dispares puede converger de manera inestable durante el entrenamiento---, todas las variables continuas de la Tabla \ref{tab:features_entrada} se normalizan mediante escalamiento Min-Max al rango $[0,1]$:
 
 \begin{equation}
     x_{\mbox{\scriptsize norm}} = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
@@ -1311,7 +1311,7 @@ Sin embargo, como se advirtió en la Sección \ref{sec:metricas_utilizar}, el \t
 
 Para que los algoritmos de aprendizaje automático puedan predecir a partir de series temporales, es necesario transformar la serie lineal en conjuntos de variables estructuradas mediante una \textbf{ventana deslizante} (\textit{sliding window}). Este proceso aplica para todos los modelos, pero difiere en la topología de los datos generados:
 
-Para los modelos clásicos (\textit{Random Forest}, SVR), que carecen de memoria interna (Sección \ref{subsec:ml_clasico}), la ventana aplana el historial temporal en un vector tabular de características (2D), donde cada observación pasada se convierte en una variable independiente. Por el contrario, para las arquitecturas LSTM y GRU (Sección \ref{subsec:deep_learning}), el ventaneo preserva la estructura tridimensional (3D) de secuencias temporales que la red recurrente consume de manera nativa. Dada una longitud de ventana $w$, cada bloque de 
+Para los modelos clásicos (\textit{Random Forest}), que carecen de memoria interna (Sección \ref{subsec:ml_clasico}), la ventana aplana el historial temporal en un vector tabular de características (2D), donde cada observación pasada se convierte en una variable independiente. Por el contrario, para la arquitectura LSTM  (Sección \ref{subsec:deep_learning}), el ventaneo preserva la estructura tridimensional (3D) de secuencias temporales que la red recurrente consume de manera nativa. Dada una longitud de ventana $w$, cada bloque de 
 entrada se construye como:
 
 \begin{equation}
@@ -1393,7 +1393,7 @@ La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de prepro
         \hline
         3. Normalización & Escalamiento Min-Max (Ec. \ref{eq:minmax}), ajustado solo sobre entrenamiento. \\
         \hline
-        4. Ventaneo & Construcción de secuencias para LSTM/GRU (Ec. \ref{eq:ventaneo}). \\
+        4. Ventaneo & Construcción de secuencias para LSTM (Ec. \ref{eq:ventaneo}). \\
         \hline
         5. División temporal & 60/20/20 cronológico sobre el \textit{dataset} primario; MAWI como prueba externa. \\
         \hline
@@ -1405,33 +1405,23 @@ La Tabla \ref{tab:resumen_preprocesamiento} sintetiza las cinco etapas de prepro
 \section{Modelos a implementar y justificación de su elección}
 \label{sec:modelos_justificacion}
 
-Con base en los tres paradigmas de modelado presentados en el Marco Teórico (Sección \ref{sec:tecnicas_ml}) y en la brecha metodológica identificada en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}) ---la ausencia, en la literatura revisada, de una comparación simultánea entre modelos estadísticos, de \textit{Machine Learning} clásico y de \textit{Deep Learning} bajo condiciones experimentales controladas---, esta tesis contempla la implementación y evaluación comparativa de cinco modelos específicos: ARIMA, \textit{Random Forest}, 
-SVR, LSTM y GRU. Esta sección justifica la elección de cada uno, así como la exclusión deliberada de otras alternativas que un lector familiarizado con el campo podría razonablemente esperar encontrar aquí.
+Con base en los tres paradigmas de modelado presentados en el Marco Teórico (Sección \ref{sec:tecnicas_ml}) y en la brecha metodológica identificada en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}) ---la ausencia, en la literatura revisada, de una comparación simultánea entre modelos estadísticos, de \textit{Machine Learning} clásico y de \textit{Deep Learning} bajo condiciones experimentales controladas---, esta tesis contempla la implementación y evaluación comparativa de tres modelos específicos: ARIMA, \textit{Random Forest} y LSTM. Esta sección justifica la elección de cada uno, así como la exclusión deliberada de otras alternativas que un lector familiarizado con el campo podría razonablemente esperar encontrar aquí.
 
 \subsection*{ARIMA: modelo de referencia (\textit{baseline})}
 
-ARIMA se incluye no como un candidato a ofrecer el mejor desempeño absoluto, sino como \textbf{línea base de referencia} contra la cual contrastar el desempeño de los modelos subsiguientes, conforme a su rol descrito en la Sección \ref{subsec:arima}. Su justificación no depende de una expectativa de alto desempeño, sino de un principio metodológico: sin un punto de comparación estadístico simple, cualquier ganancia de desempeño reportada por los modelos de ML clásico o \textit{Deep Learning} carecería de un marco de referencia contra el cual 
-dimensionar su magnitud real. Adicionalmente, como se documentó en la Sección \ref{sec:estado_estadistica}, ARIMA y sus variantes continúan siendo objeto de investigación vigente en la literatura reciente \cite{kochetkova2023}, lo que respalda su pertinencia como punto de comparación actual y no meramente histórico.
+ARIMA se incluye no como un candidato a ofrecer el mejor desempeño absoluto, sino como \textbf{línea base de referencia} contra la cual contrastar el desempeño de los modelos subsiguientes, conforme a su rol descrito en la Sección \ref{subsec:arima}. Su justificación no depende de una expectativa de alto desempeño, sino de un principio metodológico: sin un punto de comparación estadístico simple, cualquier ganancia de desempeño reportada por los modelos de ML clásico o \textit{Deep Learning} carecería de un marco de referencia contra el cual dimensionar su magnitud real. Adicionalmente, como se documentó en la Sección \ref{sec:estado_estadistica}, ARIMA y sus variantes continúan siendo objeto de investigación vigente en la literatura reciente \cite{kochetkova2023}, lo que respalda su pertinencia como punto de comparación actual y no meramente histórico.
 
-\subsection*{\textit{Random Forest} y SVR: \textit{Machine Learning} clásico}
+\subsection*{\textit{Random Forest}: \textit{Machine Learning} clásico}
 
-La elección de \textit{Random Forest} se fundamenta directamente en la evidencia reportada por Sneha et al. \cite{sneha2020} (Sección \ref{sec:estado_ml}), quienes encontraron que este modelo ofreció el mejor desempeño entre cuatro algoritmos clásicos evaluados para la predicción de congestión a nivel de enrutador. A esta evidencia empírica se suma una ventaja metodológica relevante para esta tesis: la capacidad de \textit{Random Forest} de calcular la importancia relativa de cada variable de entrada (Sección \ref{subsec:ml_clasico}), lo cual 
-permitirá ---una vez ejecutado el entrenamiento en el Capítulo 5--- determinar cuáles de las variables descritas en la Tabla \ref{tab:features_entrada} (Sección \ref{sec:metricas_utilizar}) resultan más informativas para anticipar la congestión, aportando así evidencia adicional más allá de la mera precisión predictiva.
+La elección de \textit{Random Forest} se fundamenta directamente en la evidencia reportada por Sneha et al. \cite{sneha2020} (Sección \ref{sec:estado_ml}), quienes encontraron que este modelo ofreció el mejor desempeño entre cuatro algoritmos clásicos evaluados para la predicción de congestión a nivel de enrutador. A esta evidencia empírica se suma una ventaja metodológica relevante para esta tesis: la capacidad de \textit{Random Forest} de calcular la importancia relativa de cada variable de entrada (Sección \ref{subsec:ml_clasico}), lo cual permitirá ---una vez ejecutado el entrenamiento en el Capítulo 5--- determinar cuáles de las variables descritas en la Tabla \ref{tab:features_entrada} (Sección \ref{sec:metricas_utilizar}) resultan más informativas para anticipar la congestión, aportando así evidencia adicional más allá de la mera precisión predictiva.
 
-SVR se incorpora como segundo representante del ML clásico con base en el precedente de Qian et al. \cite{qian2016} (Sección \ref{sec:estado_ml}), quienes demostraron su viabilidad para modelar fenómenos de saturación fundamentados en la teoría de colas ---el mismo marco teórico que sustenta la definición operativa de congestión adoptada en esta tesis (Sección \ref{sec:congestion})---, aun cuando dicho precedente provenga de un dominio de red distinto (Redes en Chip). Su inclusión permite, además, contrastar dos filosofías distintas dentro del 
-propio paradigma de ML clásico: los métodos de ensamble basados en árboles (\textit{Random Forest}) frente a los métodos basados en márgenes y funciones \textit{kernel} (SVR).
+\subsection*{LSTM: \textit{Deep Learning}}
 
-\subsection*{LSTM y GRU: \textit{Deep Learning}}
-
-La justificación de estos dos modelos se apoya directamente en el trabajo de Santos et al. \cite{santos2022} (Sección \ref{sec:estado_dl}), quienes realizaron la comparación más metodológicamente cercana a la planteada en esta tesis ---LSTM contra GRU, sobre tráfico de Internet real, con un periodo de recolección del mismo orden de magnitud que el establecido para el \textit{dataset} primario de esta investigación (Sección \ref{sec:fuente_datos})---. A diferencia de dicho trabajo, sin embargo, esta tesis no asume de antemano la superioridad 
-de uno sobre el otro: como se discutió en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}), los propios autores encontraron que el desempeño relativo entre LSTM y GRU varió según la zona geográfica analizada, lo cual, para los fines de esta tesis, se interpreta como evidencia de que dicha superioridad depende del contexto particular de la red bajo estudio y debe, por tanto, evaluarse empíricamente sobre los \textit{datasets} primario y de validación propios de este trabajo, en lugar de asumirse \textit{a priori}.
-
-La inclusión conjunta de ambas arquitecturas obedece también a una consideración práctica señalada en la Sección \ref{subsec:deep_learning}: GRU posee una estructura interna más simple que LSTM (al prescindir de un estado de celda independiente), lo que podría traducirse en un menor costo computacional y un entrenamiento más eficiente sobre un conjunto de datos de tamaño moderado como el \textit{dataset} primario de esta tesis. De confirmarse esta hipótesis durante la fase experimental (Capítulo 5), ello constituiría evidencia relevante para 
-escenarios de redes de pequeña escala similares al aquí estudiado, donde los recursos computacionales disponibles para el entrenamiento pueden ser más limitados que en los grandes centros de datos donde suele evaluarse la literatura de \textit{Deep Learning}.
+La justificación de este modelo se apoya directamente en el trabajo de Santos et al. \cite{santos2022} (Sección \ref{sec:estado_dl}), quienes realizaron la comparación metodológicamente más cercana a la planteada en esta tesis ---LSTM contra GRU, sobre tráfico de Internet real, con un periodo de recolección del mismo orden de magnitud que el establecido para el \textit{dataset} primario de esta investigación (Sección \ref{sec:fuente_datos})---. En su estudio, los autores demostraron empíricamente que la arquitectura LSTM superó en desempeño predictivo a GRU en la mayoría de los agrupamientos y escenarios geográficos analizados. Con base en esta evidencia, esta tesis adopta LSTM como el representante óptimo y único del paradigma de redes neuronales recurrentes, destinando los recursos computacionales a la sintonización exhaustiva de este modelo en lugar de duplicar esfuerzos en arquitecturas redundantes.
 
 \subsection*{Modelos considerados y no incluidos}
 
-Es previsible que, ante la elección de los cinco modelos anteriores, surja la pregunta de por qué no se incluyeron otras alternativas frecuentemente mencionadas en la literatura de predicción de series temporales, como XGBoost, Prophet o arquitecturas basadas en mecanismos de atención (\textit{Transformers}). La Tabla \ref{tab:modelos_excluidos} explicita esta decisión y su justificación.
+Es previsible que, ante la elección de los tres modelos anteriores, surja la pregunta de por qué no se incluyeron otras alternativas frecuentemente mencionadas en la literatura de predicción de series temporales. La Tabla \ref{tab:modelos_excluidos} explicita esta decisión y su justificación.
 
 \begin{table}[H]
     \centering
@@ -1439,12 +1429,13 @@ Es previsible que, ante la elección de los cinco modelos anteriores, surja la p
         \hline
         \textbf{Modelo no incluido} & \textbf{Justificación de exclusión} \\
         \hline
-        XGBoost & Si bien supera frecuentemente a \textit{Random Forest}, XGBoost se basa en \textit{Boosting} (reducción secuencial de sesgo), lo que lo hace altamente susceptible al sobreajuste (\textit{overfitting}) en conjuntos de datos pequeños o con métricas ruidosas (como la latencia TCP inferida), a menos que se realice una sintonización de hiperparámetros exhaustiva. Se optó por \textit{Random Forest} (\textit{Bagging}) por su mayor robustez inherente al ruido operativo como representante del ML clásico, dejando a XGBoost como línea de 
-        trabajo futuro. \\
+        XGBoost & Si bien supera frecuentemente a \textit{Random Forest}, XGBoost se basa en \textit{Boosting} (reducción secuencial de sesgo), lo que lo hace altamente susceptible al sobreajuste (\textit{overfitting}) en conjuntos de datos pequeños o con métricas ruidosas (como la latencia TCP inferida), a menos que se realice una sintonización de hiperparámetros exhaustiva. Se optó por \textit{Random Forest} (\textit{Bagging}) por su mayor robustez inherente al ruido operativo. \\
         \hline
-        Prophet & Diseñado principalmente para series con estacionalidad y tendencia de negocio (ventas, demanda), con supuestos que no necesariamente se ajustan al comportamiento del tráfico de red a la granularidad de minutos empleada en esta tesis. \\
+        SVR y GRU & Excluidos para evitar redundancia paradigmática. SVR pertenece a la misma familia de ML clásico que \textit{Random Forest}, y GRU demostró ser inferior a LSTM en literatura similar \cite{santos2022}. La metodología priorizó optimizar a fondo los tres mejores representantes de cada enfoque en lugar de implementar múltiples variantes del mismo tipo. \\
         \hline
-        \textit{Transformers} / Modelos de atención & Si bien representan el estado del arte más reciente (Sección \ref{sec:estado_brecha}), su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el \textit{dataset} primario de esta tesis (30 días en una red de escala reducida), por lo que su evaluación rigurosa excede el alcance y los recursos de este trabajo. \\
+        Prophet & Diseñado principalmente para series con estacionalidad de negocio (ventas, demanda), con supuestos que no se ajustan al tráfico de red a granularidad de minutos. \\
+        \hline
+        \textit{Transformers} & Su entrenamiento efectivo típicamente requiere volúmenes de datos considerablemente mayores a los disponibles en el \textit{dataset} primario de esta tesis (30 días en red reducida). \\
         \hline
     \end{tabular}
     \caption{Modelos considerados durante la planeación de esta tesis y justificación de su exclusión del alcance experimental.}
@@ -1453,8 +1444,7 @@ Es previsible que, ante la elección de los cinco modelos anteriores, surja la p
 
 \subsection*{Diseño experimental general}
 
-La Figura \ref{fig:diseno_experimental} sintetiza el diseño experimental completo que resulta de las decisiones justificadas en esta sección. Los cinco modelos se evaluarán bajo las dos formulaciones del problema (regresión y clasificación). Es importante precisar una distinción operativa: mientras que los modelos de ML clásico y \textit{Deep Learning} pueden entrenarse explícitamente para clasificar (optimizando funciones de pérdida binarias como \textit{Binary Cross-Entropy}), el modelo ARIMA operará estrictamente como regresor continuo. 
-Su evaluación en tareas de clasificación se realizará de manera derivada, aplicando el umbral $U_{th}$ (Ecuación \ref{eq:congestion_instanciada}) sobre su predicción numérica final. Una vez evaluados sobre el \textit{dataset} primario, se validará su capacidad de generalización sobre el \textit{dataset} MAWI.
+La Figura \ref{fig:diseno_experimental} sintetiza el diseño experimental completo que resulta de las decisiones justificadas en esta sección. 
 
 \begin{figure}[H]
     \centering
@@ -1466,34 +1456,33 @@ Su evaluación en tareas de clasificación se realizará de manera derivada, apl
     \node[box, minimum width=3.4cm] (data) {\textit{Dataset} primario\\ \footnotesize (red privada PYME)};
     \node[box, right=1.4cm of data, minimum width=2.6cm, fill=black!10] (train) {Entrenamiento\\ y validación\\ \footnotesize (Sección \ref{sec:preprocesamiento})};
 
-    \node[box, right=1.8cm of train, minimum width=2.2cm] (arima) {ARIMA};
-    \node[box, below=0.25cm of arima, minimum width=2.2cm] (rf) {\textit{Random Forest}};
-    \node[box, below=0.25cm of rf, minimum width=2.2cm] (svr) {SVR};
-    \node[box, below=0.25cm of svr, minimum width=2.2cm] (lstm) {LSTM};
-    \node[box, below=0.25cm of lstm, minimum width=2.2cm] (gru) {GRU};
+    % Se define Random Forest en el centro para balancear la figura
+    \node[box, right=1.8cm of train, minimum width=2.2cm] (rf) {\textit{Random Forest}};
+    \node[box, above=0.4cm of rf, minimum width=2.2cm] (arima) {ARIMA};
+    \node[box, below=0.4cm of rf, minimum width=2.2cm] (lstm) {LSTM};
 
     \node[box, right=1.8cm of rf, minimum width=2.6cm, fill=black!15] (eval) {Evaluación\\ \footnotesize (Sección \ref{sec:evaluacion})};
 
+    % Se baja MAWI lo suficiente para que su flecha pase por debajo de LSTM
     \node[box, below=2.6cm of data, minimum width=3.4cm] (mawi) {\textit{Dataset} MAWI\\ \footnotesize (validación externa)};
 
-    \draw[arrow] (data) -- (train);
-    \draw[arrow] (train) -- (arima);
-    \draw[arrow] (train) -- (rf);
-    \draw[arrow] (train) -- (svr);
-    \draw[arrow] (train) -- (lstm);
-    \draw[arrow] (train) -- (gru);
-    \draw[arrow] (arima) -- (eval);
-    \draw[arrow] (rf) -- (eval);
-    \draw[arrow] (svr) -- (eval);
-    \draw[arrow] (lstm) -- (eval);
-    \draw[arrow] (gru) -- (eval);
-    \draw[arrow] (mawi) -| (eval);
+    % Se conectan los puntos cardinales (east a west) para evitar cortes de esquinas
+    \draw[arrow] (data.east) -- (train.west);
+    \draw[arrow] (train.east) -- (arima.west);
+    \draw[arrow] (train.east) -- (rf.west);
+    \draw[arrow] (train.east) -- (lstm.west);
+    \draw[arrow] (arima.east) -- (eval.west);
+    \draw[arrow] (rf.east) -- (eval.west);
+    \draw[arrow] (lstm.east) -- (eval.west);
+    
+    % La flecha de MAWI va hacia la derecha y luego hacia arriba (hasta el sur de eval)
+    \draw[arrow] (mawi.east) -| (eval.south);
     \end{tikzpicture}
     \caption{Diseño experimental general: entrenamiento sobre el \textit{dataset} primario y validación cruzada contra MAWI.}
     \label{fig:diseno_experimental}
 \end{figure}
 
-Es importante subrayar que las afirmaciones planteadas en esta sección ---respecto a qué modelo podría desempeñarse mejor y bajo qué condiciones--- constituyen hipótesis de trabajo fundamentadas en la evidencia de la literatura revisada, y no conclusiones anticipadas de esta tesis. La confirmación, matización o refutación de dichas hipótesis, con base en evidencia empírica propia, se presentará en los Capítulos 5 y 6.
+Es importante precisar una distinción operativa: mientras que \textit{Random Forest} y LSTM pueden entrenarse explícitamente para clasificar, ARIMA operará estrictamente como regresor continuo, realizando la clasificación de manera derivada aplicando el umbral $U_{th}$ (Ecuación \ref{eq:congestion_instanciada}). Las afirmaciones sobre qué modelo podría desempeñarse mejor constituyen hipótesis fundamentadas en la literatura y se pondrán a prueba empírica en los Capítulos 5 y 6.
 
 \section{Métricas de evaluación del modelo}
 \label{sec:evaluacion}
@@ -1642,9 +1631,9 @@ Todo el desarrollo del prototipo se realizará en el lenguaje de programación \
         \hline
         ARIMA & \texttt{statsmodels} \\
         \hline
-        \textit{Random Forest}, SVR & \texttt{scikit-learn} \\
+        \textit{Random Forest}& \texttt{scikit-learn} \\
         \hline
-        LSTM, GRU & \texttt{TensorFlow} / \texttt{Keras} \\
+        LSTM & \texttt{TensorFlow} / \texttt{Keras} \\
         \hline
         Métricas de evaluación (Sección \ref{sec:evaluacion}) & \texttt{scikit-learn} (\texttt{metrics}) \\
         \hline
@@ -1666,27 +1655,29 @@ Esta restricción de \textit{hardware} se mantuvo deliberadamente a lo largo de 
 Finalmente, el código fuente desarrollado para esta tesis se gestionará mediante un sistema de control de versiones (Git), con el propósito de mantener un historial reproducible de los experimentos realizados. Los fragmentos de código considerados más relevantes para la comprensión del prototipo se incluirán como parte del Apéndice A de este documento, conforme a lo indicado en el índice general de la tesis.
 
 \chapter{Desarrollo e Implementación}
+\label{cap:desarrollo}
+
 El presente capítulo constituye el núcleo empírico de esta investigación, materializando las decisiones metodológicas y arquitectónicas justificadas en el Capítulo 4. Aquí se abandona el plano de las definiciones teóricas para documentar la ejecución sistemática del \textit{pipeline} de datos y la codificación algorítmica del prototipo.
 
-El desarrollo se expone siguiendo la secuencia lógica del flujo de información en un sistema predictivo aplicado a redes. Inicialmente, se detalla la extracción híbrida de telemetría desde la infraestructura de enrutamiento y la posterior exploración estadística del conjunto de datos real para definir el umbral de congestión (Sección 5.1). A continuación, se implementan los tratamientos matemáticos de limpieza, 
-ventaneo y escalado exigidos para mitigar las discrepancias estructurales entre las fuentes de información (Sección 5.2). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados —transitando desde la línea base estadística, pasando por el ensamble de Machine Learning clásico, 
-hasta culminar con las topologías de redes neuronales recurrentes—.
+El desarrollo se expone siguiendo la secuencia lógica del flujo de información en un sistema predictivo aplicado a redes. Inicialmente, se detalla la extracción híbrida de telemetría desde la infraestructura de enrutamiento y la posterior exploración estadística del conjunto de datos real para definir el umbral de congestión (Sección \ref{sec:obtencion_exploracion}). A continuación, se implementan los tratamientos matemáticos de limpieza, ventaneo y escalado exigidos para mitigar las discrepancias estructurales 
+entre las fuentes de información (Sección \ref{sec:preprocesamiento_implementacion}). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados ---transitando desde la línea base estadística, pasando por el ensamble de \textit{Machine Learning} clásico, hasta culminar con las topologías de redes neuronales recurrentes---.
 
-El objetivo rector de este capítulo no es constituir un manual de programación, sino evidenciar, que la transformación del tráfico bruto en un sistema predictivo funcional obedece a un diseño de software determinista, reproducible y científicamente fundamentado.
+El objetivo rector de este capítulo no es constituir un manual de programación, sino evidenciar que la transformación del tráfico bruto en un sistema predictivo funcional obedece a un diseño de \textit{software} determinista, reproducible y científicamente fundamentado.
 
 \section{Obtención y exploración de los conjuntos de datos}
+\label{sec:obtencion_exploracion}
 
-La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del dataset primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exige un periodo de observación longitudinal que transcurre en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del dataset externo MAWI, para posteriormente aplicarse sobre el dataset primario una vez concluida su recolección.
+La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del \textit{dataset} primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exigió un periodo de observación longitudinal que transcurrió en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del \textit{dataset} externo MAWI, para posteriormente aplicarse sobre el \textit{dataset} primario una vez concluida su recolección.
 
-\subsection*{Extracción de telemetría del dataset primario}
+\subsection*{Extracción de telemetría del \textit{dataset} primario}
 
-Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada PYME —en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente— condujeron a adoptar como mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo, complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución preserva la naturaleza pasiva de la recolección y la métrica obtenida, sin alterar el diseño experimental planteado en el Capítulo 4.
+Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada bajo estudio ---en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente--- condujeron a adoptar como mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante el Programador de Tareas (\textit{Scheduler}) del propio equipo, complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución preserva la naturaleza pasiva de la recolección y la métrica obtenida, sin alterar el diseño experimental planteado en el Capítulo 4.
 
-La recolección, iniciada el 29 de agosto de 2026, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar continuidad ante interrupciones de la conectividad remota (Sección 4.8.1).
+La recolección, iniciada el 29 de agosto de 2026, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar la continuidad ante posibles interrupciones de la conectividad remota (Sección \ref{sec:herramientas_entorno}).
 
 \subsection*{Consolidación y auditoría de continuidad}
 
-Al cierre del periodo de recolección, el dataset primario quedó constituido por \textbf{21 días} de monitoreo (del 29 de agosto al 19 de septiembre de 2026), consolidados en 25,422 observaciones a granularidad de 1 minuto. La auditoría de continuidad de la serie —necesaria dado que la recolección remota depende de la disponibilidad sostenida del túnel VPN hacia la infraestructura del Cliente— reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
+Al cierre del periodo de recolección, el \textit{dataset} primario quedó constituido por \textbf{21 días} de monitoreo (del 29 de agosto al 19 de septiembre de 2026), consolidados en 25\,422 observaciones a una granularidad de 1 minuto. La auditoría de continuidad de la serie ---necesaria dado que la extracción remota de los registros dependía de la disponibilidad sostenida del túnel VPN hacia la infraestructura de la red privada--- reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
 
 \begin{table}[H]
     \centering
@@ -1697,14 +1688,24 @@ Al cierre del periodo de recolección, el dataset primario quedó constituido po
         Corte prolongado (pérdida de un día completo) & 1 & $\approx$ 37 horas \\
         Interrupciones menores & 21 & 6 minutos \\
         \hline
-        \textbf{Cobertura efectiva del periodo} & \multicolumn{2}{c|}{\textbf{82.9\%}} \\
+        \textbf{Cobertura efectiva del periodo} & \multicolumn{2}{c|}{\textbf{82.9\,\%}} \\
         \hline
     \end{tabular}
-    \caption{Resumen de interrupciones de conectividad durante la recolección del dataset primario.}
+    \caption{Resumen de interrupciones de conectividad durante la recolección del \textit{dataset} primario.}
     \label{tab:huecos_recoleccion}
 \end{table}
 
-El corte prolongado, ocurrido entre el 7 y 9 de septiembre de 2026, resultó en la pérdida completa del día 8 de septiembre, y es atribuible a una interrupción sostenida de la conectividad VPN hacia la infraestructura del Cliente. Las 21 interrupciones menores, de 6 minutos cada una, son consistentes con reinicios periódicos del enlace VPN y se encuentran, en todos los casos, dentro del límite de interpolación establecido en la Sección \ref{sec:preprocesamiento} (hasta 3 muestras faltantes); el corte prolongado, en cambio, excede dicho límite y se trata como frontera de sesión durante el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}). Esta cobertura del 82.9\% es consistente con las limitaciones de monitoreo remoto sin presencia física reconocidas en la Sección 1.4.
+El corte prolongado, ocurrido entre el 7 y el 9 de septiembre de 2026, resultó en la pérdida completa del día 8 de septiembre, y es atribuible a una interrupción sostenida de la conectividad VPN y de suministro eléctrico en la sede de la red bajo estudio. Las 21 interrupciones menores, de 6 minutos cada una, son consistentes con reinicios periódicos del enlace. Dado que su duración excede ligeramente el umbral de 3 muestras planteado inicialmente en la Sección \ref{sec:preprocesamiento}, se decidió flexibilizar empíricamente dicho límite a 6 muestras, permitiendo así su imputación mediante interpolación lineal sin comprometer la integridad de las tendencias. El corte prolongado, en cambio, excede abrumadoramente cualquier límite razonable de interpolación y se trata estrictamente como una frontera de sesión durante el preprocesamiento, dividiendo la serie en dos segmentos continuos independientes. Esta cobertura del 82.9\,\% es coherente con las limitaciones de un monitoreo remoto sin presencia física reconocidas en los Alcances y Limitaciones de este trabajo (Sección \ref{sec:alcances}).
+
+
+
+% =========================================================================
+% TODO: CONTINUAR AQUÍ
+% Siguiente paso: Segunda mitad de la Sección 5.1 (Exploración de datos y 
+% definición empírica del umbral de congestión).
+% Nota: Metodología (Capítulo 4) ya actualizada a 21 días y 3 modelos.
+% =========================================================================
+
 
 \subsection*{Exploración estadística del dataset primario}
 
