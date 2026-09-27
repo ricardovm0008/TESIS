@@ -2645,8 +2645,8 @@ Estos resultados constituyen, por un margen considerable, el mejor desempeño de
     \label{fig:lstm_primario_regresion_test}
 \end{figure}
 
-Una explicación analítica plausible de esta ventaja sustancial reside en la capacidad de la red para reconocer el patrón de bajo tráfico característico del régimen real de la red privada bajo estudio (Sección \ref{sec:obtencion_exploracion}) directamente a partir de la secuencia completa de entrada. Esto contrasta con depender de una media incondicional aprendida durante el entrenamiento ---como ocurre con ARIMA--- o de particiones discretas del espacio de variables ---como ocurre con \textit{Random Forest}---, ya que ambas 
-topologías clásicas resultan excesivamente influenciadas por la proporción de eventos de congestión sintéticos presentes en el conjunto de entrenamiento combinado.
+Una explicación analítica plausible de esta ventaja sustancial reside en la capacidad de la red para reconocer el patrón de bajo tráfico característico del régimen real de la red privada bajo estudio (Sección \ref{sec:obtencion_exploracion}) directamente a partir de la secuencia completa de entrada. Esto contrasta con depender de una media incondicional aprendida durante el entrenamiento ---como ocurre con ARIMA--- o de particiones discretas del espacio de variables ---como 
+ocurre con \textit{Random Forest}---, ya que ambas topologías clásicas resultan excesivamente influenciadas por la proporción de eventos de congestión sintéticos presentes en el conjunto de entrenamiento combinado.
 
 \subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
 
@@ -2692,7 +2692,8 @@ Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_c
     \label{fig:lstm_primario_clasificacion_test}
 \end{figure}
 
-Este resultado, aparentemente contraintuitivo ---el modelo con mejor desempeño de regresión no es el de mejor desempeño de clasificación---, resulta matemáticamente congruente con la función objetivo empleada durante el entrenamiento: al minimizar el Error Cuadrático Medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\,\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección \ref{sec:obtencion_exploracion}), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. Este hallazgo fundamental se retomará con mayor profundidad en la discusión comparativa del Capítulo 6.
+Este resultado, aparentemente contraintuitivo ---el modelo con mejor desempeño de regresión no es el de mejor desempeño de clasificación---, resulta matemáticamente congruente con la función objetivo empleada durante el entrenamiento: al minimizar el Error Cuadrático Medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\,\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección 
+\ref{sec:obtencion_exploracion}), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. Este hallazgo fundamental se retomará con mayor profundidad en la discusión comparativa del Capítulo 6.
 
 \subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
 
@@ -2714,20 +2715,29 @@ Este resultado, aparentemente contraintuitivo ---el modelo con mejor desempeño 
 \footnotetext{No aplicable: el \textit{dataset} piloto de MAWI no contuvo casos naturales de congestión (Sección \ref{sec:obtencion_exploracion}), por lo que la formulación de clasificación formal no pudo evaluarse en esa fase.}
 
 \chapter{Resultados y Discusión}
+\label{cap:resultados}
 
-El presente capítulo consolida y analiza los hallazgos empíricos obtenidos al aplicar los tres modelos predictivos construidos en el Capítulo 5 —ARIMA, Random Forest y LSTM— sobre el dataset primario definitivo: 21 días de recolección real en la red privada PYME del Cliente, complementados mediante la estrategia de aumento de datos sintéticos calibrados descrita en la Sección 5.1. A diferencia del capítulo anterior, cuyo propósito fue documentar la construcción, ejecución y correcta convergencia de cada modelo, este capítulo se concentra en la interpretación crítica de sus resultados a la luz de las preguntas de investigación planteadas en el Capítulo 1 y de la evidencia recabada en la revisión de la literatura (Capítulo 3).
+El presente capítulo consolida y analiza los hallazgos empíricos obtenidos al aplicar los tres modelos predictivos construidos en el Capítulo 5 ---ARIMA, \textit{Random Forest} y LSTM--- sobre el \textit{dataset} primario definitivo: 21 días de recolección real en la red privada PYME bajo estudio, complementados mediante la estrategia de aumento de datos sintéticos calibrados descrita en la Sección \ref{sec:obtencion_exploracion}. A diferencia del capítulo anterior, 
+cuyo propósito fue documentar la construcción, ejecución y correcta convergencia de cada modelo, este capítulo se concentra en la interpretación crítica de sus resultados a la luz de las preguntas de investigación planteadas en el Capítulo 1 y de la evidencia recabada en la revisión de la literatura (Capítulo 3).
 
-Es indispensable reiterar, antes de proceder, el diseño de evaluación dual bajo el cual deben leerse los resultados de este capítulo (Sección 5.1, Tabla \ref{tab:composicion_dataset_final}). La tarea de \textbf{regresión} —predicción continua del factor de utilización $U(t+h)$— se evalúa exclusivamente sobre datos \textbf{reales} de la red del Cliente, nunca vistos durante el entrenamiento, y por tanto sus resultados constituyen evidencia directa del comportamiento de los modelos ante el tráfico genuino de la infraestructura estudiada. La tarea de \textbf{clasificación} —predicción binaria de un evento de congestión, $U(t+h) \geq U_{th}$—, en cambio, se evalúa sobre una partición de datos \textbf{sintéticos} aislada del entrenamiento, dado que el régimen de tráfico real observado durante la ventana de recolección jamás alcanzó el umbral de congestión $U_{th}=0.80$ (Sección 5.1). Esta asimetría entre la naturaleza de los datos de evaluación de una y otra tarea no es una limitación oculta, sino una decisión metodológica explícita, consultada y autorizada por el comité asesor de este trabajo, y se mantiene como un hilo conductor explícito a lo largo de las secciones siguientes: cada resultado se presenta identificando con precisión si proviene de la evaluación sobre datos reales o sintéticos, evitando cualquier ambigüedad que pudiera sugerir una capacidad de detección de congestión verificada sobre datos genuinos que, en la práctica, la naturaleza del tráfico observado no permitió constatar.
+Es indispensable reiterar, antes de proceder, el diseño de evaluación dual bajo el cual deben leerse los resultados de este capítulo (Sección \ref{sec:obtencion_exploracion}, Tabla \ref{tab:composicion_dataset_final}). La tarea de \textbf{regresión} ---predicción continua del factor de utilización $U(t+h)$--- se evalúa exclusivamente sobre datos \textbf{reales} de la infraestructura estudiada, nunca vistos durante el entrenamiento, y por tanto sus resultados constituyen 
+evidencia directa del comportamiento de los modelos ante el tráfico genuino de la red. La tarea de \textbf{clasificación} ---predicción binaria de un evento de congestión, $U(t+h) \geq U_{th}$---, en cambio, se evalúa sobre una partición de datos \textbf{sintéticos} aislada del entrenamiento, dado que el régimen de tráfico real observado durante la ventana de recolección jamás alcanzó el umbral de congestión $U_{th}=0.80$. 
 
-Las Secciones 6.1 a 6.3 recapitulan, para cada modelo, los resultados ya documentados en el Capítulo 5, sintetizando sus hallazgos principales sin reiterar el detalle experimental completo. La Sección 6.4 presenta la comparativa integral entre los tres modelos, para ambas tareas, como fundamento cuantitativo de la discusión. Finalmente, la Sección 6.5 interpreta el conjunto de hallazgos a la luz del problema de investigación planteado en el Capítulo 1, contrasta los resultados obtenidos contra la evidencia de la literatura revisada en el Capítulo 3, y discute con honestidad las limitaciones que se desprenden del diseño experimental adoptado.
+Esta asimetría entre la naturaleza de los datos de evaluación de una y otra tarea no es una limitación oculta, sino una decisión metodológica explícita, consultada y autorizada por el comité asesor de esta investigación. Este rigor se mantiene como un hilo conductor a lo largo de las secciones siguientes: cada resultado se presenta identificando con precisión si proviene de la evaluación sobre datos reales o sintéticos, evitando cualquier ambigüedad que pudiera sugerir una 
+capacidad de detección de congestión verificada sobre datos genuinos que, en la práctica, la naturaleza del tráfico observado no permitió constatar.
+
+Las Secciones 6.1 a 6.3 recapitulan, para cada modelo, los resultados de evaluación ya introducidos en el Capítulo 5, sintetizando sus métricas principales sin reiterar el detalle experimental. La Sección 6.4 presenta la comparativa integral entre los tres modelos, para ambas tareas, como fundamento cuantitativo de la discusión. Finalmente, la Sección 6.5 interpreta el conjunto de hallazgos a la luz del problema de investigación original, contrasta los resultados obtenidos 
+contra la evidencia de la literatura revisada, y discute con honestidad las limitaciones que se desprenden del diseño experimental adoptado, sentando las bases para el trabajo futuro.
 
 \section{Resultados de ARIMA}
+\label{sec:resultados_arima}
 
-Esta sección consolida la totalidad de los resultados obtenidos con el modelo ARIMA a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el dataset MAWI (Sección 5.3), su evaluación definitiva de regresión y clasificación sobre el dataset primario (Sección 5.3, subsección "Entrenamiento sobre el dataset primario"), y su validación de generalización frente a MAWI reagregado a granularidad oficial. El propósito de esta sección es exclusivamente descriptivo: se presentan, comparan y sintetizan los resultados obtenidos en cada contexto, reservando la interpretación conjunta con los demás modelos y las conclusiones derivadas de dicha comparación para las Secciones 6.4 y 6.5.
+Esta sección consolida la totalidad de los resultados obtenidos con el modelo ARIMA a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:arima_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y su validación exploratoria de generalización frente a MAWI reagregado a granularidad oficial. El propósito de esta sección es exclusivamente descriptivo: 
+se presentan, comparan y sintetizan los resultados obtenidos en cada contexto, reservando la interpretación conjunta con los demás modelos y las conclusiones derivadas de dicha comparación para las Secciones 6.4 y 6.5.
 
 \subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
 
-Como se documentó en la Sección 5.3, el orden identificado durante la fase piloto fue $\text{ARIMA}(1,1,1)$, ajustado sobre las 1,064 observaciones de entrenamiento del dataset piloto de MAWI a granularidad de 1 segundo. La Tabla \ref{tab:recap_arima_piloto} recuerda las métricas de regresión obtenidas en dicha fase.
+Como se documentó en la Sección \ref{sec:arima_desarrollo}, el orden identificado durante la fase piloto fue $\mbox{ARIMA}(1,1,1)$, ajustado sobre las 1\,064 observaciones de entrenamiento del \textit{dataset} piloto de MAWI a granularidad de 1 segundo. La Tabla \ref{tab:recap_arima_piloto} recuerda las métricas de regresión obtenidas en dicha fase.
 
 \begin{table}[H]
     \centering
@@ -2735,19 +2745,19 @@ Como se documentó en la Sección 5.3, el orden identificado durante la fase pil
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0265 & 0.0204 & 10.61\% \\
-        Prueba (piloto, MAWI) & 0.0282 & 0.0221 & 10.80\% \\
+        Validación (piloto, MAWI) & 0.0265 & 0.0204 & 10.61\,\% \\
+        Prueba (piloto, MAWI) & 0.0282 & 0.0221 & 10.80\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de ARIMA(1,1,1), fase piloto (Sección 5.3).}
+    \caption{Recapitulación: métricas de regresión de ARIMA(1,1,1), fase piloto (Sección \ref{sec:arima_desarrollo}).}
     \label{tab:recap_arima_piloto}
 \end{table}
 
-Es importante recordar que, en esta fase piloto, la formulación de clasificación no pudo evaluarse: el dataset piloto de MAWI no contuvo, de forma natural, ningún caso de congestión ($U \geq U_{th}=0.80$), tal como se documentó en la Sección 5.1.
+Es importante recordar que, en esta fase piloto, la formulación de clasificación no pudo evaluarse: el \textit{dataset} piloto de MAWI no contuvo, de forma natural, ningún caso de congestión ($U \geq U_{th}=0.80$), tal como se justificó empíricamente en la Sección \ref{sec:obtencion_exploracion}.
 
-\subsection*{Resultados de regresión sobre el dataset primario}
+\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
 
-Sobre el dataset primario, se esperaba que ARIMA(3,0,3) —el orden identificado mediante minimización del AIC sobre la sesión sintética continua de entrenamiento (Sección \ref{sec:preprocesamiento_desarrollo})— mantuviera un desempeño de regresión razonable al evaluarse sobre las particiones reales de validación y prueba, dada la estabilidad observada durante la fase piloto. La Tabla \ref{tab:recap_arima_primario_regresion} presenta los resultados observados.
+Sobre el \textit{dataset} primario, se esperaba que $\mbox{ARIMA}(3,0,3)$ ---el orden identificado mediante minimización del AIC sobre la sesión sintética continua de entrenamiento--- mantuviera un desempeño de regresión razonable al evaluarse sobre las particiones reales de validación y prueba, dada la estabilidad observada durante la fase piloto. La Tabla \ref{tab:recap_arima_primario_regresion} presenta los resultados observados.
 
 \begin{table}[H]
     \centering
@@ -2759,24 +2769,25 @@ Sobre el dataset primario, se esperaba que ARIMA(3,0,3) —el orden identificado
         Prueba (primario, real) & 0.045872 & 0.015059 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de ARIMA(3,0,3) sobre el dataset primario (escala original de utilización).}
+    \caption{Métricas de regresión de ARIMA(3,0,3) sobre el \textit{dataset} primario (escala original de utilización).}
     \label{tab:recap_arima_primario_regresion}
 \end{table}
 
-Contrario a lo esperado, el RMSE resultó aproximadamente 63\% mayor que el observado en la fase piloto (0.0459 frente a 0.0282), a pesar de que la utilización real del dataset primario (máximo de 1.44\%, Tabla \ref{tab:estadisticas_real}) es considerablemente más reducida que la de MAWI (máximo de 32.3\%, Tabla \ref{tab:estadisticas_mawi_piloto}) —una condición que, en principio, debería facilitar la predicción, no dificultarla—. La Figura \ref{fig:recap_arima_regresion} contrasta visualmente las predicciones del modelo contra los valores reales observados en el conjunto de prueba.
+Contrario a lo esperado, el RMSE resultó aproximadamente un 63\,\% mayor que el observado en la fase piloto (0.0459 frente a 0.0282), a pesar de que la utilización real del \textit{dataset} primario (máximo de 1.44\,\%, Tabla \ref{tab:estadisticas_real}) es considerablemente más reducida que la de MAWI (máximo de 32.3\,\%, Tabla \ref{tab:estadisticas_mawi_piloto}) ---una condición que, en principio, debería facilitar la predicción, no dificultarla---. La Figura \ref{fig:recap_arima_regresion} 
+contrasta visualmente las predicciones del modelo contra los valores reales observados en el conjunto de prueba.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_regresion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
     \label{fig:recap_arima_regresion}
 \end{figure}
 
-Como es visible en la Figura \ref{fig:recap_arima_regresion}, el modelo sobreestima de manera sistemática y sostenida el valor real de utilización, prácticamente sin seguir las fluctuaciones de la serie real. Esta observación se retoma en la discusión al cierre de esta sección.
+Como es visible en la Figura \ref{fig:recap_arima_regresion}, el modelo sobreestima de manera sistemática y sostenida el valor real de utilización, prácticamente sin seguir las fluctuaciones de la serie real. Esta observación analítica se retoma en la discusión al cierre de esta sección.
 
 \subsection*{Resultados de clasificación sobre datos sintéticos aislados}
 
-Se esperaba que, al evaluar el modelo sobre la partición sintética de clasificación —que sí contiene eventos de congestión inyectados deliberadamente (Sección 5.1)—, ARIMA lograra un desempeño de clasificación moderado, en virtud de haber sido entrenado precisamente sobre una sesión que incluye dichos eventos. La Tabla \ref{tab:recap_arima_primario_clasificacion} presenta los resultados observados.
+Se esperaba que, al evaluar el modelo sobre la partición sintética de clasificación ---que sí contiene eventos de congestión inyectados deliberadamente (Sección \ref{sec:obtencion_exploracion})---, ARIMA lograra un desempeño de clasificación moderado, en virtud de haber sido entrenado precisamente sobre una sesión que incluye dichos eventos. La Tabla \ref{tab:recap_arima_primario_clasificacion} presenta los resultados observados.
 
 \begin{table}[H]
     \centering
@@ -2784,10 +2795,10 @@ Se esperaba que, al evaluar el modelo sobre la partición sintética de clasific
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Accuracy & 0.9741 & 0.9750 \\
-        Precision & 0.6667 & 1.0000 \\
-        Recall & 0.0357 & 0.0185 \\
-        F1-score & 0.0678 & 0.0364 \\
+        Exactitud (\textit{Accuracy}) & 0.9741 & 0.9750 \\
+        Precisión & 0.6667 & 1.0000 \\
+        \textit{Recall} (Exhaustividad) & 0.0357 & 0.0185 \\
+        \textit{F1-score} & 0.0678 & 0.0364 \\
         AUC-ROC & 0.8905 & 0.8939 \\
         \hline
     \end{tabular}
@@ -2800,14 +2811,14 @@ La Figura \ref{fig:recap_arima_clasificacion_metricas} presenta estas mismas mé
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{arima_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, ARIMA sobre el dataset primario.}
+    \caption{Comparación de métricas de clasificación, validación vs. prueba, ARIMA sobre el \textit{dataset} primario.}
     \label{fig:recap_arima_clasificacion_metricas}
 \end{figure}
 
-Los resultados observados difieren marcadamente de lo esperado: si bien la precisión es alta —perfecta en el conjunto de prueba (100\%)—, el recall es extremadamente bajo (1.85\% en prueba), de modo que, de los 275 eventos de congestión reales en el conjunto de prueba, el modelo únicamente detectó 1. La Ecuación \ref{eq:recap_confusion_arima} reproduce la matriz de confusión correspondiente.
+Los resultados observados difieren marcadamente de lo esperado: si bien la precisión es alta ---perfecta en el conjunto de prueba (100\,\%)---, el \textit{Recall} es extremadamente bajo (1.85\,\% en prueba), de modo que, de los 275 eventos de congestión reales en el conjunto de prueba, el modelo únicamente detectó 1. La Ecuación \ref{eq:recap_confusion_arima} reproduce la matriz de confusión correspondiente.
 
 \begin{equation}
-    \begin{pmatrix} \text{VN}=2070 & \text{FP}=0 \\ \text{FN}=53 & \text{VP}=1 \end{pmatrix}
+    \begin{pmatrix} \mbox{VN}=2070 & \mbox{FP}=0 \\ \mbox{FN}=53 & \mbox{VP}=1 \end{pmatrix}
     \label{eq:recap_confusion_arima}
 \end{equation}
 
@@ -2816,13 +2827,13 @@ La Figura \ref{fig:recap_arima_clasificacion_pred} ilustra las predicciones cont
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_clasificacion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
     \label{fig:recap_arima_clasificacion_pred}
 \end{figure}
 
 \subsection*{Resultados de la validación de generalización (MAWI, granularidad oficial)}
 
-Se esperaba, de manera exploratoria, que el modelo —aunque entrenado sobre un régimen de tráfico radicalmente distinto— pudiera al menos aproximar el orden de magnitud de la utilización observada en un enlace de mayor escala como MAWI. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado obtenido sobre las 6 observaciones evaluables derivadas de las trazas de MAWI reagregadas a 1 minuto.
+Se esperaba, de manera exploratoria, que el modelo ---aunque entrenado sobre un régimen de tráfico radicalmente distinto--- pudiera al menos aproximar el orden de magnitud de la utilización observada en un enlace de mayor escala como MAWI. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado obtenido sobre las 6 observaciones evaluables derivadas de las trazas de MAWI reagregadas a 1 minuto.
 
 \begin{table}[H]
     \centering
@@ -2845,7 +2856,7 @@ La Figura \ref{fig:recap_arima_generalizacion} contrasta las predicciones del mo
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_generalizacion_mawi.png}
-    \caption{Validación de generalización: ARIMA (dataset primario) evaluado sobre MAWI (1 minuto oficial).}
+    \caption{Validación de generalización: ARIMA (\textit{dataset} primario) evaluado sobre MAWI (1 minuto oficial).}
     \label{fig:recap_arima_generalizacion}
 \end{figure}
 
@@ -2869,15 +2880,15 @@ La Tabla \ref{tab:sintesis_completa_arima} consolida en un solo lugar la totalid
     \small
     \begin{tabular}{|l|l|r|r|r|}
         \hline
-        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto — validación & 100\% Real (MAWI) & 0.0265 & N/A & N/A \\
-        Piloto — prueba & 100\% Real (MAWI) & 0.0282 & N/A & N/A \\
-        Primario — regresión (val.) & 100\% Real (Cliente) & 0.0460 & --- & --- \\
-        Primario — regresión (prueba) & 100\% Real (Cliente) & 0.0459 & --- & --- \\
-        Primario — clasificación (val.) & 100\% Sintético & --- & 0.0357 & 0.8905 \\
-        Primario — clasificación (prueba) & 100\% Sintético & --- & 0.0185 & 0.8939 \\
-        Generalización — MAWI (oficial) & 100\% Real (MAWI) & 0.3233 & N/A & N/A \\
+        Piloto --- validación & 100\,\% Real (MAWI) & 0.0265 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% Real (MAWI) & 0.0282 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.0460 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.0459 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.0357 & 0.8905 \\
+        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.0185 & 0.8939 \\
+        Generalización --- MAWI (oficial) & 100\,\% Real (MAWI) & 0.3233 & N/A & N/A \\
         \hline
     \end{tabular}
     \caption{Síntesis completa de los resultados de ARIMA a través de todos los contextos de evaluación de este trabajo.}
@@ -2886,11 +2897,30 @@ La Tabla \ref{tab:sintesis_completa_arima} consolida en un solo lugar la totalid
 
 \subsection*{Discusión de los resultados de ARIMA}
 
-Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, el desempeño de regresión de ARIMA se deterioró al pasar de la fase piloto al dataset primario (RMSE de 0.0282 a 0.0459), a pesar de que la magnitud de la señal real a predecir es sustancialmente menor en este último. La explicación más plausible reside en que el modelo se ajustó sobre una serie de entrenamiento (la sesión sintética) cuya media incondicional —elevada por la presencia deliberada de eventos de congestión (Sección 5.1)— no corresponde al régimen de tráfico bajo que domina las particiones reales de evaluación; en consecuencia, el modelo produce un sesgo de sobreestimación sistemático, visible en la Figura \ref{fig:recap_arima_regresion}.
+Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, el desempeño de regresión de ARIMA se deterioró al pasar de la fase piloto al \textit{dataset} primario (RMSE de 0.0282 a 0.0459), a pesar de que la magnitud de la señal real a predecir es sustancialmente menor en este último. La explicación más plausible reside en que el modelo se ajustó sobre una serie de entrenamiento (la sesión sintética) cuya media incondicional ---elevada por la presencia 
+deliberada de eventos de congestión (Sección \ref{sec:obtencion_exploracion})--- no corresponde al régimen de tráfico bajo que domina las particiones reales de evaluación; en consecuencia, el modelo produce un sesgo de sobreestimación sistemático, visible en la Figura \ref{fig:recap_arima_regresion}.
 
-Segunda, en la tarea de clasificación, el patrón de precisión alta y recall extremadamente bajo (Tabla \ref{tab:recap_arima_primario_clasificacion}) es consistente con la naturaleza de ARIMA como modelo lineal que suaviza sus pronósticos hacia la tendencia central de la serie mediante su componente de media móvil: rara vez genera una predicción puntual que cruce el umbral $U_{th}$, incluso durante una tendencia de ascenso genuina, resultando en un número elevado de falsos negativos. Esta limitación teórica, anticipada en el Marco Teórico de esta tesis (Sección 2.1.2) respecto a la naturaleza reactiva —y ahora se evidencia, también, la naturaleza excesivamente conservadora— de los mecanismos lineales frente a la congestión, encuentra aquí su primera confirmación empírica.
+Segunda, en la tarea de clasificación, el patrón de precisión alta y \textit{Recall} extremadamente bajo (Tabla \ref{tab:recap_arima_primario_clasificacion}) es consistente con la naturaleza de ARIMA como modelo lineal que suaviza sus pronósticos hacia la tendencia central de la serie mediante su componente de media móvil: rara vez genera una predicción puntual que cruce el umbral $U_{th}$, incluso durante una tendencia de ascenso genuina, resultando en un número elevado de falsos negativos. 
+Esta limitación teórica, anticipada en el Marco Teórico de esta tesis (Sección \ref{subsec:arima}) respecto a la naturaleza reactiva ---y ahora se evidencia, también, la naturaleza excesivamente conservadora--- de los mecanismos lineales frente a la congestión, encuentra aquí su primera confirmación empírica.
 
-Tercera, y quizás el hallazgo más contundente de esta sección, la validación de generalización contra MAWI reveló una incapacidad casi total del modelo para operar fuera del régimen de tráfico sobre el cual fue entrenado: un RMSE que triplica el rango completo de la variable real observada constituye evidencia inequívoca de que un modelo ARIMA ajustado sobre una red de escala reducida no generaliza a un enlace de tránsito de escala considerablemente mayor, aun cuando ambas series comparten la misma unidad de medida (factor de utilización, acotado entre 0 y 1). Esta observación se retoma de manera comparativa frente a Random Forest y LSTM en la Sección 6.4, y se discute en términos de sus implicaciones prácticas en la Sección 6.5.
+Tercera, y quizás el hallazgo más contundente de esta sección, la validación exploratoria de generalización contra MAWI reveló una incapacidad casi total del modelo para operar fuera del régimen de tráfico sobre el cual fue entrenado: un RMSE que triplica el rango completo de la variable real observada constituye evidencia inequívoca de que un modelo ARIMA ajustado sobre una red de escala reducida no generaliza a un enlace de tránsito de escala considerablemente mayor, aun cuando ambas series 
+comparten la misma unidad de medida (factor de utilización, acotado entre 0 y 1). Esta observación se retoma de manera comparativa frente a \textit{Random Forest} y LSTM en la Sección 6.4, y se discute en términos de sus implicaciones prácticas en la Sección 6.5.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Resultados de Random Forest}
 
@@ -3319,11 +3349,215 @@ Este resultado constituye evidencia empírica de una limitación de generalizaci
 
 \section{Discusión}
 
+Los hallazgos presentados a lo largo de este capítulo —individualmente en las Secciones 6.1 a 6.3, y de manera integrada en la Sección 6.4— permiten ahora regresar a las preguntas que dieron origen a esta investigación. Esta sección interpreta dichos hallazgos a la luz del problema de investigación planteado en el Capítulo 1, los contrasta contra el marco teórico desarrollado en el Capítulo 2 y la evidencia de la literatura revisada en el Capítulo 3, y discute con honestidad las limitaciones que se desprenden del diseño experimental adoptado, sentando las bases para las conclusiones formales del Capítulo 7.
+
+\subsection*{Retorno al problema de investigación}
+
+El Capítulo 1 (Sección 1.1) formuló el problema de esta tesis como una pregunta concreta: \textit{¿es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un estado de congestión, de tal forma que dicha predicción resulte útil para la toma de decisiones antes de que la degradación del servicio se materialice?} La evidencia recabada en este capítulo permite responder a esta pregunta de manera matizada, no binaria. Sí es posible construir modelos que predicen con notable precisión el comportamiento continuo del tráfico de la red del Cliente —LSTM lo demostró con un RMSE de 0.001036 sobre datos reales nunca vistos durante el entrenamiento (Sección 6.3)—. Pero la utilidad práctica de dicha predicción para la toma de decisiones, tal como la plantea el problema de investigación, depende de la capacidad del sistema para señalar el cruce de un umbral de acción —la propia formulación de clasificación establecida en la Sección 2.2.1—, y en esa dimensión específica, ningún modelo evaluado alcanzó un desempeño que pueda calificarse de plenamente satisfactorio: el recall máximo observado, 29.82\% con Random Forest (Tabla \ref{tab:tabla_maestra}), implica que más de dos tercios de los eventos de congestión sintéticos habrían pasado inadvertidos por el sistema.
+
+Esta disociación entre "predecir bien el valor" y "detectar bien el evento" no es un fracaso del diseño experimental, sino, en sí misma, la aportación empírica central de esta tesis. Como se argumentó en la Sección \ref{sec:metricas_evaluacion} desde el capítulo metodológico, la razón por la cual esta tesis definió y priorizó el recall como criterio de comparación —por encima del accuracy o de la precisión aislada— es precisamente la asimetría de costos entre un falso negativo (una congestión no anticipada, que reproduce exactamente la limitación reactiva descrita en el Planteamiento del Problema) y un falso positivo (una alerta preventiva injustificada). Bajo ese criterio, el hallazgo de esta tesis no es que los modelos "fallen", sino que revela con precisión cuantitativa \textit{cuánto} camino queda por recorrer antes de que un sistema de este tipo pueda desplegarse con confianza operativa —una distinción que, se sostiene aquí, tiene más valor científico que reportar una única métrica optimista y agregada.
+
+\subsection*{Un hallazgo no anticipado: la disociación entre regresión y clasificación}
+
+Ninguno de los cinco trabajos de Machine Learning clásico o Deep Learning revisados en el Estado del Arte (Secciones 3.2 y 3.3) documentó explícitamente esta disociación, en buena medida porque, como se señaló en la síntesis de dicho capítulo (Sección 3.5), la mayoría de la literatura revisada evalúa sus modelos mediante métricas de error continuo (RMSE, MAE, MAPE) sin traducir dicho desempeño a un criterio de clasificación accionable. La Tabla \ref{tab:reconciliacion_hallazgo} sintetiza cómo este hallazgo se conecta con la evidencia teórica y empírica de capítulos anteriores.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{3.3cm}|p{5.2cm}|p{5.2cm}|}
+        \hline
+        \textbf{Fuente} & \textbf{Lo que anticipaba} & \textbf{Lo que esta tesis encontró} \\
+        \hline
+        Sección \ref{sec:modelos_justificacion} (justificación de modelos) & LSTM, al capturar dependencias de largo plazo, tendría ventaja general sobre ARIMA y Random Forest & LSTM domina en regresión, pero queda en segundo lugar en clasificación \\
+        \hline
+        Oliveira et al. \cite{oliveira2016} (Sección 3.3) & Mayor complejidad arquitectónica no garantiza mejor desempeño & Confirmado, y extendido: ni siquiera garantiza mejor desempeño \textit{dentro del mismo modelo} entre tareas distintas \\
+        \hline
+        Sección \ref{sec:metricas_evaluacion} (advertencia sobre Accuracy) & Bajo desbalance de clases, el Accuracy oculta el desempeño real & Confirmado empíricamente: Accuracy casi idéntico (0.975-0.981) entre modelos con Recall que difiere 16 veces (Figura \ref{fig:barras_clasificacion}) \\
+        \hline
+    \end{tabular}
+    \caption{Reconciliación del hallazgo central de esta tesis con el marco teórico y metodológico de capítulos anteriores.}
+    \label{tab:reconciliacion_hallazgo}
+\end{table}
+
+\subsection*{La congestión como fenómeno raro: coherencia con la teoría de colas}
+
+El hallazgo, ya documentado en la Sección 5.1, de que la utilización real de la red del Cliente nunca superó el 1.44\% durante los 21 días de recolección, podría interpretarse —incorrectamente— como una falla de la investigación. Por el contrario, este resultado es plenamente coherente con el fundamento teórico desarrollado en la Sección \ref{sec:congestion}: la teoría de colas de Kleinrock \cite{kleinrock1976}, ya citada en el Marco Teórico, predice que el tiempo de espera crece de forma no lineal —proporcional a $\frac{1}{1-\rho}$— únicamente en la vecindad de la saturación ($\rho \to 1$); mientras la utilización se mantenga moderada, como ocurre consistentemente en la red del Cliente, el sistema opera sin manifestar ninguno de los síntomas de congestión descritos en la Sección 2.1.2. La ausencia de RTT elevado o pérdida de paquetes en los 21 días reales (Tabla \ref{tab:estadisticas_real}) no contradice la teoría: la confirma. Es, de hecho, la misma teoría de colas la que justificó, en la Sección 5.1, la necesidad de generar eventos de congestión sintéticos: sin una intervención deliberada, ningún modelo podría jamás observar el fenómeno no lineal que se supone debe aprender a predecir.
+
+Este razonamiento conecta directamente con la justificación original de esta tesis (Sección 1.3): la propia motivación del trabajo —anticipar la congestión antes de que se materialice— presupone que la congestión es, precisamente, un evento infrecuente y súbito; si fuera común y gradual, la gestión reactiva tradicional (Sección 1.1) resultaría suficiente. La rareza estadística del evento que se buscó predecir es, en cierto sentido, la razón de ser de esta investigación, y también la fuente de su principal dificultad técnica: el desbalance de clases documentado en la Sección 5.1 (2.6\% de casos positivos) no es un defecto del dataset, sino un reflejo fiel de la naturaleza del fenómeno estudiado.
+
+\subsection*{Limitaciones reconocidas}
+
+En congruencia con el compromiso de honestidad metodológica sostenido a lo largo de este trabajo, se enumeran a continuación las limitaciones más relevantes que condicionan el alcance de los hallazgos anteriores.
+
+\begin{enumerate}
+    \item \textbf{Periodo de recolección reducido.} Como se documentó en la Sección 1.4, el periodo de recolección del dataset primario se ajustó de los dos meses originalmente planificados a 21 días, por restricciones de calendario académico. Un periodo más extenso habría permitido observar un mayor número de ciclos semanales completos y, potencialmente, episodios de congestión genuinos —por ejemplo, ante una eventual actualización masiva de las cámaras de videovigilancia o una migración de datos de gran volumen en Nextcloud (Sección \ref{sec:fuente_datos})— que este trabajo no tuvo oportunidad de observar.
+
+    \item \textbf{Dependencia de datos sintéticos para la evaluación de clasificación.} Como se estableció explícitamente en la Sección 5.1 y se ha reiterado a lo largo de este capítulo, la totalidad de la evidencia de clasificación presentada en las Secciones 6.1 a 6.4 proviene de datos sintéticos, calibrados estadísticamente pero no observados. Si bien el diseño experimental garantiza que esta partición nunca fue vista durante el entrenamiento (Tabla \ref{tab:composicion_dataset_final}), y si bien la literatura revisada (Sneha et al. \cite{sneha2020}, Labonne et al. \cite{labonne2021}, Sección 3.2) respalda el uso de tráfico simulado para este propósito, el desempeño de clasificación reportado en este trabajo no debe interpretarse como una medición directa de la capacidad de los modelos para detectar congestión \textit{real} en la red del Cliente, sino como una aproximación razonada a dicha capacidad.
+
+    \item \textbf{Limitación de generalización entre escalas de red.} La Sección 6.4 documentó que únicamente ARIMA pudo evaluarse frente a MAWI bajo la granularidad oficial, con un resultado que descarta cualquier expectativa de generalización directa sin reajuste. Random Forest y LSTM, por la incompatibilidad estructural entre sus parámetros de ventana y la duración de las trazas de MAWI (Secciones 6.2 y 6.3), no pudieron siquiera someterse a esta prueba. En consecuencia, los hallazgos de esta tesis deben interpretarse como válidos específicamente para el contexto de la red del Cliente, y no como evidencia de aplicabilidad universal a cualquier infraestructura de red.
+
+    \item \textbf{Fuente única de datos primarios.} Consistente con lo reconocido desde los Alcances y Limitaciones (Sección 1.4), la totalidad del dataset primario proviene de una única red privada PYME. Los patrones de tráfico observados —incluyendo la escala de utilización extremadamente baja documentada en la Sección 5.1— son específicos de esta infraestructura particular, y no necesariamente representativos de redes PYME en general.
+\end{enumerate}
+
+\subsection*{Una implicación de diseño emergente: hacia un sistema híbrido}
+
+El hallazgo central de este capítulo —que ningún modelo individual domina ambas tareas (Sección 6.4, Figura \ref{fig:scatter_tradeoff})— sugiere una vía de solución que ninguno de los tres modelos, evaluado de forma aislada, puede ofrecer por sí solo: un esquema de \textbf{alertamiento híbrido}, en el cual Random Forest —el modelo de mayor recall— opera como el mecanismo primario de detección de eventos de congestión, mientras que LSTM —el modelo de menor error continuo— complementa dicha alerta con una estimación precisa de la magnitud y trayectoria esperada de la utilización. La Figura \ref{fig:esquema_hibrido} ilustra conceptualmente esta arquitectura propuesta.
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        every node/.style={font=\sffamily\footnotesize},
+        box/.style={rectangle, draw=black!70, thick, rounded corners=3pt, align=center, minimum height=1.1cm, minimum width=3.2cm, fill=gray!5},
+        arrow/.style={-{Latex[length=2.5mm]}, thick}
+    ]
+    \node[box] (entrada) {Métricas de red\\ en tiempo real};
+    \node[box, below left=1.2cm and -0.3cm of entrada, fill=black!10] (rf) {Random Forest\\ \footnotesize (Recall=0.298)};
+    \node[box, below right=1.2cm and -0.3cm of entrada, fill=black!10] (lstm) {LSTM\\ \footnotesize (RMSE=0.0010)};
+    \node[box, below=2.6cm of entrada, fill=black!20, minimum width=5cm] (alerta) {¿Random Forest detecta\\ posible congestión?};
+    \node[box, below=1.1cm of alerta, fill=black!30, minimum width=5cm] (salida) {Alerta + estimación de magnitud\\ (aportada por LSTM)};
+
+    \draw[arrow] (entrada) -- (rf);
+    \draw[arrow] (entrada) -- (lstm);
+    \draw[arrow] (rf) -- (alerta);
+    \draw[arrow] (alerta) -- (salida);
+    \draw[arrow] (lstm.south) |- (salida.east);
+    \end{tikzpicture}
+    \caption{Esquema conceptual de un sistema de alertamiento híbrido, combinando la sensibilidad de detección de Random Forest con la precisión de estimación continua de LSTM.}
+    \label{fig:esquema_hibrido}
+\end{figure}
+
+Esta propuesta no fue implementada ni evaluada empíricamente en el alcance de este trabajo —y por tanto no constituye un hallazgo, sino una implicación de diseño derivada de la evidencia recabada—, pero se retoma formalmente como línea de trabajo futuro en la Sección 7.3, dado que se desprende con naturalidad del propio patrón de especialización complementaria documentado en la Sección 6.4.
+
+\subsection*{Cierre de las brechas identificadas en el Estado del Arte}
+
+Para cerrar esta discusión, la Tabla \ref{tab:cierre_brechas} retoma las tres brechas formuladas al final de la revisión de la literatura (Sección 3.5) y contrasta cada una contra la evidencia generada en este capítulo.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{3cm}|p{5.5cm}|p{5.2cm}|}
+        \hline
+        \textbf{Brecha (Sección 3.5)} & \textbf{Cómo se abordó} & \textbf{Evidencia generada} \\
+        \hline
+        Conceptual: predicción de volumen vs. congestión como evento discreto & Se definió y aplicó una variable objetivo de clasificación explícita ($U \geq U_{th}$), evaluada de forma independiente a la regresión & Tablas \ref{tab:recap_arima_primario_clasificacion}, \ref{tab:recap_rf_primario_clasificacion}, \ref{tab:recap_lstm_primario_clasificacion} \\
+        \hline
+        Metodológica: ausencia de comparación simultánea entre tres paradigmas & Los tres modelos se entrenaron y evaluaron bajo condiciones idénticas (mismos datos, mismo umbral, mismas métricas) & Tabla maestra \ref{tab:tabla_maestra}, Sección 6.4 \\
+        \hline
+        De validación: dependencia de una única fuente de datos & Se adoptó un dataset híbrido (real + sintético) y se intentó una validación cruzada externa contra MAWI & Sección 5.1 (diseño híbrido); Sección 6.1 (validación exitosa para ARIMA); Secciones 6.2-6.3 (limitación documentada para RF/LSTM) \\
+        \hline
+    \end{tabular}
+    \caption{Cierre de las brechas del Estado del Arte (Sección 3.5) a la luz de los resultados del Capítulo 6.}
+    \label{tab:cierre_brechas}
+\end{table}
+
+Las tres brechas fueron abordadas de manera directa; sin embargo, como revela la última fila de la Tabla \ref{tab:cierre_brechas}, la brecha de validación se cerró solo parcialmente —un resultado honesto que, lejos de restar valor a este trabajo, delimita con precisión el punto exacto en el que una futura extensión de esta línea de investigación debería concentrar sus esfuerzos, tal como se detalla en las conclusiones y trabajo futuro del Capítulo 7.
+
 \chapter{Conclusiones}
+
+El presente trabajo de tesis se propuso, desde su Planteamiento del Problema (Sección 1.1), atender una pregunta de investigación concreta: la posibilidad de construir, a partir del análisis de datos históricos de operación, un sistema capaz de predecir la congestión de una red de computadoras con la antelación suficiente para transformar la gestión reactiva tradicional en una gestión predictiva y preventiva. A lo largo de los seis capítulos precedentes, dicha pregunta fue progresivamente delimitada —mediante la formalización de una definición operativa de congestión (Sección \ref{sec:congestion}) y la identificación de tres brechas específicas en la literatura existente (Sección 3.5)—, instrumentada —a través de un diseño metodológico riguroso que contempló tanto la recolección de datos reales como su complemento mediante aumento de datos sintéticos calibrados (Capítulo 4, Sección 5.1)—, y finalmente puesta a prueba empíricamente mediante la construcción, entrenamiento y evaluación comparativa de tres paradigmas de modelado predictivo (Capítulos 5 y 6).
+
+Corresponde a este capítulo de cierre desempeñar una función distinta a la de los anteriores: no generar nueva evidencia empírica, sino sintetizar, con rigor y honestidad intelectual, lo que dicha evidencia permite afirmar. Este ejercicio de síntesis se organiza en tres movimientos complementarios. La Sección 7.1 confronta, uno por uno, los objetivos específicos formulados en el proyecto original de esta investigación (Sección 1.2) contra la evidencia generada en los Capítulos 5 y 6, determinando el grado en que cada uno fue satisfecho. La Sección 7.2 distingue y articula las contribuciones que este trabajo aporta a la comunidad académica y a la práctica profesional de la ingeniería de redes, diferenciando entre aportes metodológicos, empíricos y de ingeniería de software. Finalmente, la Sección 7.3 asume con transparencia las limitaciones que delimitan el alcance de los hallazgos aquí presentados —muchas de ellas ya anticipadas en los Alcances y Limitaciones originales de esta tesis (Sección 1.4) y confirmadas empíricamente en el Capítulo 6—, y a partir de cada una de ellas deriva una línea concreta de continuación para trabajos futuros, de modo que las limitaciones de este estudio no se presenten como un cierre, sino como el punto de partida legítimo de la investigación que este trabajo hace posible.
 
 \section{Cumplimiento de objetivos}
 
+Esta sección examina, de manera individual, el grado de cumplimiento de cada uno de los objetivos —general y específicos— planteados en la Sección 1.2 de esta tesis, contrastando su formulación original contra la evidencia empírica generada en los Capítulos 5 y 6. Se adopta como criterio de evaluación la correspondencia directa entre lo declarado y lo efectivamente ejecutado, señalando explícitamente los casos en que el cumplimiento fue parcial o requirió ajustes respecto al diseño original, en congruencia con el compromiso de honestidad metodológica sostenido a lo largo de este trabajo.
+
+\subsection*{Objetivo general}
+
+El objetivo general de esta tesis planteó desarrollar un sistema basado en Machine Learning que permitiera predecir la congestión de redes de computadoras a partir del análisis de datos de operación, evaluando su desempeño en escenarios de tráfico de distinta escala y naturaleza. Este objetivo se considera \textbf{cumplido}. Se desarrolló, implementó y evaluó un sistema compuesto por tres modelos predictivos (ARIMA, Random Forest y LSTM, Capítulo 5), capaces de generar tanto predicciones continuas del factor de utilización como clasificaciones binarias de eventos de congestión (Sección \ref{sec:def_operativa_metodologia}). La evaluación en escenarios de distinta escala y naturaleza se satisfizo mediante el diseño experimental que contrastó una red privada PYME de bajo volumen (el dataset primario) contra un enlace troncal académico de gran escala (MAWI), tanto en la fase piloto (Sección 5.1) como en la validación de generalización (Sección 6.1). No obstante, es necesario matizar este cumplimiento con la evidencia generada en la Sección 6.4: dicha evaluación reveló que la viabilidad del enfoque predictivo depende sustancialmente de la tarea (regresión o clasificación) y de la escala de red considerada, un hallazgo que responde al objetivo general en su letra, pero que atempera cualquier lectura optimista de su alcance práctico inmediato.
+
+\subsection*{Objetivo específico 1: Recopilar y organizar datos de operación}
+
+\textit{"Recopilar y organizar datos de operación de una red de computadoras, incluyendo parámetros como frecuencia de operación, ancho de banda, rendimiento y disponibilidad."}
+
+Este objetivo se considera \textbf{cumplido, con una precisión terminológica}. Se recopilaron de manera automatizada y continua los parámetros de utilización del enlace, latencia (RTT) y tasa de pérdida de paquetes (Sección \ref{sec:fuente_datos}), mediante un mecanismo de instrumentación desplegado sobre la infraestructura RouterOS del Cliente (Sección 5.1). El parámetro originalmente denominado "frecuencia de operación" —señalado ya en el Capítulo 1 como un término ambiguo susceptible de confundirse con conceptos de radiofrecuencia— se materializó, en la práctica, como la frecuencia de muestreo de la recolección (intervalos de un minuto). Es pertinente reconocer, asimismo, que el periodo de recolección efectivamente logrado (21 días, Sección 5.1) difirió del periodo de dos meses originalmente planificado (Sección \ref{sec:fuente_datos}), por las restricciones de calendario académico reconocidas en la Sección 1.4 y discutidas como limitación en la Sección 6.5.
+
+\subsection*{Objetivo específico 2: Diseñar un procedimiento de almacenamiento, depuración y procesamiento estructurado}
+
+\textit{"Diseñar un procedimiento para almacenar, depurar y procesar los datos obtenidos de una manera estructurada."}
+
+Este objetivo se considera \textbf{cumplido de manera integral}. Se diseñó e implementó un \textit{pipeline} completo de preprocesamiento (Sección \ref{sec:preprocesamiento}, ejecutado en las Secciones 5.1 y 5.2), que incluyó: detección automática de sesiones continuas para evitar la contaminación de variables de rezago a través de interrupciones de conectividad (Tabla \ref{tab:sesiones_train}); interpolación de huecos cortos y descarte de huecos prolongados conforme a un criterio explícito; normalización Min-Max sin fuga de información entre particiones (Tabla \ref{tab:rangos_normalizados}); y construcción de secuencias mediante ventana deslizante para las arquitecturas recurrentes (Ecuación \ref{eq:ventaneo_instanciada_primario}). Este procedimiento se validó primero sobre el dataset piloto de MAWI (Sección 5.1) antes de aplicarse, sin alteraciones estructurales, al dataset primario definitivo, demostrando la reproducibilidad y solidez del diseño.
+
+\subsection*{Objetivo específico 3: Implementar técnicas de Machine Learning adecuadas}
+
+\textit{"Implementar técnicas de Machine Learning adecuadas para analizar los patrones de tráfico y comportamiento de la red."}
+
+Este objetivo se considera \textbf{cumplido}. Se implementaron y entrenaron tres técnicas representativas de otros tantos paradigmas de modelado —un modelo estadístico clásico (ARIMA), un modelo de ensamble de Machine Learning clásico (Random Forest) y una arquitectura de Deep Learning (LSTM)—, conforme a la justificación teórica y metodológica desarrollada en las Secciones 2.2 y \ref{sec:modelos_justificacion}. La adecuación de dichas técnicas al problema de patrones de tráfico se evidenció, entre otros hallazgos, en el análisis de importancia de variables de Random Forest (Sección 6.2), que identificó las variables de rezago y media móvil como predictores relevantes, y en la capacidad de LSTM para capturar la dinámica secuencial completa del tráfico, reflejada en su desempeño de regresión (Sección 6.3).
+
+\subsection*{Objetivo específico 4: Desarrollar un prototipo de predicción de escenarios de congestión}
+
+\textit{"Desarrollar un prototipo que realice predicciones de posibles escenarios de congestión de red."}
+
+Este objetivo se considera \textbf{cumplido}. El conjunto de \textit{scripts} y modelos entrenados documentados en el Capítulo 5, capaces de ingerir telemetría de red y producir tanto una estimación continua de utilización futura como una clasificación binaria de riesgo de congestión (Sección \ref{sec:def_operativa_metodologia}), constituye el prototipo funcional que este objetivo demandaba. Su naturaleza de prototipo —y no de sistema de producción— fue delimitada explícitamente desde los Alcances y Limitaciones de este trabajo (Sección 1.4), por lo que su cumplimiento debe interpretarse en esos términos: se demostró la viabilidad técnica del enfoque, no se entregó una solución lista para despliegue operativo.
+
+\subsection*{Objetivo específico 5: Validar el desempeño del sistema mediante métricas de evaluación}
+
+\textit{"Validar el desempeño del sistema mediante métricas de evaluación."}
+
+Este objetivo se considera \textbf{cumplido de manera exhaustiva}, y constituye, en la práctica, el objetivo respaldado por la evidencia más extensa de todo este trabajo. Se aplicó el esquema de evaluación dual establecido en la Sección \ref{sec:metricas_evaluacion} —ocho métricas distintas (RMSE, MAE para regresión; Accuracy, Precisión, Recall, F1-score y AUC-ROC para clasificación)— a los tres modelos, en cuatro contextos de evaluación diferenciados: la fase piloto sobre MAWI, la evaluación de regresión sobre datos reales, la evaluación de clasificación sobre datos sintéticos aislados, y la validación de generalización externa (Tabla \ref{tab:tabla_maestra}, Sección 6.4). Esta validación multinivel no solo satisface, sino que excede el alcance mínimo de lo formulado en el objetivo original, al incorporar una validación de generalización entre escalas de red no explícitamente exigida por su enunciado.
+
+\subsection*{Objetivo específico 6: Identificar aplicaciones reales del sistema propuesto}
+
+\textit{"Identificar posibles aplicaciones reales del sistema propuesto en distintos contextos de uso."}
+
+Este objetivo se considera \textbf{cumplido de manera parcial}. Como se anticipó en la revisión metodológica de la Sección 1.2, este objetivo posee una naturaleza distinta a los cinco anteriores —de carácter reflexivo y prospectivo, más que estrictamente demostrable mediante una métrica—. Este trabajo identificó, con fundamento en sus propios hallazgos, un escenario de aplicación concreto: el esquema de alertamiento híbrido propuesto en la Sección 6.5 (Figura \ref{fig:esquema_hibrido}), que combina la sensibilidad de detección de Random Forest con la precisión de estimación de LSTM. Sin embargo, dicha aplicación no fue implementada ni validada empíricamente en un contexto de uso real más allá del análisis retrospectivo presentado en el Capítulo 6, por lo que su cumplimiento se circunscribe a la identificación conceptual, y no a la demostración operativa, de dicha aplicación —una distinción que se retoma como línea de trabajo futuro en la Sección 7.3.
+
+\subsection*{Síntesis del cumplimiento de objetivos}
+
+La Tabla \ref{tab:sintesis_objetivos} resume el grado de cumplimiento de cada objetivo, con referencia a la evidencia específica que lo sustenta.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{3.5cm}|l|p{6.5cm}|}
+        \hline
+        \textbf{Objetivo} & \textbf{Cumplimiento} & \textbf{Evidencia principal} \\
+        \hline
+        General & Cumplido (con matices) & Tabla \ref{tab:tabla_maestra}, Sección 6.4 \\
+        \hline
+        Específico 1 (recolección) & Cumplido, con ajuste de alcance & Sección 5.1, Tabla \ref{tab:huecos_recoleccion} \\
+        \hline
+        Específico 2 (procesamiento) & Cumplido íntegramente & Sección \ref{sec:preprocesamiento_desarrollo} \\
+        \hline
+        Específico 3 (implementación de ML) & Cumplido & Secciones 5.3-5.5 \\
+        \hline
+        Específico 4 (prototipo) & Cumplido (como prototipo) & Capítulo 5 completo \\
+        \hline
+        Específico 5 (validación) & Cumplido exhaustivamente & Tabla \ref{tab:tabla_maestra}, Secciones 6.1-6.4 \\
+        \hline
+        Específico 6 (aplicaciones reales) & Cumplido parcialmente & Figura \ref{fig:esquema_hibrido}, Sección 6.5 \\
+        \hline
+    \end{tabular}
+    \caption{Síntesis del cumplimiento de los objetivos de investigación establecidos en la Sección 1.2.}
+    \label{tab:sintesis_objetivos}
+\end{table}
+
 \section{Contribuciones}
+
+Más allá del cumplimiento formal de los objetivos examinado en la sección anterior, esta sección distingue y articula explícitamente aquello que este trabajo aporta —de manera específica y atribuible a las decisiones tomadas en él, no como una restitución genérica del conocimiento ya existente en la literatura— a tres audiencias distintas: la comunidad académica interesada en la predicción de congestión de redes, la práctica profesional de la administración de redes de pequeña escala, y la propia disciplina de la ingeniería de software aplicada al aprendizaje automático. Las contribuciones se organizan en tres categorías: metodológicas, empíricas y de ingeniería de software.
+
+\subsection*{Contribuciones metodológicas}
+
+\textbf{Una estrategia reproducible de aumento de datos para congestión de red, con salvaguardas explícitas contra la contaminación de la evaluación.} La brecha de validación identificada en la síntesis del Estado del Arte (Sección 3.5) señalaba que buena parte de la literatura revisada recurre a datos simulados sin documentar con precisión cómo se garantiza la independencia entre los datos usados para entrenar y para evaluar un modelo. Este trabajo no solo generó datos sintéticos calibrados estadísticamente a partir de tráfico real (Sección 5.1) —una técnica ya empleada por Sneha et al. \cite{sneha2020} y Labonne et al. \cite{labonne2021}—, sino que diseñó e implementó un esquema de verificación automática (aserciones de software ejecutadas en tiempo de procesamiento, Sección 5.1) que garantiza matemáticamente la ausencia de fuga de datos entre el conjunto de entrenamiento y cada uno de los cuatro conjuntos de evaluación empleados en este trabajo. Este esquema —documentado con el detalle suficiente para ser replicado— constituye una aportación metodológica directamente transferible a cualquier investigación futura que enfrente el mismo problema estructural: un fenómeno de interés (la congestión) que resulta infrecuente o ausente en la recolección real disponible.
+
+\textbf{La operacionalización explícita de la congestión como variable objetivo, fundamentada en teoría de colas.} A diferencia de la mayoría de los trabajos revisados en el Capítulo 3 —que predicen el volumen de tráfico como una serie continua sin traducirlo a un evento accionable—, esta tesis formalizó una definición operativa de congestión (Ecuación \ref{eq:congestion_instanciada}) derivada explícitamente del comportamiento no lineal del retraso descrito por la teoría de colas de Kleinrock \cite{kleinrock1976} (Sección \ref{sec:congestion}), y la empleó de manera consistente a lo largo de los tres modelos y los cuatro contextos de evaluación de este trabajo. Esta misma fundamentación teórica se extendió, de manera original, al proceso de generación de datos sintéticos: la relación entre utilización, latencia y pérdida de paquetes durante los eventos de congestión inyectados (Sección 5.1, Figura \ref{fig:ejemplo_evento}) no se simuló de forma arbitraria, sino que se derivó matemáticamente del mismo modelo teórico, cerrando un ciclo de coherencia entre el Marco Teórico (Capítulo 2) y la implementación empírica (Capítulo 5) que rara vez se hace explícito en la literatura revisada.
+
+\subsection*{Contribuciones empíricas}
+
+\textbf{Evidencia comparativa directa entre tres paradigmas de modelado, bajo condiciones experimentales controladas.} Esta es, posiblemente, la contribución empírica más sustantiva de este trabajo, y responde de manera directa a la brecha metodológica formulada en la Sección 3.5: ningún trabajo de los revisados en el Estado del Arte comparó simultáneamente representantes de los tres paradigmas —estadístico, Machine Learning clásico y Deep Learning— sobre el mismo conjunto de datos, bajo el mismo umbral de decisión y las mismas métricas de evaluación. Esta tesis lo hizo, y el resultado de haberlo hecho reveló un hallazgo no documentado en la literatura consultada: la disociación entre el desempeño de regresión y el de clasificación (Sección 6.4, Figura \ref{fig:scatter_tradeoff}), donde LSTM domina la primera tarea y Random Forest domina la segunda, sin que ningún modelo domine ambas simultáneamente. Este patrón de especialización complementaria —y no de superioridad jerárquica de un paradigma sobre otro— constituye evidencia empírica original que matiza afirmaciones más simplistas presentes en parte de la literatura revisada respecto a la superioridad general de las arquitecturas de Deep Learning.
+
+\textbf{Un caso de estudio documentado de una red heterogénea de pequeña escala, infrecuente en la literatura del campo.} Como se señaló en la síntesis del Estado del Arte (Tabla \ref{tab:datasets_literatura}, Sección 3.4), la literatura revisada favorece abrumadoramente datasets de redes troncales de gran escala o entornos simulados de laboratorio. Esta tesis aporta, en cambio, un caso de estudio empírico de una red privada PYME real —con videovigilancia, sincronización en la nube y tráfico residencial coexistiendo sobre el mismo enlace (Sección \ref{sec:fuente_datos})—, documentando de manera transparente sus particularidades operativas: un régimen de utilización extremadamente bajo (máximo de 1.44\%, Sección 5.1), un patrón de tráfico diurno identificable (Figura \ref{fig:patron_horario_real}), e interrupciones de conectividad propias de un despliegue remoto sin presencia física (Tabla \ref{tab:huecos_recoleccion}). Este tipo de evidencia empírica, de una escala de red sustancialmente subrepresentada en la literatura consultada, tiene valor por sí misma como punto de referencia para investigaciones futuras sobre redes de escala similar.
+
+\textbf{El descubrimiento y documentación de la limitación de generalización entre escalas de red.} La validación de generalización contra MAWI (Sección 6.1) no solo verificó la capacidad de un modelo entrenado en una red pequeña para operar sobre un enlace de mayor escala —constatando su fracaso categórico (RMSE=0.3233)—, sino que además reveló y documentó una incompatibilidad estructural, hasta donde se tiene conocimiento no señalada previamente en la literatura que emplea trazas de \textit{samplepoint-F} de MAWI: la duración de 15 minutos de cada traza diaria resulta estructuralmente insuficiente para evaluar modelos que dependan de ventanas temporales de mayor longitud (Secciones 6.2 y 6.3). Esta observación constituye una advertencia metodológica original y directamente accionable para cualquier investigación futura que pretenda emplear MAWI como fuente de validación externa para modelos de ventana amplia.
+
+\subsection*{Contribuciones de ingeniería de software}
+
+\textbf{Un decodificador eficiente de trazas \textit{libpcap} en memoria constante.} Durante el desarrollo de esta tesis (Sección 5.1) se documentó que las herramientas convencionales de disección de protocolos (\texttt{tshark}) resultan impracticables para procesar trazas de decenas de millones de paquetes en una estación de trabajo convencional. La solución desarrollada —un decodificador propio en Python que interpreta directamente la estructura binaria del formato \textit{libpcap}, sin acumulación de estructuras intermedias en memoria (fragmento de código \ref{lst:parser_pcap})— constituye una herramienta de utilidad general, reutilizable en cualquier investigación futura que requiera procesar trazas de tráfico de red a gran escala sin recurrir a infraestructura de cómputo especializada.
+
+\textbf{Una estrategia de instrumentación remota adaptativa ante restricciones de acceso.} Frente a la imposibilidad de emplear SNMP —el mecanismo originalmente planificado (Sección \ref{sec:fuente_datos})— por la ausencia de dirección IP pública en la infraestructura del Cliente, este trabajo documentó y validó un mecanismo alternativo funcionalmente equivalente, basado en el Programador de Tareas nativo de RouterOS (Sección 5.1). Esta solución de ingeniería, condicionada a las restricciones reales de un despliegue de monitoreo remoto sin presencia física recurrente, aporta un precedente práctico para administradores de red y futuros investigadores que enfrenten restricciones de acceso similares en infraestructuras de pequeña escala.
+
+\textbf{Un \textit{pipeline} de modelado íntegramente reproducible, validado en dos etapas.} La totalidad del proceso —desde la extracción de telemetría hasta la evaluación final de los tres modelos— se diseñó, implementó y depuró primero sobre un dataset piloto de menor escala (MAWI, Capítulo 5), y solo posteriormente se aplicó, sin alteraciones estructurales, al dataset primario definitivo. Esta estrategia de desarrollo por etapas —documentada explícitamente a lo largo del Capítulo 5— constituye, en sí misma, una buena práctica de ingeniería de software aplicada a proyectos de Machine Learning que puede orientar el diseño de trabajos futuros con restricciones de tiempo similares a las de esta tesis (Sección 1.4).
+\newpage
 
 \section{Limitaciones del estudio}
 
