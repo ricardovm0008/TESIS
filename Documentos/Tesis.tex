@@ -2894,9 +2894,410 @@ Tercera, y quizás el hallazgo más contundente de esta sección, la validación
 
 \section{Resultados de Random Forest}
 
+Esta sección consolida los resultados obtenidos con Random Forest a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el dataset MAWI (Sección 5.4), su evaluación definitiva de regresión y clasificación sobre el dataset primario (Sección 5.4, subsección "Entrenamiento sobre el dataset primario"), y una discusión sobre la imposibilidad de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del pipeline.
+
+\subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
+
+Como se documentó en la Sección 5.4, Random Forest se entrenó sobre las 1,026 secuencias del conjunto de entrenamiento del dataset piloto, empleando las variables de rezago y media móvil a granularidad de 1 segundo. La Tabla \ref{tab:recap_rf_piloto} recuerda las métricas de regresión obtenidas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
+        \hline
+        Validación (piloto, MAWI) & 0.0962 & 0.0721 & 12.83\% \\
+        Prueba (piloto, MAWI) & 0.1311 & 0.1004 & 16.26\% \\
+        \hline
+    \end{tabular}
+    \caption{Recapitulación: métricas de regresión de Random Forest (escala normalizada), fase piloto (Sección 5.4).}
+    \label{tab:recap_rf_piloto}
+\end{table}
+
+Al igual que con ARIMA, la formulación de clasificación no pudo evaluarse durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección 5.1).
+
+\subsection*{Resultados de regresión sobre el dataset primario}
+
+Se esperaba que Random Forest, al haber demostrado en la fase piloto una capacidad no lineal superior a la de un modelo puramente lineal para capturar relaciones entre variables de rezago (Sección \ref{sec:modelos_justificacion}), mantuviera un desempeño de regresión consistente al evaluarse sobre el dataset primario. La Tabla \ref{tab:recap_rf_primario_regresion} presenta los resultados observados.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
+        \hline
+        Validación (primario, real) & 0.005084 & 0.004766 \\
+        Prueba (primario, real) & 0.049590 & 0.010301 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de Random Forest sobre el dataset primario (escala normalizada).}
+    \label{tab:recap_rf_primario_regresion}
+\end{table}
+
+Se observó una discrepancia notable entre validación y prueba: el RMSE se incrementó en un factor de casi 10 (de 0.0051 a 0.0496), un patrón de degradación considerablemente más pronunciado que el de ARIMA sobre el mismo par de conjuntos (Sección 6.1, incremento de apenas 0.4\%). Las Figuras \ref{fig:recap_rf_regresion_val} y \ref{fig:recap_rf_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_val.png}
+    \caption{Random Forest: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \label{fig:recap_rf_regresion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
+    \caption{Random Forest: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \label{fig:recap_rf_regresion_test}
+\end{figure}
+
+La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente el RMSE de Random Forest a través de los cuatro contextos de evaluación de regresión disponibles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{rf_sintesis_rmse.png}
+    \caption{Síntesis comparativa del RMSE de Random Forest a través de los contextos de evaluación.}
+    \label{fig:rf_sintesis_rmse}
+\end{figure}
+
+\subsection*{Resultados de clasificación sobre datos sintéticos aislados}
+
+Se esperaba que Random Forest, dada su capacidad de particionar el espacio de variables de manera no lineal, ofreciera un desempeño de clasificación superior al de ARIMA. La Tabla \ref{tab:recap_rf_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:rf_sintesis_clasificacion} los compara visualmente entre validación y prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
+        \hline
+        Accuracy & 0.9803 & 0.9813 \\
+        Precision & 0.9121 & 0.9318 \\
+        Recall & 0.2923 & 0.2982 \\
+        F1-score & 0.4427 & 0.4518 \\
+        AUC-ROC & 0.8796 & 0.9187 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de clasificación de Random Forest, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:recap_rf_primario_clasificacion}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{rf_sintesis_clasificacion.png}
+    \caption{Comparación de métricas de clasificación, validación vs. prueba, Random Forest sobre el dataset primario.}
+    \label{fig:rf_sintesis_clasificacion}
+\end{figure}
+
+Los resultados observados confirmaron la expectativa de manera parcial: si bien el recall (29.82\% en prueba) resultó considerablemente superior al de ARIMA (1.85\%, Sección 6.1), continúa siendo modesto en términos absolutos —el modelo detecta poco menos de un tercio de los eventos de congestión reales—. La Ecuación \ref{eq:recap_confusion_rf} reproduce la matriz de confusión del conjunto de prueba.
+
+\begin{equation}
+    \begin{pmatrix} \text{VN}=10341 & \text{FP}=6 \\ \text{FN}=193 & \text{VP}=82 \end{pmatrix}
+    \label{eq:recap_confusion_rf}
+\end{equation}
+
+La Figura \ref{fig:recap_rf_clasificacion} ilustra las predicciones continuas del modelo sobre el conjunto de prueba de clasificación.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
+    \caption{Random Forest: predicción vs. valor real, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:recap_rf_clasificacion}
+\end{figure}
+
+\subsection*{Importancia de variables: comparación entre fase piloto y dataset primario}
+
+Un hallazgo particular de este trabajo, ya adelantado en la Sección 5.4, es la inversión del patrón de importancia de variables entre ambas fases. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{rf_comparativa_importancia.png}
+    \caption{Comparación de la importancia relativa de variables, Random Forest: fase piloto (granularidad de 1 segundo) vs. dataset primario (granularidad de 1 minuto).}
+    \label{fig:rf_comparativa_importancia}
+\end{figure}
+
+Mientras que en la fase piloto la media móvil ($U_{\text{media\_movil}}$) concentraba el 66.2\% de la importancia total, en el dataset primario esta proporción desciende a 12.5\%, cediendo el primer lugar al rezago inmediato ($U_{lag1}$), que pasa de 13.9\% a 66.4\%.
+
+\subsection*{Imposibilidad de la validación de generalización}
+
+A diferencia de ARIMA (Sección 6.1), Random Forest no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es estructural: la variable de entrada $U_{\text{media\_movil}}$, calculada como una media móvil de 30 minutos (Sección \ref{sec:preprocesamiento}), no puede computarse dentro de una traza de MAWI cuya duración total es de apenas 15 minutos por día (Sección \ref{sec:fuente_datos}). En consecuencia, el vector de entrada requerido por el modelo entrenado no puede construirse a partir de los datos disponibles de MAWI bajo los parámetros oficiales, y esta validación se reporta como no realizada, en lugar de forzar una adaptación que alteraría la configuración validada del modelo. Esta limitación se retoma con mayor profundidad en la Sección 6.5.
+
+\subsection*{Síntesis completa de los resultados de Random Forest}
+
+La Tabla \ref{tab:sintesis_completa_rf} consolida la totalidad de los resultados de esta sección.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|l|l|r|r|r|}
+        \hline
+        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \hline
+        Piloto — validación & 100\% Real (MAWI) & 0.0962 & N/A & N/A \\
+        Piloto — prueba & 100\% Real (MAWI) & 0.1311 & N/A & N/A \\
+        Primario — regresión (val.) & 100\% Real (Cliente) & 0.0051 & --- & --- \\
+        Primario — regresión (prueba) & 100\% Real (Cliente) & 0.0496 & --- & --- \\
+        Primario — clasificación (val.) & 100\% Sintético & --- & 0.2923 & 0.8796 \\
+        Primario — clasificación (prueba) & 100\% Sintético & --- & 0.2982 & 0.9187 \\
+        Generalización — MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        \hline
+    \end{tabular}
+    \caption{Síntesis completa de los resultados de Random Forest a través de todos los contextos de evaluación.}
+    \label{tab:sintesis_completa_rf}
+\end{table}
+
+\subsection*{Discusión de los resultados de Random Forest}
+
+Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, la marcada degradación entre validación y prueba en la tarea de regresión (Tabla \ref{tab:recap_rf_primario_regresion}) reafirma, a escala del dataset primario, la limitación de extrapolación de los modelos basados en árboles de decisión ya documentada en la fase piloto (Sección 5.4): incapaces de predecir valores fuera del rango de la variable objetivo observado durante el entrenamiento, estos modelos subestiman o sobreestiman de manera sistemática cualquier observación del conjunto de prueba que se aleje del régimen dominante en el entrenamiento.
+
+Segunda, el desempeño de clasificación de Random Forest —aunque modesto en términos absolutos (recall de 29.82\%)— representa una mejora sustancial frente a ARIMA (Sección 6.1), multiplicando su recall por un factor de 16. Esta ventaja es consistente con la capacidad de los modelos de ensamble para capturar relaciones no lineales entre variables de rezago específicas, en contraste con la tendencia de ARIMA a suavizar sus predicciones.
+
+Tercera, la inversión del patrón de importancia de variables entre la fase piloto y el dataset primario (Figura \ref{fig:rf_comparativa_importancia}) constituye un hallazgo metodológicamente relevante: sugiere que la granularidad temporal de la recolección —1 segundo en el piloto, 1 minuto en el dataset primario— no es una decisión neutral, sino que determina cuál variable resulta más informativa para el modelo. A mayor frecuencia de muestreo, el ruido de alta frecuencia parece favorecer variables suavizadas (media móvil); a una granularidad más gruesa, cada observación individual ya integra suficiente información como para que el valor más reciente domine la predicción. Finalmente, la imposibilidad de evaluar la generalización de este modelo frente a MAWI —a diferencia de ARIMA— pone de manifiesto una tensión práctica entre la riqueza de las variables de ingeniería de características (que mejoran el desempeño dentro de un dominio) y la portabilidad del modelo hacia datasets externos con restricciones estructurales distintas, tensión que se retoma en la discusión general de la Sección 6.5.
+
 \section{Resultados de LSTM}
 
+Esta sección consolida los resultados obtenidos con la red LSTM a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el dataset MAWI (Sección 5.5), su evaluación definitiva de regresión y clasificación sobre el dataset primario (Sección 5.5, subsección "Entrenamiento sobre el dataset primario"), y una discusión sobre la imposibilidad de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del pipeline.
+
+\subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
+
+Como se documentó en la Sección 5.5, la arquitectura empleada (una capa LSTM de 32 unidades, una capa densa de 16 unidades y una capa de salida, 4,897 parámetros entrenables) se entrenó sobre las 1,026 secuencias del dataset piloto, convergiendo mediante \textit{early stopping} en la época 12. La Tabla \ref{tab:recap_lstm_piloto} recuerda las métricas de regresión obtenidas.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
+        \hline
+        Validación (piloto, MAWI) & 0.0860 & 0.0664 & 11.53\% \\
+        Prueba (piloto, MAWI) & 0.0891 & 0.0690 & 11.00\% \\
+        \hline
+    \end{tabular}
+    \caption{Recapitulación: métricas de regresión de LSTM (escala normalizada), fase piloto (Sección 5.5).}
+    \label{tab:recap_lstm_piloto}
+\end{table}
+
+Al igual que con los modelos anteriores, la formulación de clasificación no pudo evaluarse durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección 5.1).
+
+\subsection*{Resultados de regresión sobre el dataset primario}
+
+Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de entrada en lugar de depender de variables de rezago aisladas, ofreciera el mejor desempeño de regresión entre los tres modelos evaluados, dada su mayor capacidad de representación (Sección \ref{sec:modelos_justificacion}). La red se reentrenó con idéntica arquitectura sobre las 46,582 secuencias del dataset primario, convergiendo en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados observados.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
+        \hline
+        Validación (primario, real) & 0.000131 & 0.000019 \\
+        Prueba (primario, real) & 0.001036 & 0.000125 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de regresión de LSTM sobre el dataset primario (escala normalizada).}
+    \label{tab:recap_lstm_primario_regresion}
+\end{table}
+
+Los resultados observados confirmaron plenamente esta expectativa, y de manera contundente: el RMSE de prueba (0.001036) resultó casi dos órdenes de magnitud inferior al de ARIMA (0.0459, Sección 6.1) y al de Random Forest (0.0496, Sección 6.2) sobre el mismo conjunto. La Figura \ref{fig:lstm_sintesis_rmse} sitúa este resultado en el contexto de los cuatro escenarios de evaluación de regresión disponibles, empleando escala logarítmica dada la magnitud de la diferencia.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lstm_sintesis_rmse.png}
+    \caption{Síntesis comparativa del RMSE de LSTM a través de los contextos de evaluación (escala logarítmica).}
+    \label{fig:lstm_sintesis_rmse}
+\end{figure}
+
+Las Figuras \ref{fig:recap_lstm_regresion_val} y \ref{fig:recap_lstm_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
+    \caption{LSTM: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \label{fig:recap_lstm_regresion_val}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
+    \caption{LSTM: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \label{fig:recap_lstm_regresion_test}
+\end{figure}
+
+\subsection*{Resultados de clasificación sobre datos sintéticos aislados}
+
+Dada la superioridad observada en regresión, se esperaba —de manera intuitiva— que LSTM ofreciera también el mejor desempeño de clasificación entre los tres modelos. La Tabla \ref{tab:recap_lstm_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:lstm_sintesis_clasificacion} los compara entre validación y prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
+        \hline
+        Accuracy & 0.9742 & 0.9750 \\
+        Precision & 0.7619 & 0.7778 \\
+        Recall & 0.0563 & 0.0509 \\
+        F1-score & 0.1049 & 0.0956 \\
+        AUC-ROC & 0.8783 & 0.9000 \\
+        \hline
+    \end{tabular}
+    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:recap_lstm_primario_clasificacion}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lstm_sintesis_clasificacion.png}
+    \caption{Comparación de métricas de clasificación, validación vs. prueba, LSTM sobre el dataset primario.}
+    \label{fig:lstm_sintesis_clasificacion}
+\end{figure}
+
+Contrario a la expectativa planteada, los resultados observados no confirman la superioridad de LSTM en esta tarea: su recall de prueba (5.09\%) resulta muy inferior al de Random Forest (29.82\%, Sección 6.2), aunque superior al de ARIMA (1.85\%, Sección 6.1). La Ecuación \ref{eq:recap_confusion_lstm} reproduce la matriz de confusión del conjunto de prueba: de los 275 eventos de congestión reales, LSTM detectó correctamente 14.
+
+\begin{equation}
+    \begin{pmatrix} \text{VN}=10314 & \text{FP}=4 \\ \text{FN}=261 & \text{VP}=14 \end{pmatrix}
+    \label{eq:recap_confusion_lstm}
+\end{equation}
+
+La Figura \ref{fig:recap_lstm_clasificacion} ilustra las predicciones del modelo sobre este conjunto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
+    \caption{LSTM: predicción, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \label{fig:recap_lstm_clasificacion}
+\end{figure}
+
+La Figura \ref{fig:comparativa_recall} sitúa este resultado en el contexto de los tres modelos evaluados sobre la misma tarea, anticipando la comparativa integral de la Sección 6.4.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{comparativa_recall_tres_modelos.png}
+    \caption{Recall de clasificación (prueba) de los tres modelos evaluados sobre el dataset primario.}
+    \label{fig:comparativa_recall}
+\end{figure}
+
+\subsection*{Imposibilidad de la validación de generalización}
+
+De manera análoga a Random Forest (Sección 6.2), LSTM no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es igualmente estructural: la ventana de entrada de la red, de $w=30$ pasos temporales (Sección \ref{sec:preprocesamiento}), no puede construirse a partir de una traza de MAWI cuya duración total es de apenas 15 minutos por día (Sección \ref{sec:fuente_datos}). A diferencia de ARIMA —que opera directamente sobre la serie temporal sin requerir una ventana de longitud fija—, la arquitectura recurrente exige, por diseño, contar con al menos 30 observaciones consecutivas para generar una sola predicción, condición que ninguna traza individual de MAWI satisface. Esta limitación, idéntica en naturaleza a la reportada para Random Forest, se retoma con mayor profundidad en la Sección 6.5.
+
+\subsection*{Síntesis completa de los resultados de LSTM}
+
+La Tabla \ref{tab:sintesis_completa_lstm} consolida la totalidad de los resultados de esta sección.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|l|l|r|r|r|}
+        \hline
+        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \hline
+        Piloto — validación & 100\% Real (MAWI) & 0.0860 & N/A & N/A \\
+        Piloto — prueba & 100\% Real (MAWI) & 0.0891 & N/A & N/A \\
+        Primario — regresión (val.) & 100\% Real (Cliente) & 0.000131 & --- & --- \\
+        Primario — regresión (prueba) & 100\% Real (Cliente) & 0.001036 & --- & --- \\
+        Primario — clasificación (val.) & 100\% Sintético & --- & 0.0563 & 0.8783 \\
+        Primario — clasificación (prueba) & 100\% Sintético & --- & 0.0509 & 0.9000 \\
+        Generalización — MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        \hline
+    \end{tabular}
+    \caption{Síntesis completa de los resultados de LSTM a través de todos los contextos de evaluación.}
+    \label{tab:sintesis_completa_lstm}
+\end{table}
+
+\subsection*{Discusión de los resultados de LSTM}
+
+Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, la superioridad de LSTM en la tarea de regresión es contundente y consistente entre validación y prueba, confirmando la expectativa teórica planteada en la Sección \ref{sec:modelos_justificacion}: al procesar la secuencia completa de entrada en lugar de depender de una media incondicional (ARIMA) o de particiones discretas del espacio de variables (Random Forest), la red logra reconocer con precisión el patrón de bajo tráfico característico del régimen real de la red del Cliente.
+
+Segunda, y de manera notable, esta misma superioridad no se traduce en la tarea de clasificación, donde LSTM se ubica en un desempeño intermedio entre ARIMA y Random Forest (Figura \ref{fig:comparativa_recall}). Este resultado, aparentemente contraintuitivo, resulta congruente con la función objetivo empleada durante el entrenamiento: al minimizar el error cuadrático medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección 5.1), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. En otras palabras, el objetivo de minimizar el RMSE global y el objetivo de maximizar el recall de un evento minoritario no están necesariamente alineados, y esta tesis aporta evidencia empírica directa de dicha tensión.
+
+Tercera, la imposibilidad de evaluar la generalización de LSTM frente a MAWI —idéntica en su causa estructural a la de Random Forest— confirma que esta limitación no es específica de un modelo en particular, sino una consecuencia directa de la elección de parámetros de ventana temporal (Sección \ref{sec:preprocesamiento}) frente a la duración inherente de las trazas de MAWI (Sección \ref{sec:fuente_datos}). Este hallazgo, junto con los de las Secciones 6.1 y 6.2, se integra en la comparativa transversal de la Sección 6.4 y se discute en términos de sus implicaciones metodológicas en la Sección 6.5.
+
 \section{Comparativa de modelos}
+
+Las Secciones 6.1 a 6.3 presentaron, de manera individual, los resultados de cada modelo a través de los distintos contextos de evaluación de esta tesis. Esta sección integra dichos resultados en una comparativa transversal, orientada a responder directamente la pregunta que subyace al diseño experimental completo de este trabajo (Sección \ref{sec:modelos_justificacion}): ¿existe un modelo que domine de manera uniforme sobre los demás, o el desempeño relativo depende de la tarea, el conjunto de datos y las condiciones de evaluación?
+
+\subsection*{Tabla maestra de resultados}
+
+La Tabla \ref{tab:tabla_maestra} consolida, en un solo lugar, la totalidad de las métricas cuantitativas obtenidas por los tres modelos a lo largo de esta investigación.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|l|l|r|r|r|}
+        \hline
+        \textbf{Contexto} & \textbf{Modelo} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \hline
+        \multirow{3}{*}{Piloto — prueba (MAWI, 100\% real)}
+            & ARIMA & 0.0282 & N/A & N/A \\
+            & Random Forest & 0.1311 & N/A & N/A \\
+            & LSTM & 0.0891 & N/A & N/A \\
+        \hline
+        \multirow{3}{*}{Primario — regresión, prueba (100\% real)}
+            & ARIMA & 0.0459 & --- & --- \\
+            & Random Forest & 0.0496 & --- & --- \\
+            & LSTM & \textbf{0.0010} & --- & --- \\
+        \hline
+        \multirow{3}{*}{Primario — clasificación, prueba (100\% sintético)}
+            & ARIMA & --- & 0.0185 & 0.8939 \\
+            & Random Forest & --- & \textbf{0.2982} & 0.9187 \\
+            & LSTM & --- & 0.0509 & 0.9000 \\
+        \hline
+        \multirow{3}{*}{Generalización — MAWI, 1 min (100\% real)}
+            & ARIMA & 0.3233 & N/A & N/A \\
+            & Random Forest & \multicolumn{3}{c|}{No evaluable} \\
+            & LSTM & \multicolumn{3}{c|}{No evaluable} \\
+        \hline
+    \end{tabular}
+    \caption{Tabla maestra: totalidad de resultados cuantitativos de los tres modelos evaluados en esta tesis.}
+    \label{tab:tabla_maestra}
+\end{table}
+
+Un primer examen de esta tabla revela un patrón que se sostiene consistentemente a través de todos los conjuntos de prueba: \textbf{ningún modelo domina de manera uniforme ambas tareas}. LSTM es superior por un margen abrumador en regresión; Random Forest es superior, también por un margen considerable, en clasificación; ARIMA, la línea base estadística, ocupa consistentemente el último lugar en ambas dimensiones —cumpliendo, en ese sentido, precisamente la función de referencia mínima para la que fue concebido (Sección \ref{sec:modelos_justificacion})—.
+
+\subsection*{El trade-off central: precisión continua vs. sensibilidad de alertamiento}
+
+La Figura \ref{fig:scatter_tradeoff} visualiza este hallazgo de la manera más directa posible: cada modelo se posiciona en un plano cuyo eje horizontal es su error de regresión (menor es mejor, escala logarítmica) y cuyo eje vertical es su recall de clasificación (mayor es mejor).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{scatter_tradeoff_rmse_recall.png}
+    \caption{Trade-off entre precisión de regresión (RMSE, prueba) y sensibilidad de clasificación (Recall, prueba), los tres modelos.}
+    \label{fig:scatter_tradeoff}
+\end{figure}
+
+Si un modelo ideal existiera para los fines de esta tesis, se ubicaría en la esquina inferior derecha de este plano: RMSE mínimo y recall máximo simultáneamente. Ninguno de los tres modelos evaluados ocupa esa posición. LSTM se ubica en el extremo de mínimo error de regresión, pero con un recall modesto; Random Forest se ubica en el extremo de máximo recall, pero con el error de regresión más alto de los tres (incluso ligeramente superior al de ARIMA); ARIMA no domina en ninguna de las dos dimensiones. Esta disposición geométrica —tres modelos ocupando tres regiones distintas del plano, sin que ninguno subsuma a los demás— constituye la evidencia visual más contundente del hallazgo central de este capítulo.
+
+\subsection*{Comparación multidimensional}
+
+La Figura \ref{fig:radar_comparativo} amplía esta comparación a cinco dimensiones simultáneas —capacidad de regresión (invertida y normalizada, de modo que valores mayores indican mejor desempeño), precisión, recall, F1-score y AUC-ROC—, permitiendo apreciar el perfil de fortalezas y debilidades de cada modelo de un solo vistazo.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{radar_comparativo_modelos.png}
+    \caption{Comparación multidimensional de los tres modelos, dataset primario, conjunto de prueba.}
+    \label{fig:radar_comparativo}
+\end{figure}
+
+El perfil de LSTM se extiende marcadamente hacia el eje de regresión y, en menor medida, hacia AUC-ROC, pero se contrae drásticamente en recall y F1-score. El perfil de Random Forest es más equilibrado: sin alcanzar el extremo de ningún eje individual, mantiene un desempeño moderado a alto en la mayoría de las dimensiones simultáneamente, incluyendo la más alta precisión ponderada entre recall y precisión (F1-score de 0.4518). El perfil de ARIMA se distingue por su precisión perfecta (un artefacto, más que una virtud, de predecir positivo en muy pocas ocasiones) y su colapso casi total en recall.
+
+La Figura \ref{fig:barras_clasificacion} desagrega esta misma comparación en sus cinco métricas de clasificación individuales, para una lectura más granular.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{barras_clasificacion_tres_modelos.png}
+    \caption{Comparativa integral de las cinco métricas de clasificación, conjunto de prueba, tres modelos.}
+    \label{fig:barras_clasificacion}
+\end{figure}
+
+Es particularmente revelador que el \textit{Accuracy} —la métrica más intuitiva y, con frecuencia, la primera que se reporta en trabajos menos cuidadosos— resulte prácticamente idéntico entre los tres modelos (0.9750, 0.9813, 0.9750), a pesar de que sus capacidades reales de detección de congestión difieren en un factor de hasta 16 veces (Recall de ARIMA vs. Random Forest). Este contraste confirma, con evidencia empírica propia, la advertencia metodológica formulada en la Sección \ref{sec:metricas_evaluacion}: bajo un fuerte desbalance de clases —como el 2.6\% de casos positivos de este dataset (Sección 5.1)—, el Accuracy es una métrica engañosa que un modelo trivial (que jamás prediga congestión) satisfaría casi en su totalidad, y que solo el Recall, la Precisión y el F1-score exponen la verdadera capacidad discriminativa de cada modelo.
+
+\subsection*{Generalización entre escalas de red: una limitación transversal}
+
+La última fila de la Tabla \ref{tab:tabla_maestra} documenta un segundo hallazgo relevante: de los tres modelos, únicamente ARIMA pudo someterse a la validación de generalización frente a MAWI bajo la granularidad oficial de 1 minuto, y su desempeño en dicho contexto (RMSE=0.3233) representa, por un margen amplio, el peor resultado de regresión obtenido por cualquier modelo en cualquier contexto de este trabajo —incluso peor que su propio desempeño sobre el dataset primario (RMSE=0.0459) o sobre el dataset piloto (RMSE=0.0282)—. Random Forest y LSTM, por su parte, no pudieron evaluarse en absoluto en este contexto, debido a una incompatibilidad estructural entre sus parámetros de ventana oficiales (30 minutos) y la duración de cada traza individual de MAWI (15 minutos, Secciones 6.2 y 6.3).
+
+Este doble hallazgo —el fracaso categórico de ARIMA al generalizar, y la imposibilidad metodológica de siquiera intentarlo con los otros dos modelos— apunta a una conclusión más amplia que trasciende a cualquier modelo individual: los tres modelos de esta tesis fueron optimizados, por diseño, para operar dentro de las características específicas de la red privada PYME del Cliente (su escala de tráfico, su granularidad de muestreo, sus parámetros de ventana), y ninguna evidencia recabada en este trabajo respalda la extrapolación de dichos modelos, sin reajuste, hacia infraestructuras de red de naturaleza o escala sustancialmente distinta.
+
+\subsection*{Reconciliación con la brecha metodológica identificada en el Estado del Arte}
+
+Resulta pertinente cerrar esta comparativa retomando la brecha metodológica formulada en la síntesis del Estado del Arte (Sección 3.5): la ausencia, en la literatura revisada, de una comparación simultánea entre los tres paradigmas de modelado bajo condiciones experimentales controladas. Esta tesis cubre dicha brecha de manera directa, y el resultado de haberlo hecho es, en sí mismo, sustantivo: la literatura revisada tendía a presentar comparaciones parciales —Sneha et al. \cite{sneha2020} entre variantes de ML clásico, Santos et al. \cite{santos2022} entre LSTM y GRU exclusivamente dentro de Deep Learning—, ninguna de las cuales podría, por su propio diseño, haber revelado el patrón de especialización por tarea documentado en esta sección. Al someter a los tres paradigmas a un diseño experimental común —mismos datos de entrenamiento, mismo umbral de decisión, mismas métricas de evaluación—, esta tesis aporta evidencia de que la elección del "mejor" modelo para un sistema de predicción de congestión no puede resolverse de manera abstracta, sino que depende críticamente de si la prioridad del sistema es la precisión de la estimación continua o la sensibilidad ante el evento discreto de interés, un matiz ausente en la literatura revisada.
+
+Los hallazgos aquí sintetizados —el trade-off central entre regresión y clasificación, la falacia del Accuracy bajo desbalance de clases, y la limitación de generalización entre escalas de red— se retoman e interpretan en conjunto, a la luz del problema de investigación planteado en el Capítulo 1, en la Sección 6.5.
 
 
 \subsection*{Validación de generalización contra MAWI}
