@@ -3561,6 +3561,137 @@ Más allá del cumplimiento formal de los objetivos examinado en la sección ant
 
 \section{Limitaciones del estudio}
 
+Esta sección expone, de manera deliberadamente exhaustiva, las limitaciones que condicionan el alcance de los hallazgos de esta tesis. Se distinguen tres orígenes: (a) limitaciones \textbf{de alcance declarado}, asumidas desde el diseño y ya anunciadas en la Sección 1.4; (b) limitaciones \textbf{derivadas de restricciones de ejecución}, surgidas de las condiciones prácticas del despliegue y del calendario; y (c) limitaciones \textbf{descubiertas empíricamente}, que solo se hicieron visibles al analizar los resultados. Para cada una se indica qué no se realizó (o se realizó de forma distinta a lo planificado), por qué, y qué efecto tiene sobre las conclusiones. La Tabla \ref{tab:limitaciones_resumen} las resume.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{4.1cm}|p{1.7cm}|p{4.6cm}|p{2.6cm}|}
+        \hline
+        \textbf{Limitación} & \textbf{Origen} & \textbf{Efecto sobre las conclusiones} & \textbf{Continuación} \\
+        \hline
+        Sin interfaz gráfica, aplicación empaquetada ni operación en producción & (a) & Ninguno sobre la viabilidad predictiva; limita la utilidad operativa inmediata & Trabajo futuro 1 \\
+        \hline
+        Sin alertamiento operativo ni evaluación del TAE & (a)/(c) & La utilidad para la toma de decisiones se argumenta, no se demuestra & Trabajo futuro 2 \\
+        \hline
+        21 días de recolección (82.9\% de cobertura) en lugar de dos meses & (b) & Menos ciclos semanales; sin congestión real observada & Trabajo futuro 3 \\
+        \hline
+        Una sola red primaria, de utilización máxima 1.44\% & (b)/(c) & Los patrones no son extrapolables a otras redes & Trabajo futuro 3 \\
+        \hline
+        Clasificación evaluada solo sobre datos sintéticos & (c) & El recall reportado es una aproximación, no una medición sobre congestión real & Trabajo futuro 4 \\
+        \hline
+        Variables de entrada derivadas solo de la utilización & (c) & No se contrasta el aporte de RTT, pérdida ni variables de calendario & Trabajo futuro 5 \\
+        \hline
+        SVR y GRU no implementados; hiperparámetros sin búsqueda exhaustiva; solo CPU & (a)/(b) & Comparación limitada a tres representantes de tres paradigmas & Trabajo futuro 5 \\
+        \hline
+        Etiqueta de congestión instantánea y umbral $U_{th}$ no validado empíricamente & (c) & Simplifica la definición formal de la Ecuación \ref{eq:congestion_instanciada} & Trabajo futuro 4 \\
+        \hline
+        Una sola ejecución por modelo, sin intervalos de confianza; generalización con 6 observaciones & (b)/(c) & Las diferencias grandes son robustas; las pequeñas no son concluyentes & Trabajo futuro 6 \\
+        \hline
+        Generalización a MAWI evaluable solo para ARIMA & (c) & Sin evidencia de portabilidad para RF y LSTM & Trabajo futuro 6 \\
+        \hline
+    \end{tabular}
+    \caption{Resumen de las limitaciones del estudio, su origen y su efecto sobre las conclusiones.}
+    \label{tab:limitaciones_resumen}
+\end{table}
+
+\subsection*{Alcance del prototipo}
+
+\textbf{Qué no se realizó.} No se desarrolló una interfaz gráfica de usuario, una aplicación empaquetada ni un sistema de producción. El prototipo opera fuera de línea sobre trazas históricas, sin ingestión continua de datos, sin detección de cambio de concepto y sin reentrenamiento automático.
+
+\textbf{Por qué.} Estas exclusiones fueron declaradas desde la Sección 1.4 y responden a la naturaleza del objetivo específico 4, que exige un \textit{prototipo que realice predicciones}, no un producto. La pregunta de investigación (Sección 1.1) es de viabilidad predictiva; una interfaz o un servicio en tiempo real no aportan evidencia adicional para responderla, y su desarrollo habría desplazado tiempo de la recolección, el diseño experimental y la evaluación, que sí determinan la validez científica del trabajo.
+
+\textbf{Efecto.} El cumplimiento del objetivo 4 debe leerse como demostración de viabilidad técnica, no como entrega de una herramienta lista para despliegue. Las capacidades ausentes se plantean como trabajo futuro (Sección 7.4).
+
+\subsection*{Alertamiento operativo y métrica de anticipación (TAE)}
+
+\textbf{Qué no se realizó.} No se implementó un mecanismo de alertamiento basado en los modelos, y la métrica de Tiempo de Anticipación Efectivo propuesta en la Sección \ref{sec:metricas_evaluacion} no se calculó sobre el dataset primario. El esquema híbrido de la Figura \ref{fig:esquema_hibrido} es una propuesta conceptual, no un sistema evaluado; por ello el objetivo específico 6 se declaró parcialmente cumplido (Sección 7.1).
+
+\textbf{Por qué.} El TAE solo es calculable sobre eventos de congestión, y los únicos disponibles son sintéticos. En ellos, la duración y la pendiente de ascenso de cada evento las fija el propio generador (perfil trapezoidal con ascenso del 20\% de la duración, Sección 5.1), de modo que un TAE medido reflejaría en buena medida el diseño del generador y no la capacidad del modelo. Además, con recall bajo, el número de eventos detectados es pequeño (82 para Random Forest, 14 para LSTM y 1 para ARIMA en el conjunto de prueba, Sección 6.4), y un promedio sobre tan pocos eventos carecería de estabilidad estadística. Se optó por no reportar una cifra que pudiera inducir a error.
+
+\textbf{Efecto.} La afirmación de que estos modelos serían útiles para anticipar congestión con antelación operativa queda argumentada, no demostrada.
+
+\subsection*{Datos primarios: duración, fuente única y ausencia de congestión real}
+
+\textbf{Duración.} La recolección planificada de dos meses se ajustó a 21 días de monitoreo, con una cobertura efectiva del 82.9\% por interrupciones de la conectividad remota (Tabla \ref{tab:huecos_recoleccion}). El ajuste respondió al calendario académico. Se declara como limitación y no se compensó fabricando periodos de observación: los datos sintéticos se incorporaron con un propósito distinto y explícito (Sección 5.1).
+
+\textbf{Fuente única y régimen de tráfico.} Todo el dataset primario proviene de una sola red privada PYME, cuya utilización máxima observada fue 1.44\% del ancho de banda contratado (Tabla \ref{tab:estadisticas_real}). La red nunca se congestionó durante la observación, lo que es coherente con la teoría de colas (Sección 6.5) pero impide medir directamente el fenómeno de interés sobre datos reales.
+
+\textbf{Efecto.} Los resultados de regresión describen el comportamiento de los modelos ante el tráfico genuino de esta red y no son extrapolables sin reajuste a otras infraestructuras.
+
+\subsection*{Naturaleza y sesgos de los datos sintéticos}
+
+La evaluación de clasificación descansa por completo en datos sintéticos aislados del entrenamiento (Tabla \ref{tab:composicion_dataset_final}). Deben reconocerse tres sesgos propios de su construcción.
+
+\begin{enumerate}
+    \item \textbf{Ausencia de dependencia serial en el tráfico base.} El tráfico sintético normal se generó remuestreando valores reales por hora del día, minuto a minuto y de forma independiente. Esto preserva la distribución marginal, incluidas las ráfagas, pero no la autocorrelación temporal que exhibe el tráfico real, lo que puede afectar de forma distinta a los modelos secuenciales (ARIMA, LSTM) y a los de variables de rezago (Random Forest).
+    \item \textbf{Eventos estilizados.} Los eventos de congestión siguen un perfil trapezoidal, con un ascenso desde una utilización base de 0.10, muy superior a la mediana real. El modelo puede aprender a reconocer la forma del perfil, y el desempeño de clasificación puede reflejar en parte esa regularidad más que la detección de congestión genuina.
+    \item \textbf{Evaluación dentro de la misma distribución.} Entrenamiento y evaluación de clasificación comparten el mismo generador, por lo que las métricas se obtienen en condiciones favorables. Es previsible que el desempeño sobre congestión real sea menor.
+\end{enumerate}
+
+Estos sesgos no invalidan la comparación relativa entre modelos, que se hizo bajo condiciones idénticas, pero sí impiden leer los valores absolutos de recall como capacidad de detección en una red real.
+
+\subsection*{Diseño de variables y modelos}
+
+\textbf{Variables de entrada.} La Tabla \ref{tab:features_entrada} contempló RTT, pérdida de paquetes y variables temporales cíclicas como entradas. En la implementación final, los modelos emplearon únicamente variables derivadas de la utilización (rezagos y media móvil). Ello se debió a tres razones: la pérdida de paquetes real fue nula en los 21 días, por lo que no aporta información; el RTT real fue estable y no mostró relación con la carga, coherente con una red lejos de la saturación; y las variables de calendario requieren más ciclos semanales que los disponibles. Incorporar el RTT y la pérdida sintéticos habría contaminado la evaluación, pues se derivan deterministamente de la utilización y codificarían la etiqueta.
+
+\textbf{Modelos.} La Sección \ref{sec:modelos_justificacion} contempló inicialmente SVR y GRU; la implementación se acotó a ARIMA, Random Forest y LSTM, un representante por paradigma, por restricciones de tiempo. La comparación LSTM frente a GRU ya cuenta con evidencia en la literatura revisada (Santos et al. \cite{santos2022}). Los hiperparámetros de Random Forest y LSTM se fijaron a partir de la fase piloto sin búsqueda exhaustiva, y el entrenamiento se realizó en CPU, conforme a lo declarado en la Sección 1.4. Se evaluó un único horizonte ($h=5$ minutos).
+
+\textbf{Efecto.} Los resultados son válidos para las configuraciones evaluadas y no descartan que otras configuraciones o variables modifiquen el orden relativo, en particular en clasificación.
+
+\subsection*{Definición de congestión y umbral}
+
+La Ecuación \ref{eq:congestion_instanciada} define la congestión como utilización $\geq U_{th}$ sostenida durante al menos 5 minutos. Por simplicidad, la etiqueta de clasificación se implementó como el cruce instantáneo del umbral en el horizonte, $U(t+h) \geq U_{th}$ (Sección \ref{sec:preprocesamiento_desarrollo}). En los eventos sintéticos, que duran entre 5 y 29 minutos, ambas definiciones casi coinciden, pero en datos reales podrían diferir. Además, la Sección \ref{sec:def_operativa_metodologia} comprometió validar empíricamente $U_{th}=0.80$ con el dataset primario; como la utilización real máxima fue 1.44\%, dicha validación no fue posible y el umbral se mantiene con su justificación teórica y de práctica de la industria.
+
+\subsection*{Protocolo de evaluación y robustez estadística}
+
+\begin{itemize}
+    \item ARIMA se evaluó mediante pronóstico progresivo por bloques de $h$ observaciones, y Random Forest y LSTM sobre cada instante; los números de puntos evaluados difieren entre modelos (Sección 6.1). La comparabilidad de los RMSE de la Tabla \ref{tab:tabla_maestra} se sostiene porque, en el dataset primario, el rango de normalización es prácticamente unitario (mínimo y máximo de entrenamiento de $6.5\times10^{-7}$ y $0.999$), por lo que las escalas original y normalizada son equivalentes.
+    \item Cada modelo se entrenó una sola vez (semilla 42), sin repeticiones ni intervalos de confianza. Las diferencias grandes (por ejemplo, el recall de Random Forest frente al de ARIMA, o el RMSE de LSTM) son de un orden de magnitud tal que es improbable que se deban a la aleatoriedad; las diferencias pequeñas no son concluyentes.
+    \item La validación de generalización se basó en 6 bloques evaluables, y ha de leerse como prueba exploratoria.
+\end{itemize}
+
+\subsection*{Generalización entre escalas de red}
+
+Solo ARIMA pudo evaluarse frente a MAWI a granularidad oficial; Random Forest y LSTM no, porque sus ventanas de 30 minutos exceden la duración de cada traza diaria (15 minutos, Secciones 6.2 y 6.3). No se forzó una adaptación que habría alterado las configuraciones validadas, ni se concatenaron trazas de días distintos, lo que habría introducido continuidad artificial. En consecuencia, no existe evidencia de portabilidad de estos dos modelos.
+
+\subsection*{Alcance de las conclusiones}
+
+La Tabla \ref{tab:alcance_conclusiones} delimita qué afirmaciones sostiene la evidencia y cuáles no.
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{6.4cm}|p{6.4cm}|}
+        \hline
+        \textbf{Sostenido por la evidencia} & \textbf{No sostenido por la evidencia} \\
+        \hline
+        LSTM predice con el menor error el tráfico real de la red estudiada (Sección 6.3) & Que estos modelos detecten congestión real con la sensibilidad reportada en clasificación \\
+        \hline
+        Ningún modelo domina simultáneamente regresión y clasificación en las condiciones evaluadas (Sección 6.4) & Que el orden relativo se mantenga con otras variables, configuraciones o redes \\
+        \hline
+        El Accuracy es engañoso bajo desbalance de clases (Figura \ref{fig:barras_clasificacion}) & Que el sistema resulte útil en operación real sin evaluación adicional \\
+        \hline
+        Un ARIMA ajustado en una red pequeña no generaliza a un enlace troncal (Sección 6.1) & Que Random Forest o LSTM generalicen o no lo hagan \\
+        \hline
+    \end{tabular}
+    \caption{Alcance de las conclusiones de esta tesis.}
+    \label{tab:alcance_conclusiones}
+\end{table}
+
+Estas limitaciones delimitan el alcance de los hallazgos sin invalidarlos: el diseño experimental las hizo explícitas y controló su efecto sobre la comparación entre modelos.
+
+\subsection*{Líneas de trabajo futuro}
+
+\begin{enumerate}
+    \item Desarrollar una interfaz y un servicio de ingestión continua, con detección de cambio de concepto y reentrenamiento periódico.
+    \item Implementar el alertamiento basado en el esquema híbrido y evaluar el TAE sobre eventos reales.
+    \item Extender la recolección a al menos dos meses y a varias redes de distinta escala.
+    \item Validar $U_{th}$ empíricamente con congestión real, y sustituir la etiqueta instantánea por la definición sostenida.
+    \item Incorporar RTT, pérdida y variables de calendario cuando exista variabilidad real, y evaluar SVR, GRU y una búsqueda sistemática de hiperparámetros.
+    \item Repetir los experimentos con múltiples semillas e intervalos de confianza, y evaluar la generalización con parámetros de ventana compatibles con trazas de 15 minutos.
+\end{enumerate}
+
 \clearpage
 \addcontentsline{toc}{chapter}{Referencias bibliográficas}
 \bibliographystyle{IEEEtran}
