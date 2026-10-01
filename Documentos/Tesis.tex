@@ -2906,29 +2906,14 @@ Esta limitación teórica, anticipada en el Marco Teórico de esta tesis (Secci�
 Tercera, y quizás el hallazgo más contundente de esta sección, la validación exploratoria de generalización contra MAWI reveló una incapacidad casi total del modelo para operar fuera del régimen de tráfico sobre el cual fue entrenado: un RMSE que triplica el rango completo de la variable real observada constituye evidencia inequívoca de que un modelo ARIMA ajustado sobre una red de escala reducida no generaliza a un enlace de tránsito de escala considerablemente mayor, aun cuando ambas series 
 comparten la misma unidad de medida (factor de utilización, acotado entre 0 y 1). Esta observación se retoma de manera comparativa frente a \textit{Random Forest} y LSTM en la Sección 6.4, y se discute en términos de sus implicaciones prácticas en la Sección 6.5.
 
+\section{Resultados de \textit{Random Forest}}
+\label{sec:resultados_rf}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-\section{Resultados de Random Forest}
-
-Esta sección consolida los resultados obtenidos con Random Forest a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el dataset MAWI (Sección 5.4), su evaluación definitiva de regresión y clasificación sobre el dataset primario (Sección 5.4, subsección "Entrenamiento sobre el dataset primario"), y una discusión sobre la imposibilidad de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del pipeline.
+Esta sección consolida los resultados obtenidos con el ensamble \textit{Random Forest} a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:rf_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y una discusión analítica sobre la imposibilidad técnica de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del \textit{pipeline}.
 
 \subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
 
-Como se documentó en la Sección 5.4, Random Forest se entrenó sobre las 1,026 secuencias del conjunto de entrenamiento del dataset piloto, empleando las variables de rezago y media móvil a granularidad de 1 segundo. La Tabla \ref{tab:recap_rf_piloto} recuerda las métricas de regresión obtenidas.
+Como se documentó en la Sección \ref{sec:rf_desarrollo}, \textit{Random Forest} se entrenó sobre las 1\,044 secuencias del conjunto de entrenamiento del \textit{dataset} piloto, empleando las variables de rezago y media móvil a una granularidad de 1 segundo. La Tabla \ref{tab:recap_rf_piloto} recuerda las métricas de regresión obtenidas.
 
 \begin{table}[H]
     \centering
@@ -2936,19 +2921,19 @@ Como se documentó en la Sección 5.4, Random Forest se entrenó sobre las 1,026
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0962 & 0.0721 & 12.83\% \\
-        Prueba (piloto, MAWI) & 0.1311 & 0.1004 & 16.26\% \\
+        Validación (piloto, MAWI) & 0.0962 & 0.0721 & 12.83\,\% \\
+        Prueba (piloto, MAWI) & 0.1311 & 0.1004 & 16.26\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de Random Forest (escala normalizada), fase piloto (Sección 5.4).}
+    \caption{Recapitulación: métricas de regresión de \textit{Random Forest} (escala normalizada), fase piloto (Sección \ref{sec:rf_desarrollo}).}
     \label{tab:recap_rf_piloto}
 \end{table}
 
-Al igual que con ARIMA, la formulación de clasificación no pudo evaluarse durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección 5.1).
+Al igual que con ARIMA, la formulación de clasificación no pudo evaluarse formalmente durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección \ref{sec:obtencion_exploracion}).
 
-\subsection*{Resultados de regresión sobre el dataset primario}
+\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
 
-Se esperaba que Random Forest, al haber demostrado en la fase piloto una capacidad no lineal superior a la de un modelo puramente lineal para capturar relaciones entre variables de rezago (Sección \ref{sec:modelos_justificacion}), mantuviera un desempeño de regresión consistente al evaluarse sobre el dataset primario. La Tabla \ref{tab:recap_rf_primario_regresion} presenta los resultados observados.
+Se esperaba que \textit{Random Forest}, al haber demostrado en la fase piloto una capacidad no lineal superior a la de un modelo puramente autorregresivo para capturar interacciones complejas entre las variables de rezago (Sección \ref{sec:modelos_justificacion}), mantuviera un desempeño de regresión consistente al evaluarse sobre el \textit{dataset} primario. La Tabla \ref{tab:recap_rf_primario_regresion} presenta los resultados observados.
 
 \begin{table}[H]
     \centering
@@ -2960,38 +2945,38 @@ Se esperaba que Random Forest, al haber demostrado en la fase piloto una capacid
         Prueba (primario, real) & 0.049590 & 0.010301 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de Random Forest sobre el dataset primario (escala normalizada).}
+    \caption{Métricas de regresión de \textit{Random Forest} sobre el \textit{dataset} primario (escala normalizada).}
     \label{tab:recap_rf_primario_regresion}
 \end{table}
 
-Se observó una discrepancia notable entre validación y prueba: el RMSE se incrementó en un factor de casi 10 (de 0.0051 a 0.0496), un patrón de degradación considerablemente más pronunciado que el de ARIMA sobre el mismo par de conjuntos (Sección 6.1, incremento de apenas 0.4\%). Las Figuras \ref{fig:recap_rf_regresion_val} y \ref{fig:recap_rf_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales.
+Se observó una discrepancia notable entre validación y prueba: el RMSE se incrementó en un factor de casi 10 (pasando de 0.0051 a 0.0496). Este patrón de degradación es considerablemente más pronunciado que el exhibido por ARIMA sobre el mismo par de conjuntos (Sección \ref{sec:resultados_arima}, donde el incremento fue de apenas 0.4\,\%). Las Figuras \ref{fig:recap_rf_regresion_val} y \ref{fig:recap_rf_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_regresion_val.png}
-    \caption{Random Forest: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \caption{\textit{Random Forest}: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
     \label{fig:recap_rf_regresion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
-    \caption{Random Forest: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
     \label{fig:recap_rf_regresion_test}
 \end{figure}
 
-La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente el RMSE de Random Forest a través de los cuatro contextos de evaluación de regresión disponibles.
+La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente el RMSE de \textit{Random Forest} a través de los cuatro contextos de evaluación de regresión disponibles.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{rf_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de Random Forest a través de los contextos de evaluación.}
+    \caption{Síntesis comparativa del RMSE de \textit{Random Forest} a través de los contextos de evaluación.}
     \label{fig:rf_sintesis_rmse}
 \end{figure}
 
 \subsection*{Resultados de clasificación sobre datos sintéticos aislados}
 
-Se esperaba que Random Forest, dada su capacidad de particionar el espacio de variables de manera no lineal, ofreciera un desempeño de clasificación superior al de ARIMA. La Tabla \ref{tab:recap_rf_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:rf_sintesis_clasificacion} los compara visualmente entre validación y prueba.
+Bajo la formulación binarizada de alerta temprana, se esperaba que \textit{Random Forest} ofreciera un desempeño de clasificación sustancialmente superior al de ARIMA, aprovechando su capacidad intrínseca para particionar el espacio de características mediante reglas lógicas no lineales. La Tabla \ref{tab:recap_rf_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:rf_sintesis_clasificacion} los compara visualmente entre validación y prueba.
 
 \begin{table}[H]
     \centering
@@ -2999,96 +2984,106 @@ Se esperaba que Random Forest, dada su capacidad de particionar el espacio de va
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Accuracy & 0.9803 & 0.9813 \\
-        Precision & 0.9121 & 0.9318 \\
-        Recall & 0.2923 & 0.2982 \\
-        F1-score & 0.4427 & 0.4518 \\
+        Exactitud (\textit{Accuracy}) & 0.9803 & 0.9813 \\
+        Precisión & 0.9121 & 0.9318 \\
+        \textit{Recall} (Exhaustividad) & 0.2923 & 0.2982 \\
+        \textit{F1-score} & 0.4427 & 0.4518 \\
         AUC-ROC & 0.8796 & 0.9187 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de Random Forest, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \caption{Métricas de clasificación de \textit{Random Forest}, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
     \label{tab:recap_rf_primario_clasificacion}
 \end{table}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{rf_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, Random Forest sobre el dataset primario.}
+    \caption{Comparación de métricas de clasificación, validación vs. prueba, \textit{Random Forest} sobre el \textit{dataset} primario.}
     \label{fig:rf_sintesis_clasificacion}
 \end{figure}
 
-Los resultados observados confirmaron la expectativa de manera parcial: si bien el recall (29.82\% en prueba) resultó considerablemente superior al de ARIMA (1.85\%, Sección 6.1), continúa siendo modesto en términos absolutos —el modelo detecta poco menos de un tercio de los eventos de congestión reales—. La Ecuación \ref{eq:recap_confusion_rf} reproduce la matriz de confusión del conjunto de prueba.
+Los resultados empíricos confirmaron la expectativa planteada, aunque con matices: si bien el \textit{Recall} (29.82\,\% en el conjunto de prueba) resultó abrumadoramente superior al obtenido por ARIMA (1.85\,\%, Sección \ref{sec:resultados_arima}), continúa siendo una tasa modesta en términos absolutos, ya que el ensamble logró detectar poco menos de un tercio de los eventos de congestión reales. La Ecuación \ref{eq:recap_confusion_rf} reproduce la matriz de confusión del conjunto de prueba.
 
 \begin{equation}
-    \begin{pmatrix} \text{VN}=10341 & \text{FP}=6 \\ \text{FN}=193 & \text{VP}=82 \end{pmatrix}
+    \begin{pmatrix} \mbox{VN}=10\,341 & \mbox{FP}=6 \\ \mbox{FN}=193 & \mbox{VP}=82 \end{pmatrix}
     \label{eq:recap_confusion_rf}
 \end{equation}
 
-La Figura \ref{fig:recap_rf_clasificacion} ilustra las predicciones continuas del modelo sobre el conjunto de prueba de clasificación.
+La Figura \ref{fig:recap_rf_clasificacion} ilustra las predicciones continuas del modelo sobre el conjunto de prueba de clasificación, evidenciando una mayor sensibilidad a los picos de tráfico en comparación con la inercia característica de la línea base estadística.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
-    \caption{Random Forest: predicción vs. valor real, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
     \label{fig:recap_rf_clasificacion}
 \end{figure}
 
-\subsection*{Importancia de variables: comparación entre fase piloto y dataset primario}
+\subsection*{Importancia de variables: el impacto de la granularidad}
 
-Un hallazgo particular de este trabajo, ya adelantado en la Sección 5.4, es la inversión del patrón de importancia de variables entre ambas fases. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
+Un hallazgo analítico particular de este trabajo, adelantado empíricamente en la Sección \ref{sec:rf_desarrollo}, es la inversión topológica del patrón de importancia de variables entre ambas fases de la investigación. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{rf_comparativa_importancia.png}
-    \caption{Comparación de la importancia relativa de variables, Random Forest: fase piloto (granularidad de 1 segundo) vs. dataset primario (granularidad de 1 minuto).}
+    \caption{Comparación de la importancia relativa de variables, \textit{Random Forest}: fase piloto (granularidad de 1 segundo) vs. \textit{dataset} primario (granularidad de 1 minuto).}
     \label{fig:rf_comparativa_importancia}
 \end{figure}
 
-Mientras que en la fase piloto la media móvil ($U_{\text{media\_movil}}$) concentraba el 66.2\% de la importancia total, en el dataset primario esta proporción desciende a 12.5\%, cediendo el primer lugar al rezago inmediato ($U_{lag1}$), que pasa de 13.9\% a 66.4\%.
+Mientras que en la fase piloto la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentraba el 66.2\,\% de la importancia predictiva total, en el \textit{dataset} primario esta proporción descendió drásticamente al 12.5\,\%, cediendo el rol de predictor dominante al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$), el cual escaló del 13.9\,\% al 66.4\,\%. 
 
 \subsection*{Imposibilidad de la validación de generalización}
 
-A diferencia de ARIMA (Sección 6.1), Random Forest no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es estructural: la variable de entrada $U_{\text{media\_movil}}$, calculada como una media móvil de 30 minutos (Sección \ref{sec:preprocesamiento}), no puede computarse dentro de una traza de MAWI cuya duración total es de apenas 15 minutos por día (Sección \ref{sec:fuente_datos}). En consecuencia, el vector de entrada requerido por el modelo entrenado no puede construirse a partir de los datos disponibles de MAWI bajo los parámetros oficiales, y esta validación se reporta como no realizada, en lugar de forzar una adaptación que alteraría la configuración validada del modelo. Esta limitación se retoma con mayor profundidad en la Sección 6.5.
+A diferencia de ARIMA (Sección \ref{sec:resultados_arima}), \textit{Random Forest} no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es estrictamente estructural: la variable de entrada $U_{\mbox{\scriptsize media\_movil}}$, calculada empíricamente como una media móvil de 30 minutos (Sección \ref{sec:preprocesamiento_desarrollo}), es matemáticamente imposible de computar dentro de una traza de MAWI cuya duración total captura 
+apenas 15 minutos continuos por día (Sección \ref{sec:obtencion_exploracion}). 
 
-\subsection*{Síntesis completa de los resultados de Random Forest}
+En consecuencia, el vector de entrada completo que exige el ensamble entrenado no puede construirse a partir de los datos disponibles de MAWI bajo los parámetros oficiales. Forzar una adaptación (como rellenar con ceros o acortar la ventana) alteraría la configuración validada del modelo, invalidando cualquier comparativa justa. Por tanto, esta validación se reporta formalmente como no realizada. Esta limitación inherente a la ingeniería de características estáticas se retoma con mayor profundidad en la Sección 6.5.
 
-La Tabla \ref{tab:sintesis_completa_rf} consolida la totalidad de los resultados de esta sección.
+\subsection*{Síntesis completa de los resultados de \textit{Random Forest}}
+
+La Tabla \ref{tab:sintesis_completa_rf} consolida la totalidad de los resultados de esta sección, ofreciendo un panorama unificado del desempeño del paradigma de \textit{Machine Learning} clásico.
 
 \begin{table}[H]
     \centering
     \small
     \begin{tabular}{|l|l|r|r|r|}
         \hline
-        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto — validación & 100\% Real (MAWI) & 0.0962 & N/A & N/A \\
-        Piloto — prueba & 100\% Real (MAWI) & 0.1311 & N/A & N/A \\
-        Primario — regresión (val.) & 100\% Real (Cliente) & 0.0051 & --- & --- \\
-        Primario — regresión (prueba) & 100\% Real (Cliente) & 0.0496 & --- & --- \\
-        Primario — clasificación (val.) & 100\% Sintético & --- & 0.2923 & 0.8796 \\
-        Primario — clasificación (prueba) & 100\% Sintético & --- & 0.2982 & 0.9187 \\
-        Generalización — MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        Piloto --- validación & 100\,\% Real (MAWI) & 0.0962 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% Real (MAWI) & 0.1311 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.0051 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.0496 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.2923 & 0.8796 \\
+        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.2982 & 0.9187 \\
+        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
         \hline
     \end{tabular}
-    \caption{Síntesis completa de los resultados de Random Forest a través de todos los contextos de evaluación.}
+    \caption{Síntesis completa de los resultados de \textit{Random Forest} a través de todos los contextos de evaluación.}
     \label{tab:sintesis_completa_rf}
 \end{table}
 
-\subsection*{Discusión de los resultados de Random Forest}
+\subsection*{Discusión de los resultados de \textit{Random Forest}}
 
-Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, la marcada degradación entre validación y prueba en la tarea de regresión (Tabla \ref{tab:recap_rf_primario_regresion}) reafirma, a escala del dataset primario, la limitación de extrapolación de los modelos basados en árboles de decisión ya documentada en la fase piloto (Sección 5.4): incapaces de predecir valores fuera del rango de la variable objetivo observado durante el entrenamiento, estos modelos subestiman o sobreestiman de manera sistemática cualquier observación del conjunto de prueba que se aleje del régimen dominante en el entrenamiento.
+Tres observaciones analíticas de peso se desprenden del conjunto de resultados presentados en esta sección. Primera, la marcada degradación entre validación y prueba en la tarea de regresión (Tabla \ref{tab:recap_rf_primario_regresion}) reafirma, ahora a escala del \textit{dataset} primario, una limitación matemática intrínseca de los modelos basados en árboles de decisión: su incapacidad absoluta para extrapolar. Dado que cada nodo hoja de un árbol de decisión emite su pronóstico promediando exclusivamente 
+las muestras de entrenamiento que cayeron en dicha región espacial, el modelo es arquitectónicamente incapaz de predecir un valor que supere el máximo histórico observado en su fase de aprendizaje. Por tanto, \textit{Random Forest} subestimará o sobreestimará de manera sistemática cualquier observación del conjunto de prueba que se aleje del régimen de tráfico dominante en el entrenamiento.
 
-Segunda, el desempeño de clasificación de Random Forest —aunque modesto en términos absolutos (recall de 29.82\%)— representa una mejora sustancial frente a ARIMA (Sección 6.1), multiplicando su recall por un factor de 16. Esta ventaja es consistente con la capacidad de los modelos de ensamble para capturar relaciones no lineales entre variables de rezago específicas, en contraste con la tendencia de ARIMA a suavizar sus predicciones.
+Segunda, a pesar de su deficiencia en la extrapolación continua, el desempeño de clasificación binarizada de \textit{Random Forest} representa una mejora superlativa frente a la estadística tradicional, multiplicando el \textit{Recall} de ARIMA por un factor de 16. Esta ventaja se sustenta en la naturaleza estructural del ensamble: mientras que ARIMA depende de un proceso iterativo de suma y media móvil que difumina los picos súbitos (generando falsos negativos sistemáticos), las reglas lógicas no lineales 
+de los árboles de decisión son altamente sensibles a combinaciones específicas de las variables de rezago, permitiéndoles cruzar el umbral de alerta con mayor rapidez ante patrones incipientes de saturación.
 
-Tercera, la inversión del patrón de importancia de variables entre la fase piloto y el dataset primario (Figura \ref{fig:rf_comparativa_importancia}) constituye un hallazgo metodológicamente relevante: sugiere que la granularidad temporal de la recolección —1 segundo en el piloto, 1 minuto en el dataset primario— no es una decisión neutral, sino que determina cuál variable resulta más informativa para el modelo. A mayor frecuencia de muestreo, el ruido de alta frecuencia parece favorecer variables suavizadas (media móvil); a una granularidad más gruesa, cada observación individual ya integra suficiente información como para que el valor más reciente domine la predicción. Finalmente, la imposibilidad de evaluar la generalización de este modelo frente a MAWI —a diferencia de ARIMA— pone de manifiesto una tensión práctica entre la riqueza de las variables de ingeniería de características (que mejoran el desempeño dentro de un dominio) y la portabilidad del modelo hacia datasets externos con restricciones estructurales distintas, tensión que se retoma en la discusión general de la Sección 6.5.
+Tercera, la inversión del patrón de importancia de variables entre la fase piloto y el \textit{dataset} primario (Figura \ref{fig:rf_comparativa_importancia}) constituye un hallazgo metodológico crítico. Sugiere fuertemente que la granularidad temporal de la recolección ---1 segundo en el piloto, 1 minuto en el primario--- no es una decisión neutral, sino un factor que determina la topología informacional del modelo. A frecuencias de muestreo altas, el ruido transitorio en la red parece favorecer 
+predictores agregados (como la media móvil) para estabilizar la señal; sin embargo, a una granularidad más gruesa, cada observación individual ya integra inherentemente una unidad de tiempo mayor, promediando el estocasticismo transitorio y permitiendo que el nivel de tráfico más reciente actúe como el indicador más confiable del estado inmediato del canal. 
+
+Finalmente, la imposibilidad de evaluar la generalización de este modelo frente a MAWI ---a diferencia de ARIMA, que sí operó sobre las trazas reagregadas--- pone de manifiesto una tensión práctica vital en el despliegue de \textit{Machine Learning}: la riqueza predictiva que provee la ingeniería de características (como ventanas de tiempo ampliadas) mejora el desempeño dentro de un dominio conocido, pero sacrifica la portabilidad arquitectónica del modelo hacia infraestructuras o \textit{datasets} externos 
+que operan bajo restricciones estructurales distintas. Esta tensión entre precisión local y generalización global se retomará de forma integral en la Sección 6.5.
 
 \section{Resultados de LSTM}
+\label{sec:resultados_lstm}
 
-Esta sección consolida los resultados obtenidos con la red LSTM a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el dataset MAWI (Sección 5.5), su evaluación definitiva de regresión y clasificación sobre el dataset primario (Sección 5.5, subsección "Entrenamiento sobre el dataset primario"), y una discusión sobre la imposibilidad de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del pipeline.
+Esta sección consolida los resultados obtenidos con la red neuronal recurrente LSTM a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:lstm_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y una discusión analítica sobre la imposibilidad técnica de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del \textit{pipeline}.
 
 \subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
 
-Como se documentó en la Sección 5.5, la arquitectura empleada (una capa LSTM de 32 unidades, una capa densa de 16 unidades y una capa de salida, 4,897 parámetros entrenables) se entrenó sobre las 1,026 secuencias del dataset piloto, convergiendo mediante \textit{early stopping} en la época 12. La Tabla \ref{tab:recap_lstm_piloto} recuerda las métricas de regresión obtenidas.
+Como se documentó en la Sección \ref{sec:lstm_desarrollo}, la arquitectura empleada (una capa LSTM de 32 unidades, una capa densa de 16 unidades y una capa de salida; 4\,897 parámetros entrenables) se entrenó sobre las 1\,044 secuencias del \textit{dataset} piloto, convergiendo mediante \textit{Early Stopping} en la época 12. La Tabla \ref{tab:recap_lstm_piloto} recuerda las métricas de regresión obtenidas.
 
 \begin{table}[H]
     \centering
@@ -3096,19 +3091,19 @@ Como se documentó en la Sección 5.5, la arquitectura empleada (una capa LSTM d
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0860 & 0.0664 & 11.53\% \\
-        Prueba (piloto, MAWI) & 0.0891 & 0.0690 & 11.00\% \\
+        Validación (piloto, MAWI) & 0.0860 & 0.0664 & 11.53\,\% \\
+        Prueba (piloto, MAWI) & 0.0891 & 0.0690 & 11.00\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de LSTM (escala normalizada), fase piloto (Sección 5.5).}
+    \caption{Recapitulación: métricas de regresión de LSTM (escala normalizada), fase piloto (Sección \ref{sec:lstm_desarrollo}).}
     \label{tab:recap_lstm_piloto}
 \end{table}
 
-Al igual que con los modelos anteriores, la formulación de clasificación no pudo evaluarse durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección 5.1).
+Al igual que con los modelos anteriores, la formulación de clasificación binarizada no pudo evaluarse formalmente durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección \ref{sec:obtencion_exploracion}).
 
-\subsection*{Resultados de regresión sobre el dataset primario}
+\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
 
-Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de entrada en lugar de depender de variables de rezago aisladas, ofreciera el mejor desempeño de regresión entre los tres modelos evaluados, dada su mayor capacidad de representación (Sección \ref{sec:modelos_justificacion}). La red se reentrenó con idéntica arquitectura sobre las 46,582 secuencias del dataset primario, convergiendo en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados observados.
+Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de entrada en lugar de depender de variables de rezago aisladas o promedios estáticos, ofreciera el mejor desempeño de regresión entre los tres modelos evaluados, dada su mayor capacidad de representación topológica (Sección \ref{sec:modelos_justificacion}). La red se reentrenó con idéntica arquitectura sobre las 46\,582 secuencias del \textit{dataset} primario, convergiendo en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados observados.
 
 \begin{table}[H]
     \centering
@@ -3120,11 +3115,11 @@ Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de
         Prueba (primario, real) & 0.001036 & 0.000125 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de LSTM sobre el dataset primario (escala normalizada).}
+    \caption{Métricas de regresión de LSTM sobre el \textit{dataset} primario (escala normalizada).}
     \label{tab:recap_lstm_primario_regresion}
 \end{table}
 
-Los resultados observados confirmaron plenamente esta expectativa, y de manera contundente: el RMSE de prueba (0.001036) resultó casi dos órdenes de magnitud inferior al de ARIMA (0.0459, Sección 6.1) y al de Random Forest (0.0496, Sección 6.2) sobre el mismo conjunto. La Figura \ref{fig:lstm_sintesis_rmse} sitúa este resultado en el contexto de los cuatro escenarios de evaluación de regresión disponibles, empleando escala logarítmica dada la magnitud de la diferencia.
+Los resultados empíricos confirmaron plenamente esta expectativa, y de manera contundente: el RMSE de prueba (0.001036) resultó casi dos órdenes de magnitud inferior al de ARIMA (0.0459, Sección \ref{sec:resultados_arima}) y al de \textit{Random Forest} (0.0496, Sección \ref{sec:resultados_rf}) sobre el mismo conjunto. La Figura \ref{fig:lstm_sintesis_rmse} sitúa este resultado en el contexto de los cuatro escenarios de evaluación de regresión disponibles, empleando escala logarítmica dada la notable magnitud de la diferencia.
 
 \begin{figure}[H]
     \centering
@@ -3133,25 +3128,25 @@ Los resultados observados confirmaron plenamente esta expectativa, y de manera c
     \label{fig:lstm_sintesis_rmse}
 \end{figure}
 
-Las Figuras \ref{fig:recap_lstm_regresion_val} y \ref{fig:recap_lstm_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados.
+Las Figuras \ref{fig:recap_lstm_regresion_val} y \ref{fig:recap_lstm_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados, demostrando un ajuste casi perfecto sobre la tendencia de bajo tráfico.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
-    \caption{LSTM: predicción vs. valor real, validación de regresión (dataset primario, datos reales).}
+    \caption{LSTM: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
     \label{fig:recap_lstm_regresion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
-    \caption{LSTM: predicción vs. valor real, prueba de regresión (dataset primario, datos reales).}
+    \caption{LSTM: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
     \label{fig:recap_lstm_regresion_test}
 \end{figure}
 
 \subsection*{Resultados de clasificación sobre datos sintéticos aislados}
 
-Dada la superioridad observada en regresión, se esperaba —de manera intuitiva— que LSTM ofreciera también el mejor desempeño de clasificación entre los tres modelos. La Tabla \ref{tab:recap_lstm_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:lstm_sintesis_clasificacion} los compara entre validación y prueba.
+Dada la apabullante superioridad observada en la tarea de regresión continua, se esperaba ---de manera intuitiva--- que LSTM ofreciera también el mejor desempeño de clasificación temprana entre los tres modelos. La Tabla \ref{tab:recap_lstm_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:lstm_sintesis_clasificacion} los compara entre validación y prueba.
 
 \begin{table}[H]
     \centering
@@ -3159,10 +3154,10 @@ Dada la superioridad observada en regresión, se esperaba —de manera intuitiva
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Accuracy & 0.9742 & 0.9750 \\
-        Precision & 0.7619 & 0.7778 \\
-        Recall & 0.0563 & 0.0509 \\
-        F1-score & 0.1049 & 0.0956 \\
+        Exactitud (\textit{Accuracy}) & 0.9742 & 0.9750 \\
+        Precisión & 0.7619 & 0.7778 \\
+        \textit{Recall} (Exhaustividad) & 0.0563 & 0.0509 \\
+        \textit{F1-score} & 0.1049 & 0.0956 \\
         AUC-ROC & 0.8783 & 0.9000 \\
         \hline
     \end{tabular}
@@ -3173,23 +3168,23 @@ Dada la superioridad observada en regresión, se esperaba —de manera intuitiva
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{lstm_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, LSTM sobre el dataset primario.}
+    \caption{Comparación de métricas de clasificación, validación vs. prueba, LSTM sobre el \textit{dataset} primario.}
     \label{fig:lstm_sintesis_clasificacion}
 \end{figure}
 
-Contrario a la expectativa planteada, los resultados observados no confirman la superioridad de LSTM en esta tarea: su recall de prueba (5.09\%) resulta muy inferior al de Random Forest (29.82\%, Sección 6.2), aunque superior al de ARIMA (1.85\%, Sección 6.1). La Ecuación \ref{eq:recap_confusion_lstm} reproduce la matriz de confusión del conjunto de prueba: de los 275 eventos de congestión reales, LSTM detectó correctamente 14.
+Contrario a la expectativa planteada, los resultados observados no confirman la superioridad de LSTM en esta tarea: su \textit{Recall} de prueba (5.09\,\%) resulta dramáticamente inferior al de \textit{Random Forest} (29.82\,\%, Sección \ref{sec:resultados_rf}), aunque ligeramente superior al de ARIMA (1.85\,\%, Sección \ref{sec:resultados_arima}). La Ecuación \ref{eq:recap_confusion_lstm} reproduce la matriz de confusión del conjunto de prueba: de los 275 eventos de congestión reales, LSTM detectó correctamente apenas 14.
 
 \begin{equation}
-    \begin{pmatrix} \text{VN}=10314 & \text{FP}=4 \\ \text{FN}=261 & \text{VP}=14 \end{pmatrix}
+    \begin{pmatrix} \mbox{VN}=10\,314 & \mbox{FP}=4 \\ \mbox{FN}=261 & \mbox{VP}=14 \end{pmatrix}
     \label{eq:recap_confusion_lstm}
 \end{equation}
 
-La Figura \ref{fig:recap_lstm_clasificacion} ilustra las predicciones del modelo sobre este conjunto.
+La Figura \ref{fig:recap_lstm_clasificacion} ilustra las predicciones del modelo sobre este conjunto, donde es evidente la resistencia de la red a cruzar el umbral de alerta.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
-    \caption{LSTM: predicción, prueba de clasificación (dataset primario, datos sintéticos aislados).}
+    \caption{LSTM: predicción, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
     \label{fig:recap_lstm_clasificacion}
 \end{figure}
 
@@ -3198,13 +3193,14 @@ La Figura \ref{fig:comparativa_recall} sitúa este resultado en el contexto de l
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{comparativa_recall_tres_modelos.png}
-    \caption{Recall de clasificación (prueba) de los tres modelos evaluados sobre el dataset primario.}
+    \caption{\textit{Recall} de clasificación (prueba) de los tres modelos evaluados sobre el \textit{dataset} primario.}
     \label{fig:comparativa_recall}
 \end{figure}
 
 \subsection*{Imposibilidad de la validación de generalización}
 
-De manera análoga a Random Forest (Sección 6.2), LSTM no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es igualmente estructural: la ventana de entrada de la red, de $w=30$ pasos temporales (Sección \ref{sec:preprocesamiento}), no puede construirse a partir de una traza de MAWI cuya duración total es de apenas 15 minutos por día (Sección \ref{sec:fuente_datos}). A diferencia de ARIMA —que opera directamente sobre la serie temporal sin requerir una ventana de longitud fija—, la arquitectura recurrente exige, por diseño, contar con al menos 30 observaciones consecutivas para generar una sola predicción, condición que ninguna traza individual de MAWI satisface. Esta limitación, idéntica en naturaleza a la reportada para Random Forest, se retoma con mayor profundidad en la Sección 6.5.
+De manera análoga a \textit{Random Forest}, LSTM no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es igualmente estructural: la ventana de entrada de la red, establecida en $w=30$ pasos temporales (Sección \ref{sec:preprocesamiento}), no puede construirse a partir de una traza de MAWI cuya duración total captura apenas 15 minutos continuos por día. A diferencia de ARIMA ---que opera directamente sobre la serie temporal continua sin requerir una ventana 
+de longitud fija simultánea---, la arquitectura recurrente exige, por diseño tensorial, contar con al menos 30 observaciones consecutivas para generar una sola predicción, condición que ninguna traza individual de MAWI satisface bajo los parámetros del \textit{dataset} primario. Esta limitación se retoma con mayor profundidad en la Sección 6.5.
 
 \subsection*{Síntesis completa de los resultados de LSTM}
 
@@ -3215,15 +3211,15 @@ La Tabla \ref{tab:sintesis_completa_lstm} consolida la totalidad de los resultad
     \small
     \begin{tabular}{|l|l|r|r|r|}
         \hline
-        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{Recall} & \textbf{AUC-ROC} \\
+        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto — validación & 100\% Real (MAWI) & 0.0860 & N/A & N/A \\
-        Piloto — prueba & 100\% Real (MAWI) & 0.0891 & N/A & N/A \\
-        Primario — regresión (val.) & 100\% Real (Cliente) & 0.000131 & --- & --- \\
-        Primario — regresión (prueba) & 100\% Real (Cliente) & 0.001036 & --- & --- \\
-        Primario — clasificación (val.) & 100\% Sintético & --- & 0.0563 & 0.8783 \\
-        Primario — clasificación (prueba) & 100\% Sintético & --- & 0.0509 & 0.9000 \\
-        Generalización — MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        Piloto --- validación & 100\,\% Real (MAWI) & 0.0860 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% Real (MAWI) & 0.0891 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.000131 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.001036 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.0563 & 0.8783 \\
+        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.0509 & 0.9000 \\
+        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
         \hline
     \end{tabular}
     \caption{Síntesis completa de los resultados de LSTM a través de todos los contextos de evaluación.}
@@ -3232,11 +3228,35 @@ La Tabla \ref{tab:sintesis_completa_lstm} consolida la totalidad de los resultad
 
 \subsection*{Discusión de los resultados de LSTM}
 
-Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, la superioridad de LSTM en la tarea de regresión es contundente y consistente entre validación y prueba, confirmando la expectativa teórica planteada en la Sección \ref{sec:modelos_justificacion}: al procesar la secuencia completa de entrada en lugar de depender de una media incondicional (ARIMA) o de particiones discretas del espacio de variables (Random Forest), la red logra reconocer con precisión el patrón de bajo tráfico característico del régimen real de la red del Cliente.
+Tres observaciones críticas se desprenden del conjunto de resultados presentados en esta sección. Primera, la superioridad de LSTM en la tarea de regresión es contundente y consistente entre validación y prueba, confirmando la expectativa teórica planteada en el diseño metodológico: al procesar la secuencia completa de entrada en lugar de depender de una media incondicional (ARIMA) o de particiones discretas del espacio de variables (\textit{Random Forest}), la red logra reconocer con asombrosa precisión el patrón de bajo tráfico 
+característico del régimen real de la infraestructura estudiada.
 
-Segunda, y de manera notable, esta misma superioridad no se traduce en la tarea de clasificación, donde LSTM se ubica en un desempeño intermedio entre ARIMA y Random Forest (Figura \ref{fig:comparativa_recall}). Este resultado, aparentemente contraintuitivo, resulta congruente con la función objetivo empleada durante el entrenamiento: al minimizar el error cuadrático medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección 5.1), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. En otras palabras, el objetivo de minimizar el RMSE global y el objetivo de maximizar el recall de un evento minoritario no están necesariamente alineados, y esta tesis aporta evidencia empírica directa de dicha tensión.
+Segunda, y de manera analíticamente notable, esta misma superioridad no se traduce en la tarea de clasificación binarizada, donde LSTM se ubica en un desempeño intermedio entre ARIMA y \textit{Random Forest} (Figura \ref{fig:comparativa_recall}). Este resultado, aparentemente contraintuitivo, resulta matemáticamente congruente con la función de pérdida empleada durante el entrenamiento: al minimizar el Error Cuadrático Medio (MSE) sobre un conjunto de entrenamiento dominado abrumadoramente por observaciones de bajo tráfico 
+(el 97.9\,\% de las observaciones se encuentra por debajo de $U_{th}$, Sección \ref{sec:obtencion_exploracion}), la red aprende a priorizar la reducción del error sobre el régimen mayoritario. Como consecuencia, el modelo produce predicciones altamente conservadoras que penalizan y difuminan la detección de los eventos infrecuentes de congestión. En otras palabras, el objetivo matemático de minimizar el RMSE global y el objetivo operativo de maximizar el \textit{Recall} de un evento anómalo y minoritario no están alineados; 
+esta tesis aporta evidencia empírica directa de dicha tensión topológica.
 
-Tercera, la imposibilidad de evaluar la generalización de LSTM frente a MAWI —idéntica en su causa estructural a la de Random Forest— confirma que esta limitación no es específica de un modelo en particular, sino una consecuencia directa de la elección de parámetros de ventana temporal (Sección \ref{sec:preprocesamiento}) frente a la duración inherente de las trazas de MAWI (Sección \ref{sec:fuente_datos}). Este hallazgo, junto con los de las Secciones 6.1 y 6.2, se integra en la comparativa transversal de la Sección 6.4 y se discute en términos de sus implicaciones metodológicas en la Sección 6.5.
+Tercera, la imposibilidad de evaluar la generalización de LSTM frente a MAWI ---idéntica en su causa estructural a la de \textit{Random Forest}--- confirma que esta limitación no es un defecto específico de un algoritmo en particular, sino una consecuencia sistémica directa de la elección de los parámetros de ventana temporal (diseñados para capturar la dinámica de 30 minutos) frente a la fragmentación inherente de fuentes de datos externas. Este hallazgo, junto con los de las Secciones \ref{sec:resultados_arima} y 
+\ref{sec:resultados_rf}, se integra en la comparativa transversal de la Sección 6.4 y conformará el núcleo de las recomendaciones metodológicas en la Sección 6.5.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 \section{Comparativa de modelos}
 
@@ -3698,9 +3718,445 @@ Estas limitaciones delimitan el alcance de los hallazgos sin invalidarlos: el di
 \bibliography{referencias}
 
 \appendix
-
 \chapter{Código fuente de ejemplos críticos}
 
-\chapter{Capturas de pantalla adicionales}
+Este apéndice reproduce el código fuente de las piezas de software consideradas más relevantes para la comprensión y reproducibilidad del prototipo desarrollado en esta tesis. Se excluyen deliberadamente los scripts de configuración de entorno, corrección de errores y depuración que no aportan al entendimiento metodológico del trabajo. El repositorio completo del proyecto contiene la totalidad de los scripts empleados.
+
+\section{Decodificador de trazas libpcap}
+\label{apx:decodificador_libpcap}
+
+El siguiente fragmento corresponde al decodificador propio empleado para extraer telemetría de las trazas de MAWI (Sección \ref{sec:preprocesamiento_desarrollo}), evitando la sobrecarga de memoria de herramientas de disección de protocolos de alto nivel. A diferencia del fragmento presentado en el Capítulo 5 (Código \ref{lst:parser_pcap}), aquí se incluye el manejo completo de las cuatro variantes del encabezado global de \textit{libpcap} (orden de bytes y precisión temporal).
+
+\begin{lstlisting}[language=Python, caption={Decodificador completo de trazas libpcap.}, label={lst:apx_parser_pcap}]
+import struct
+from collections import defaultdict
+
+def parsear_pcap(pcap_path, ventana_seg=60):
+    """
+    Lee un archivo .pcap directamente (formato clasico libpcap), extrayendo
+    timestamp y tamano original de cada paquete SIN decodificar protocolos.
+    Agrega el volumen de bytes transmitidos en ventanas temporales discretas.
+    """
+    acumulado = defaultdict(int)
+    contador = 0
+
+    with open(pcap_path, "rb") as f:
+        # --- Encabezado global (24 bytes) ---
+        cabecera_global = f.read(24)
+        magic = struct.unpack("I", cabecera_global[0:4])[0]
+
+        if magic == 0xa1b2c3d4:
+            endian = "<"   # little-endian, microsegundos
+            nano = False
+        elif magic == 0xd4c3b2a1:
+            endian = ">"   # big-endian, microsegundos
+            nano = False
+        elif magic == 0xa1b23c4d:
+            endian = "<"   # little-endian, nanosegundos
+            nano = True
+        elif magic == 0x4d3cb2a1:
+            endian = ">"   # big-endian, nanosegundos
+            nano = True
+        else:
+            raise ValueError(f"Magic number no reconocido: {hex(magic)}")
+
+        fmt_registro = endian + "IIII"  # ts_sec, ts_usec, incl_len, orig_len
+
+        while True:
+            encabezado_paquete = f.read(16)
+            if len(encabezado_paquete) < 16:
+                break  # fin del archivo
+
+            ts_sec, ts_usec, incl_len, orig_len = struct.unpack(
+                fmt_registro, encabezado_paquete
+            )
+
+            if nano:
+                timestamp = ts_sec + (ts_usec / 1_000_000_000)
+            else:
+                timestamp = ts_sec + (ts_usec / 1_000_000)
+
+            ventana = int(timestamp // ventana_seg)
+            acumulado[ventana] += orig_len
+            contador += 1
+
+            f.seek(incl_len, 1)  # salta los bytes del paquete sin leerlos
+
+    filas = [{"timestamp": v * ventana_seg, "throughput_bps": (b * 8) / ventana_seg}
+             for v, b in sorted(acumulado.items())]
+    return filas, contador
+\end{lstlisting}
+
+\section{Script de recolección en RouterOS}
+\label{apx:recoleccion_routeros}
+
+El siguiente script, escrito en RouterOS Script y ejecutado periódicamente mediante el Programador de Tareas (\textit{Scheduler}), constituye el mecanismo de recolección del dataset primario (Sección \ref{sec:fuente_datos}), adoptado como alternativa funcionalmente equivalente a SNMP ante las restricciones de acceso remoto descritas en la Sección 5.1.
+
+\begin{lstlisting}[language=bash, caption={Script de recolección de telemetría en RouterOS.}, label={lst:apx_recoleccion_routeros}]
+:local wanInterface "ether1";
+:local pingTarget "1.1.1.1";
+
+:local traf [/interface monitor-traffic interface=$wanInterface once as-value];
+:local rxbps ($traf->"rx-bits-per-second");
+:local txbps ($traf->"tx-bits-per-second");
+
+:local pingResult [/ping $pingTarget count=5 as-value];
+:local recibidos [:len $pingResult];
+:local perdida ((5 - $recibidos) * 100 / 5);
+
+:local sumaUs 0;
+:foreach r in=$pingResult do={
+    :local timeStr [:tostr ($r->"time")];
+    :local hh [:tonum [:pick $timeStr 0 2]];
+    :local mm [:tonum [:pick $timeStr 3 5]];
+    :local ss [:tonum [:pick $timeStr 6 8]];
+    :local frac [:tonum [:pick $timeStr 9 15]];
+    :local totalUs ((($hh*3600)+($mm*60)+$ss)*1000000 + $frac);
+    :set sumaUs ($sumaUs + $totalUs);
+};
+:local rttUsProm 0;
+:if ($recibidos > 0) do={ :set rttUsProm ($sumaUs / $recibidos) };
+
+:local fecha [:tostr [/system clock get date]];
+:local hora [:tostr [/system clock get time]];
+:local linea ($fecha . "," . $hora . "," . $rxbps . "," . $txbps . "," . $rttUsProm . "," . $perdida);
+:local nombreArchivo ("log_" . $fecha . ".csv");
+
+:if ([:len [/file find name=$nombreArchivo]] = 0) do={
+    /file add name=$nombreArchivo contents=("fecha,hora,rx_bps,tx_bps,rtt_us,perdida_pct\n" . $linea . "\n")
+} else={
+    :local actual [/file get [find name=$nombreArchivo] contents];
+    /file set [find name=$nombreArchivo] contents=($actual . $linea . "\n")
+}
+\end{lstlisting}
+
+Este script se programó mediante \texttt{/system scheduler add name=run-recolectar interval=1m on-event=recolectar-metrica}, ejecutándose de manera autónoma cada minuto durante todo el periodo de recolección, con respaldo local resiliente a interrupciones de la conectividad VPN (Tabla \ref{tab:huecos_recoleccion}).
+
+\section{Pipeline de preprocesamiento}
+\label{apx:pipeline_preprocesamiento}
+
+El siguiente script implementa las etapas de limpieza, detección de sesiones, generación de variables de rezago y definición de las variables objetivo de regresión y clasificación (Sección \ref{sec:preprocesamiento_desarrollo}), aplicado de manera uniforme a los cinco conjuntos derivados del dataset primario.
+
+\begin{lstlisting}[language=Python, caption={Pipeline de limpieza, detección de sesiones y generación de variables.}, label={lst:apx_preprocesamiento}]
+import pandas as pd
+import numpy as np
+
+BANDA_NOMINAL = 1_000_000_000
+U_TH = 0.80
+H = 5
+UMBRAL_SESION_MIN = 5
+N_REZAGOS = 5
+VENTANA_MEDIA_MOVIL = 30
+
+def procesar(path_entrada, nombre_salida, es_train=False):
+    df = pd.read_csv(path_entrada)
+    df["timestamp"] = pd.to_datetime(df["timestamp"])
+    df = df.sort_values("timestamp").reset_index(drop=True)
+    df["utilizacion"] = df["rx_bps"] / BANDA_NOMINAL
+
+    # --- Deteccion de sesiones (huecos grandes = frontera) ---
+    diffs = df["timestamp"].diff().dt.total_seconds().fillna(0) / 60.0
+    df["sesion_id"] = (diffs > UMBRAL_SESION_MIN).cumsum()
+
+    # --- Limpieza por sesion: reindexar, interpolar huecos cortos ---
+    sesiones_limpias = []
+    for sid, grupo in df.groupby("sesion_id"):
+        grupo = grupo.sort_values("timestamp")
+        rango = pd.date_range(grupo["timestamp"].min(), grupo["timestamp"].max(), freq="1min")
+        g_completo = pd.DataFrame({"timestamp": rango})
+        g_completo = g_completo.merge(
+            grupo[["timestamp", "utilizacion", "rtt_us", "perdida_pct", "es_sintetico"]],
+            on="timestamp", how="left"
+        )
+        g_completo["utilizacion"] = g_completo["utilizacion"].interpolate(method="linear", limit=3)
+        g_completo["rtt_us"] = g_completo["rtt_us"].interpolate(method="linear", limit=3)
+        g_completo["perdida_pct"] = g_completo["perdida_pct"].interpolate(method="linear", limit=3)
+        g_completo["es_sintetico"] = g_completo["es_sintetico"].ffill().bfill()
+        g_completo["sesion_id"] = sid
+        sesiones_limpias.append(g_completo)
+
+    df_limpio = pd.concat(sesiones_limpias, ignore_index=True)
+    df_limpio = df_limpio.dropna(subset=["utilizacion"]).reset_index(drop=True)
+
+    # --- Rezagos y media movil, calculados POR SESION ---
+    for i in range(1, N_REZAGOS + 1):
+        df_limpio[f"U_lag{i}"] = df_limpio.groupby("sesion_id")["utilizacion"].shift(i)
+
+    df_limpio["U_media_movil"] = (
+        df_limpio.groupby("sesion_id")["utilizacion"]
+        .rolling(window=VENTANA_MEDIA_MOVIL, min_periods=VENTANA_MEDIA_MOVIL)
+        .mean()
+        .reset_index(level=0, drop=True)
+    )
+
+    # --- Variables objetivo: regresion U(t+h) y clasificacion U(t+h) >= U_th ---
+    df_limpio["target_regresion"] = df_limpio.groupby("sesion_id")["utilizacion"].shift(-H)
+    df_limpio["target_clasificacion"] = (df_limpio["target_regresion"] >= U_TH).astype(float)
+    df_limpio.loc[df_limpio["target_regresion"].isna(), "target_clasificacion"] = np.nan
+
+    columnas_clave = [f"U_lag{i}" for i in range(1, N_REZAGOS+1)] + ["U_media_movil", "target_regresion"]
+    df_final = df_limpio.dropna(subset=columnas_clave).reset_index(drop=True)
+
+    df_final.to_csv(nombre_salida, index=False)
+    return df_final
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Normalización Min-Max sin fuga de datos (ajustada exclusivamente con el conjunto de entrenamiento).}, label={lst:apx_normalizacion}]
+import pandas as pd
+
+COLS_NORM = ["utilizacion", "U_lag1", "U_lag2", "U_lag3", "U_lag4", "U_lag5",
+             "U_media_movil", "target_regresion"]
+
+def normalizar(train_df, path_entrada, nombre_salida, min_vals, max_vals):
+    df = pd.read_csv(path_entrada)
+    df_norm = df.copy()
+    for col in COLS_NORM:
+        rango = max_vals[col] - min_vals[col]
+        df_norm[col] = (df[col] - min_vals[col]) / rango if rango != 0 else 0.0
+    df_norm.to_csv(nombre_salida, index=False)
+    return df_norm
+
+train = pd.read_csv("train_procesado.csv")
+min_vals = train[COLS_NORM].min()
+max_vals = train[COLS_NORM].max()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Construcción de secuencias mediante ventana deslizante, respetando fronteras de sesión.}, label={lst:apx_ventaneo}]
+import pandas as pd
+import numpy as np
+
+def construir_ventanas(path_csv, w=30):
+    df = pd.read_csv(path_csv)
+    X, y_reg, y_clas = [], [], []
+    for sid, grupo in df.groupby("sesion_id"):
+        grupo = grupo.reset_index(drop=True)
+        serie = grupo["utilizacion"].values
+        target_reg = grupo["target_regresion"].values
+        target_clas = grupo["target_clasificacion"].values
+        n = len(serie)
+        for i in range(n - w + 1):
+            ventana = serie[i: i + w]
+            idx_target = i + w - 1
+            X.append(ventana)
+            y_reg.append(target_reg[idx_target])
+            y_clas.append(target_clas[idx_target])
+    return np.array(X), np.array(y_reg), np.array(y_clas)
+\end{lstlisting}
+
+\section{Generador de datos sintéticos}
+\label{apx:generador_sintetico}
+
+El siguiente script implementa la estrategia de aumento de datos descrita en la Sección 5.1: generación de tráfico normal mediante \textit{bootstrap} horario de datos reales, e inyección de eventos de congestión con perfil trapezoidal cuyo RTT y pérdida de paquetes se derivan mediante el modelo de teoría de colas de la Sección \ref{sec:congestion}.
+
+\begin{lstlisting}[language=Python, caption={Generador de tráfico sintético calibrado con datos reales.}, label={lst:apx_generador_sintetico}]
+import pandas as pd
+import numpy as np
+
+np.random.seed(42)
+BANDA_NOMINAL = 1_000_000_000
+
+def generar_dia_normal(fecha, pools_rx_por_hora, pools_tx_por_hora, pools_rtt_por_hora):
+    """Genera 1440 minutos de trafico 'normal' por bootstrap horario de datos reales."""
+    filas = []
+    for minuto in range(1440):
+        hora = minuto // 60
+        rx = np.random.choice(pools_rx_por_hora[hora]) * np.random.normal(1.0, 0.05)
+        tx = np.random.choice(pools_tx_por_hora[hora]) * np.random.normal(1.0, 0.05)
+        rtt = np.random.choice(pools_rtt_por_hora[hora])
+        ts = fecha + pd.Timedelta(minutes=minuto)
+        filas.append({"timestamp": ts, "rx_bps": max(0, rx), "tx_bps": max(0, tx),
+                       "rtt_us": rtt, "perdida_pct": 0})
+    df_dia = pd.DataFrame(filas)
+    return df_dia.astype({"rx_bps": "float64", "tx_bps": "float64",
+                           "rtt_us": "float64", "perdida_pct": "float64"})
+
+def perfil_rampa(n_puntos, u_pico):
+    """Perfil trapezoidal: sube (20%) - se mantiene (60%) - baja (20%)."""
+    n_subida = max(1, int(n_puntos * 0.2))
+    n_bajada = max(1, int(n_puntos * 0.2))
+    n_meseta = n_puntos - n_subida - n_bajada
+    subida = np.linspace(0.10, u_pico, n_subida)
+    meseta = np.full(n_meseta, u_pico) * np.random.normal(1.0, 0.03, n_meseta)
+    bajada = np.linspace(u_pico, 0.10, n_bajada)
+    return np.clip(np.concatenate([subida, meseta, bajada]), 0, 0.999)
+
+def rtt_por_teoria_colas(utilizacion, rtt_base_us):
+    """RTT(rho) = rtt_base / (1 - rho), consistente con Kleinrock (Seccion 2.1.2)."""
+    rho = np.clip(utilizacion, 0, 0.98)
+    return rtt_base_us / (1 - rho)
+
+def perdida_por_utilizacion(utilizacion):
+    """Perdida de paquetes: 0% hasta ~0.85, luego crece cuadraticamente."""
+    return np.where(
+        utilizacion < 0.85, 0,
+        np.clip((utilizacion - 0.85) / 0.15, 0, 1) ** 2 * 15
+    )
+
+def inyectar_eventos_congestion(df_dia, n_eventos, umbral=0.80):
+    """Inyecta eventos de congestion con perfil de rampa, duracion e intensidad variadas."""
+    df_dia = df_dia.copy()
+    n = len(df_dia)
+    eventos_generados = []
+    for _ in range(n_eventos):
+        duracion = np.random.randint(5, 30)
+        inicio = np.random.randint(0, n - duracion)
+        u_pico = np.random.uniform(umbral + 0.01, min(0.98, umbral + 0.35))
+        perfil = perfil_rampa(duracion, u_pico)
+
+        idx = df_dia.index[inicio: inicio + duracion]
+        df_dia.loc[idx, "rx_bps"] = perfil * BANDA_NOMINAL
+        df_dia.loc[idx, "tx_bps"] = perfil * BANDA_NOMINAL * np.random.uniform(0.85, 1.0, len(idx))
+        df_dia.loc[idx, "rtt_us"] = rtt_por_teoria_colas(perfil, RTT_BASE_US)
+        df_dia.loc[idx, "perdida_pct"] = perdida_por_utilizacion(perfil)
+
+        eventos_generados.append({
+            "inicio": df_dia.loc[idx[0], "timestamp"],
+            "duracion_min": duracion,
+            "u_pico": round(u_pico, 3)
+        })
+    return df_dia, eventos_generados
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Verificación automática de la ausencia de fuga de datos entre entrenamiento y los conjuntos de evaluación.}, label={lst:apx_verificacion_split}]
+# Verificaciones de seguridad, ejecutadas tras ensamblar los conjuntos finales
+ts_train = set(train_final["timestamp"])
+
+assert len(set(val_regresion["timestamp"]) & ts_train) == 0, \
+    "FUGA: val_regresion se solapa con train"
+assert len(set(test_regresion["timestamp"]) & ts_train) == 0, \
+    "FUGA: test_regresion se solapa con train"
+assert len(set(val_clasificacion["timestamp"]) & ts_train) == 0, \
+    "FUGA: val_clasificacion se solapa con train"
+assert len(set(test_clasificacion["timestamp"]) & ts_train) == 0, \
+    "FUGA: test_clasificacion se solapa con train"
+
+assert val_regresion["es_sintetico"].sum() == 0, "ERROR: val_regresion contiene sintetico"
+assert test_regresion["es_sintetico"].sum() == 0, "ERROR: test_regresion contiene sintetico"
+assert val_clasificacion["es_sintetico"].sum() == len(val_clasificacion), \
+    "ERROR: val_clasificacion contiene datos reales"
+assert test_clasificacion["es_sintetico"].sum() == len(test_clasificacion), \
+    "ERROR: test_clasificacion contiene datos reales"
+
+assert (val_clasificacion["utilizacion"] >= U_TH).sum() > 0, \
+    "ERROR: val_clasificacion no tiene casos positivos"
+assert (test_clasificacion["utilizacion"] >= U_TH).sum() > 0, \
+    "ERROR: test_clasificacion no tiene casos positivos"
+\end{lstlisting}
+
+\section{Entrenamiento y evaluación de modelos}
+\label{apx:entrenamiento_modelos}
+
+A continuación se presenta la implementación de cada uno de los tres modelos evaluados, incluyendo la función común de métricas empleada de manera consistente en los Capítulos 5 y 6.
+
+\begin{lstlisting}[language=Python, caption={Función común de cálculo de métricas de clasificación (Accuracy, Precision, Recall, F1, AUC-ROC).}, label={lst:apx_metricas_comunes}]
+from sklearn.metrics import (roc_auc_score, precision_score, recall_score,
+                              f1_score, accuracy_score, confusion_matrix)
+
+def evaluar_clasificacion(y_real_cont, y_pred_cont, umbral):
+    y_real_bin = (y_real_cont >= umbral).astype(int)
+    y_pred_bin = (y_pred_cont >= umbral).astype(int)
+    if y_real_bin.sum() == 0:
+        return None
+    return {
+        "accuracy": accuracy_score(y_real_bin, y_pred_bin),
+        "precision": precision_score(y_real_bin, y_pred_bin, zero_division=0),
+        "recall": recall_score(y_real_bin, y_pred_bin, zero_division=0),
+        "f1": f1_score(y_real_bin, y_pred_bin, zero_division=0),
+        "auc": roc_auc_score(y_real_bin, y_pred_cont),
+        "matriz_confusion": confusion_matrix(y_real_bin, y_pred_bin)
+    }
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={ARIMA: identificación de orden y pronóstico progresivo por bloques.}, label={lst:apx_arima}]
+import numpy as np
+from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.arima.model import ARIMA
+
+def identificar_orden(serie_train, d_sugerido, p_max=3, q_max=3):
+    mejor_aic, mejor_orden = np.inf, None
+    for p in range(p_max + 1):
+        for q in range(q_max + 1):
+            try:
+                m = ARIMA(serie_train, order=(p, d_sugerido, q)).fit()
+                if m.aic < mejor_aic:
+                    mejor_aic, mejor_orden = m.aic, (p, d_sugerido, q)
+            except Exception:
+                continue
+    return mejor_orden, mejor_aic
+
+def pronostico_bloques(modelo_ajustado, serie, h=5):
+    """Walk-forward por bloques de tamano h, revelando h valores reales por paso."""
+    predicciones, reales = [], []
+    modelo_actual = modelo_ajustado
+    i = 0
+    while i + h <= len(serie):
+        pron = modelo_actual.get_forecast(steps=h).predicted_mean[-1]
+        predicciones.append(pron)
+        reales.append(serie[i + h - 1])
+        modelo_actual = modelo_actual.append(serie[i:i+h], refit=False)
+        i += h
+    return np.array(predicciones), np.array(reales)
+
+# Uso:
+resultado_adf = adfuller(serie_train)
+d = 0 if resultado_adf[1] <= 0.05 else 1
+orden, aic = identificar_orden(serie_train, d)
+modelo_final = ARIMA(serie_train, order=orden).fit()
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={Random Forest: entrenamiento y análisis de importancia de variables.}, label={lst:apx_random_forest}]
+import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
+
+FEATURES = ["U_lag1", "U_lag2", "U_lag3", "U_lag4", "U_lag5", "U_media_movil"]
+
+train = pd.read_csv("train_norm.csv")
+X_train, y_train = train[FEATURES], train["target_regresion"]
+
+modelo = RandomForestRegressor(n_estimators=200, max_depth=10, random_state=42, n_jobs=-1)
+modelo.fit(X_train, y_train)
+
+importancias = pd.Series(modelo.feature_importances_, index=FEATURES) \
+                 .sort_values(ascending=False)
+
+# Prediccion sobre cualquier conjunto de evaluacion:
+def predecir(df_eval):
+    return modelo.predict(df_eval[FEATURES])
+\end{lstlisting}
+
+\begin{lstlisting}[language=Python, caption={LSTM: arquitectura y entrenamiento con early stopping.}, label={lst:apx_lstm}]
+import numpy as np
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers
+
+np.random.seed(42)
+tf.random.set_seed(42)
+
+datos = np.load("ventanas_primario.npz")
+X_train = datos["X_train"].reshape((-1, datos["X_train"].shape[1], 1))
+y_train = datos["y_train_reg"]
+X_val = datos["X_val_reg"].reshape((-1, datos["X_val_reg"].shape[1], 1))
+y_val = datos["y_val_reg"]
+
+modelo = keras.Sequential([
+    layers.Input(shape=(X_train.shape[1], 1)),
+    layers.LSTM(32, activation="tanh"),
+    layers.Dense(16, activation="relu"),
+    layers.Dense(1)
+])
+modelo.compile(optimizer="adam", loss="mse", metrics=["mae"])
+
+early_stop = keras.callbacks.EarlyStopping(
+    monitor="val_loss", patience=10, restore_best_weights=True
+)
+
+historial = modelo.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=100, batch_size=64,
+    callbacks=[early_stop], verbose=1
+)
+\end{lstlisting}
 
 \end{document}
