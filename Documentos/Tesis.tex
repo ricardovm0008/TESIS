@@ -191,8 +191,8 @@ Finalmente, la investigación se justifica por su alineación con las tendencias
 de modelos predictivos en los sistemas de gestión de red, reconociendo que la supervisión tradicional resulta insuficiente para soportar las exigentes demandas de latencia y disponibilidad de las aplicaciones modernas. En este sentido, el trabajo propuesto contribuye a cerrar la brecha entre las capacidades 
 teóricas del aprendizaje automático y su aplicación práctica en un problema real de ingeniería de redes, generando evidencia empírica sobre su viabilidad, precisión y pertinencia.
 
-\section{Alcances y Limitaciones}
-
+\section{Alcances y Limitaciones} 
+\label{sec:alcances}
 El presente trabajo de tesis se circunscribe al desarrollo de un prototipo funcional de predicción de congestión, implementado enteramente en código y orientado a validar la viabilidad utilizando un conjunto de datos de operación de red. El alcance del proyecto se limita a la construcción, entrenamiento y evaluación de 
 estos modelos mediante métricas cuantitativas, sin comprometerse con el desarrollo de una interfaz gráfica de usuario, una aplicación empaquetada o un sistema de producción completo. Por lo tanto, los resultados deben interpretarse como una prueba de concepto que demuestra la capacidad predictiva de los algoritmos seleccionados, 
 y no como una solución lista para ser desplegada en un entorno operacional real.
@@ -1545,10 +1545,10 @@ Para la formulación de clasificación binaria (congestión / no congestión), l
     \label{fig:matriz_confusion}
 \end{figure}
 
-A partir de estas cuatro cantidades se calculan la \textbf{Exactitud}, \textbf{Precisión}, \textbf{Exhaustividad (\textit{Recall})} y el \textbf{\textit{F1-Score}}, cuyas formulaciones matemáticas ya fueron establecidas rigurosamente en el Marco Teórico (Capítulo 2).
+A partir de estas cuatro cantidades se calculan la \textbf{Exactitud}, \textbf{Precisión}, \textbf{Recall} y el \textbf{\textit{F1-Score}}, cuyas formulaciones matemáticas ya fueron establecidas rigurosamente en el Marco Teórico (Capítulo 2).
 
 Es necesario justificar, en el contexto específico de esta tesis, por qué estas métricas no deben ponderarse de manera equivalente. Como se señala en la Figura \ref{fig:matriz_confusion}, un \textbf{falso negativo} ---un episodio real de congestión que el modelo no logra anticipar--- resulta considerablemente más costoso, desde la perspectiva del problema planteado en el Capítulo 1, que un \textbf{falso positivo} ---una alerta emitida ante una situación que finalmente no deriva en congestión---. Esto se debe a que un falso positivo implica, 
-en el peor de los casos, una revisión innecesaria por parte de un administrador de red o una medida preventiva no estrictamente requerida, mientras que un falso negativo implica exactamente el escenario que esta tesis busca evitar: la degradación del servicio sin ningún tipo de anticipación, replicando la limitación reactiva señalada en el Planteamiento del Problema (Sección \ref{sec:planteamiento}). En consecuencia, esta tesis prioriza la \textbf{exhaustividad (\textit{Recall})} sobre la exactitud general como criterio principal de comparación 
+en el peor de los casos, una revisión innecesaria por parte de un administrador de red o una medida preventiva no estrictamente requerida, mientras que un falso negativo implica exactamente el escenario que esta tesis busca evitar: la degradación del servicio sin ningún tipo de anticipación, replicando la limitación reactiva señalada en el Planteamiento del Problema (Sección \ref{sec:planteamiento}). En consecuencia, esta tesis prioriza el \textbf{Recall} sobre la exactitud general como criterio principal de comparación 
 entre modelos, sin descuidar la precisión, para lo cual el \textbf{\textit{F1-score}} ---que balancea ambas--- se reporta como métrica de síntesis. Adicionalmente, dado que la exactitud simple puede resultar engañosa cuando la clase de interés (congestión) es minoritaria dentro del conjunto de datos ---una condición previsible dado que se espera que la red bajo estudio opere por debajo del umbral $U_{th}$ la mayor parte del tiempo---, esta métrica se reportará únicamente como referencia general y no como criterio determinante de comparación.
 
 Complementariamente, se reportará también la curva ROC (\textit{Receiver Operating Characteristic}) y el área bajo dicha curva (AUC), que permiten evaluar el desempeño del clasificador de manera independiente al umbral de decisión específico empleado, ofreciendo una visión más completa de su capacidad discriminativa entre los estados de congestión y no congestión.
@@ -1565,6 +1565,15 @@ Más allá de las métricas convencionales descritas anteriormente, y en congrue
 Esta métrica no sustituye a las anteriores, sino que las complementa: un modelo podría, en principio, alcanzar valores aceptables de \textit{Recall} y \textit{F1-score} prediciendo la congestión con muy poca antelación (por ejemplo, un minuto antes de que ocurra), lo cual tendría escasa utilidad práctica para que un administrador de red o un sistema automatizado tome medidas correctivas a tiempo. El $TAE$ promedio, reportado junto con su desviación estándar, permitirá evaluar si los horizontes de predicción $h$ explorados en la Sección 
 \ref{sec:preprocesamiento} (entre 5 y 15 minutos) resultan, en la práctica, suficientes para el propósito de anticipación planteado en esta investigación.
 
+\subsection*{Justificación de la partición cronológica frente a la validación cruzada}
+
+En la planificación inicial de este proyecto se contempló el uso de técnicas de validación cruzada estándar (como \textit{k-fold cross-validation}) para la evaluación algorítmica. Sin embargo, durante el diseño del \textit{pipeline} de datos, esta técnica clásica fue descartada por una restricción matemática intrínseca a la naturaleza del problema: la telemetría de red constituye una \textbf{serie temporal} estricta.
+
+La validación cruzada tradicional asume que las observaciones son independientes e idénticamente distribuidas (i.i.d.) y particiona el \textit{dataset} mediante un muestreo aleatorio. Aplicar este enfoque a secuencias temporales destruye la autocorrelación de la serie y provoca un sesgo metodológico crítico conocido como fuga de información temporal (\textit{temporal data leakage}), permitiendo que el modelo se entrene inadvertidamente con datos del "futuro" para predecir el pasado.
+
+Para garantizar el rigor predictivo y evitar este sesgo, se implementó en su lugar una partición de retención secuencial (\textit{chronological hold-out}). El \textit{dataset} se dividió en particiones de entrenamiento, validación y prueba respetando estrictamente la flecha del tiempo de la recolección. En el caso del modelo autorregresivo (ARIMA), este esquema se resolvió mediante un pronóstico progresivo continuo (\textit{rolling forecast}), el cual representa el equivalente funcional de la validación cruzada diseñado específicamente para 
+series temporales. Esta adaptación estructural satisface el propósito original de validar el modelo de forma exhaustiva, pero bajo un marco matemáticamente válido para datos secuenciales.
+
 \subsection*{Síntesis del esquema de evaluación}
 
 La Tabla \ref{tab:resumen_evaluacion} sintetiza el esquema completo de evaluación que se aplicará de manera uniforme a los cinco modelos justificados en la Sección \ref{sec:modelos_justificacion}, tanto sobre el conjunto de prueba del \textit{dataset} primario como sobre el conjunto de validación externa MAWI, conforme al diseño experimental ilustrado en la Figura \ref{fig:diseno_experimental}.
@@ -1575,7 +1584,7 @@ La Tabla \ref{tab:resumen_evaluacion} sintetiza el esquema completo de evaluaci�
         \hline
         \textbf{Formulación} & \textbf{Métricas} & \textbf{Criterio principal} \\
         \hline
-        Regresión & RMSE, MAE, MAPE & RMSE (penaliza errores severos) \\
+        Regresión & RMSE, MAE, MAPE & RMSE \\
         \hline
         Clasificación & Exactitud, Precisión, \textit{Recall}, F1, AUC-ROC & \textit{Recall}, sintetizado con F1 \\
         \hline
@@ -1666,7 +1675,7 @@ Finalmente, el código fuente desarrollado para esta tesis se gestionará median
 El presente capítulo constituye el núcleo empírico de esta investigación, materializando las decisiones metodológicas y arquitectónicas justificadas en el Capítulo 4. Aquí se abandona el plano de las definiciones teóricas para documentar la ejecución sistemática del \textit{pipeline} de datos y la codificación algorítmica del prototipo.
 
 El desarrollo se expone siguiendo la secuencia lógica del flujo de información en un sistema predictivo aplicado a redes. Inicialmente, se detalla la extracción híbrida de telemetría desde la infraestructura de enrutamiento y la posterior exploración estadística del conjunto de datos real para definir el umbral de congestión (Sección \ref{sec:obtencion_exploracion}). A continuación, se implementan los tratamientos matemáticos de limpieza, ventaneo y escalado exigidos para mitigar las discrepancias estructurales 
-entre las fuentes de información (Sección \ref{sec:preprocesamiento_implementacion}). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados ---transitando desde la línea base estadística, pasando por el ensamble de \textit{Machine Learning} clásico, hasta culminar con las topologías de redes neuronales recurrentes---.
+entre las fuentes de información (Sección \ref{sec:preprocesamiento}). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados ---transitando desde la línea base estadística, pasando por el ensamble de \textit{Machine Learning} clásico, hasta culminar con las topologías de redes neuronales recurrentes---.
 
 El objetivo rector de este capítulo no es constituir un manual de programación, sino evidenciar que la transformación del tráfico bruto en un sistema predictivo funcional obedece a un diseño de \textit{software} determinista, reproducible y científicamente fundamentado.
 
@@ -1680,11 +1689,11 @@ La fase de desarrollo inició con la consolidación y auditoría de los datos cr
 Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada bajo estudio ---en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente--- condujeron a adoptar como mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante 
 el Programador de Tareas (\textit{Scheduler}) del propio equipo, complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución preserva la naturaleza pasiva de la recolección y la métrica obtenida, sin alterar el diseño experimental planteado en el Capítulo 4.
 
-La recolección, iniciada el 29 de agosto de 2026, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar la continuidad ante posibles interrupciones de la conectividad remota (Sección \ref{sec:herramientas_entorno}).
+La recolección, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar la continuidad ante posibles interrupciones de la conectividad remota (Sección \ref{sec:herramientas_entorno}).
 
 \subsection*{Consolidación y auditoría de continuidad}
 
-Al cierre del periodo de recolección, el \textit{dataset} primario quedó constituido por \textbf{21 días} de monitoreo (del 29 de agosto al 19 de septiembre de 2026), consolidados en 25\,422 observaciones a una granularidad de 1 minuto. La auditoría de continuidad de la serie ---necesaria dado que la extracción remota de los registros dependía de la disponibilidad sostenida del túnel VPN hacia la infraestructura de la red privada--- reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
+Al cierre del periodo de recolección, el \textit{dataset} primario quedó constituido por \textbf{21 días} de monitoreo, consolidados en 25\,422 observaciones a una granularidad de 1 minuto. La auditoría de continuidad de la serie ---necesaria dado que la extracción remota de los registros dependía de la disponibilidad sostenida del túnel VPN hacia la infraestructura de la red privada--- reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
 
 \begin{table}[H]
     \centering
@@ -1704,10 +1713,13 @@ Al cierre del periodo de recolección, el \textit{dataset} primario quedó const
 
 El corte prolongado, ocurrido entre el 7 y el 9 de septiembre de 2026, resultó en la pérdida completa del día 8 de septiembre, y es atribuible a una interrupción sostenida de la conectividad VPN y de suministro eléctrico en la sede de la red bajo estudio. Las 21 interrupciones menores, de 6 minutos cada una, son consistentes con reinicios periódicos del enlace. Dado que su duración excede ligeramente el umbral de 3 muestras planteado inicialmente en la Sección \ref{sec:preprocesamiento}, se decidió flexibilizar empíricamente dicho límite a 6 muestras, 
 permitiendo así su imputación mediante interpolación lineal sin comprometer la integridad de las tendencias. El corte prolongado, en cambio, excede abrumadoramente cualquier límite razonable de interpolación y se trata estrictamente como una frontera de sesión durante el preprocesamiento, dividiendo la serie en dos segmentos continuos independientes. Esta cobertura del 82.9\,\% es coherente con las limitaciones de un monitoreo remoto sin presencia física reconocidas en los Alcances y Limitaciones de este trabajo (Sección \ref{sec:alcances}).
+\newpage
 
 \subsection*{Exploración estadística del \textit{dataset} primario}
 
-La Tabla \ref{tab:estadisticas_real} presenta las estadísticas descriptivas de las tres métricas capturadas.
+La Tabla \ref{tab:estadisticas_real} presenta las estadísticas descriptivas de las tres métricas capturadas. Más allá de los valores absolutos, estas cifras revelan una característica estructural crítica de la infraestructura estudiada: una extrema asimetría positiva en la distribución del tráfico. Mientras que el factor de utilización experimenta ráfagas esporádicas que alcanzan un máximo de 1.44\,\%, su mediana se sitúa en un ínfimo 0.00021\,\% y su media en 0.00221\,\%. Esta abrumadora prevalencia de estados ociosos confirma empíricamente que la red opera con un sobredimensionamiento masivo respecto a su tráfico cotidiano. 
+
+Asimismo, la métrica de latencia corrobora este diagnóstico: un RTT medio de apenas 9.44 ms con una desviación estándar minúscula de 3.53 ms demuestra que los enrutadores despachan los paquetes inmediatamente, sin que exista acumulación en los \textit{buffers} (\textit{bufferbloat}). Esta estabilidad de la latencia constituye la evidencia empírica que justifica, de manera irrefutable, la necesidad metodológica de inyectar congestión sintética (Sección \ref{sec:obtencion_exploracion}): al no presentarse el fenómeno no lineal descrito por la Teoría de Colas en los datos reales, ningún algoritmo de \textit{Machine Learning} habría tenido anomalías orgánicas de las cuales aprender.
 
 \begin{table}[H]
     \centering
@@ -1726,7 +1738,9 @@ La Tabla \ref{tab:estadisticas_real} presenta las estadísticas descriptivas de 
     \label{tab:estadisticas_real}
 \end{table}
 
-La Figura \ref{fig:patron_horario_real} ilustra el patrón de tráfico por hora del día, revelando un comportamiento consistente con la naturaleza heterogénea de la red descrita en la Sección \ref{sec:fuente_datos}: tráfico basal reducido durante la madrugada e incrementos hacia las horas de mayor actividad residencial y de videovigilancia.
+La Figura \ref{fig:patron_horario_real} ilustra este comportamiento dinámico al contrastar el tráfico promedio frente a los picos máximos observados por hora del día. La inmensa brecha visual entre ambas series evidencia la naturaleza altamente volátil y en ráfagas (\textit{bursty nature}) del tráfico analizado. Aunque el volumen promedio se mantiene prácticamente plano a lo largo de las 24 horas, los picos de máxima demanda irrumpen de manera abrupta y transitoria, concentrándose específicamente en las ventanas de las 15:00 y las 17:00 horas. Este patrón es plenamente consistente con la naturaleza heterogénea de la red descrita en la Sección \ref{sec:fuente_datos}, empatando con los horarios de finalización de jornada laboral, picos de actividad residencial y probables sincronizaciones en ráfaga de la plataforma Nextcloud.
+
+Desde el punto de vista predictivo, la Figura \ref{fig:patron_horario_real} anticipa estructuralmente el gran desafío que enfrentarán los algoritmos en el Capítulo 6: predecir el promedio estable inferior es una tarea matemáticamente trivial que un modelo conservador dominará rápidamente, pero predecir el momento exacto en que detonarán los picos requerirá una sensibilidad algorítmica excepcional.
 
 \begin{figure}[H]
     \centering
@@ -1735,7 +1749,7 @@ La Figura \ref{fig:patron_horario_real} ilustra el patrón de tráfico por hora 
     \label{fig:patron_horario_real}
 \end{figure}
 
-La Figura \ref{fig:serie_temporal_real} presenta la serie temporal completa de utilización a lo largo de los 21 días, donde son visibles tanto la estabilidad general del tráfico como las ráfagas esporádicas de mayor magnitud.
+Finalmente, la Figura \ref{fig:serie_temporal_real} presenta la serie temporal completa de utilización a lo largo de los 21 días efectivos de monitoreo. En esta representación longitudinal se confirma visualmente el diagnóstico estadístico previo: una línea base (\textit{baseline}) de estabilidad general y tráfico ocioso, interrumpida únicamente por ráfagas esporádicas de mayor magnitud que, incluso en su máxima expresión, no logran estresar la capacidad total del enlace.
 
 \begin{figure}[H]
     \centering
@@ -1744,12 +1758,16 @@ La Figura \ref{fig:serie_temporal_real} presenta la serie temporal completa de u
     \label{fig:serie_temporal_real}
 \end{figure}
 
-La Figura \ref{fig:histograma_real} presenta la distribución completa de \texttt{rx\_bps} en escala logarítmica de frecuencia, dada la naturaleza extremadamente sesgada de la distribución.
+La Figura \ref{fig:histograma_real} presenta la distribución empírica de la tasa de recepción (\texttt{rx\_bps}). Fue estrictamente necesario emplear una escala logarítmica en el eje de frecuencias (\textit{eje Y}) debido a la naturaleza extremadamente asimétrica y de cola pesada (\textit{heavy-tailed}) de los datos. 
+
+Como se ilustra en el gráfico, la inmensa mayoría de las observaciones ---representadas por la colosal primera columna a la izquierda--- se concentran en valores cercanos a cero, superando la barrera de las $10^4$ muestras (decenas de miles de minutos en estado de reposo). Por el contrario, los picos de alto rendimiento que conforman la cola extendida hacia la derecha (alcanzando los $1.4 \times 10^7$ bps, o 14 Mbps) son estadísticamente anómalos, registrando frecuencias de aparición minúsculas, de apenas uno o dos dígitos ($10^0$ a $10^1$).
+
+Desde una perspectiva analítica, este histograma trasciende la simple estadística descriptiva y revela la causa raíz del desafío algorítmico central de esta investigación. Esta distribución severamente sesgada explica de forma visual por qué una función de pérdida estándar, como el Error Cuadrático Medio (MSE), incentiva a los modelos predictivos a adoptar una postura conservadora: un algoritmo puede alcanzar una precisión global casi perfecta si se limita a predecir siempre el estado basal mayoritario (la gran columna izquierda), penalizando e ignorando por completo la detección de la cola derecha. Esta evidencia estructural anticipa y justifica matemáticamente el desempeño de la red LSTM documentado en el Capítulo 6, la cual minimizó el error de regresión de forma magistral, pero careció de la sensibilidad (\textit{Recall}) necesaria para clasificar las ráfagas anómalas.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{histograma_real_log.png}
-    \caption{Distribución de \texttt{rx\_bps} (escala logarítmica en frecuencia), \textit{dataset} primario.}
+    \caption{Distribución de \texttt{rx\_bps} (escala logarítmica en frecuencia), evidenciando el severo sesgo hacia el estado ocioso en el \textit{dataset} primario.}
     \label{fig:histograma_real}
 \end{figure}
 
@@ -1763,36 +1781,37 @@ explícita de declarar en todo momento qué proporción de los datos empleados e
 
 \subsection*{Generación de datos sintéticos calibrados}
 
-Se generaron 37 días adicionales de datos sintéticos ---alcanzando en conjunto un volumen equivalente al periodo de dos meses originalmente planificado (Sección \ref{sec:fuente_datos})---, calibrados estadísticamente a partir de los 21 días reales mediante remuestreo (\textit{bootstrap}) de la distribución empírica de tráfico observada por hora del día. Esta estrategia preserva la forma real de la distribución, incluyendo las ráfagas esporádicas características del tráfico de la red privada bajo estudio (Figura \ref{fig:patron_horario_real}), 
-sin asumir una forma paramétrica arbitraria que pudiera distorsionar la dinámica estocástica genuina del canal.
+Se generaron 37 días adicionales de datos sintéticos ---alcanzando en conjunto un volumen temporal equivalente al periodo de dos meses originalmente planificado (Sección \ref{sec:fuente_datos})---. Esta masa de datos se calibró estadísticamente a partir de los 21 días de tráfico real mediante un remuestreo iterativo (\textit{bootstrap}) de la distribución empírica observada por hora del día. Esta rigurosa estrategia preserva la topología genuina de la distribución, incluyendo las ráfagas esporádicas características de la red privada bajo estudio (Figura \ref{fig:patron_horario_real}), sin forzar una forma paramétrica arbitraria que habría distorsionado la dinámica estocástica original del canal.
 
-Sobre este tráfico sintético base se inyectaron deliberadamente 126 eventos de congestión con un perfil trapezoidal (ascenso, meseta, descenso). Estos eventos poseen una duración variable entre 5 y 29 minutos (media de 17.4 minutos) ---consistente con la duración mínima sostenida establecida en la Ecuación \ref{eq:congestion_instanciada}---, y una intensidad variable con utilización pico ($U_{pico}$) entre 0.811 y 0.979 (media de 0.890). La Figura \ref{fig:distribucion_eventos} presenta la distribución de duración e intensidad de los eventos inyectados.
+Sobre este tráfico de fondo sintético, pero estadísticamente anclado a la realidad, se inyectaron de forma deliberada 126 eventos de congestión pura. Para evitar un aprendizaje por memorización plana, los eventos se modelaron con un perfil geométrico trapezoidal (ascenso gradual, meseta de crisis, descenso de mitigación) dotado de varianza paramétrica. Su duración oscila entre 5 y 29 minutos (media de 17.4 minutos) ---cumpliendo estrictamente con la condición de sostenimiento temporal fijada en la Ecuación \ref{eq:congestion_instanciada}---, y su intensidad pico ($U_{pico}$) fluctúa entre 0.811 y 0.979 (media de 0.890). La Figura \ref{fig:distribucion_eventos} presenta el histograma bivariado de esta inyección, demostrando la heterogeneidad de las anomalías generadas.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{distribucion_eventos_sinteticos.png}
-    \caption{Distribución de duración e intensidad de los 126 eventos de congestión sintéticos inyectados.}
+    \caption{Distribución de duración e intensidad paramétrica de los 126 eventos de congestión sintéticos inyectados.}
     \label{fig:distribucion_eventos}
 \end{figure}
 
-De manera consistente con el marco teórico de esta tesis, la latencia y la tasa de pérdida de paquetes durante dichos eventos no se generaron de forma independiente o arbitraria, sino que se derivaron de la propia utilización sintética mediante el modelo de teoría de colas presentado en la Sección \ref{sec:congestion}: el retraso crece proporcionalmente a $\frac{1}{1-\rho}$ conforme la utilización se aproxima a la saturación, y la pérdida de paquetes se activa únicamente en la vecindad de dicha saturación (a partir de $U \approx 0.85$). La Figura 
-\ref{fig:ejemplo_evento} ilustra un evento de congestión sintético representativo, evidenciando la relación causal entre las tres métricas.
+Es de vital importancia metodológica destacar que la latencia (RTT) y la tasa de pérdida de paquetes durante estos eventos \textbf{no} se generaron mediante la adición de ruido blanco o valores aleatorios. En estricta adherencia al marco analítico de esta tesis, estas métricas secundarias se derivaron determinísticamente de la propia utilización sintética empleando el modelo matemático de la Teoría de Colas (Sección \ref{sec:congestion}): el retraso en cola se modeló para crecer de forma asintótica (proporcional a $\frac{1}{1-\rho}$) conforme el canal roza la saturación, mientras que la función de descarte de paquetes (\textit{packet drop}) permanece inactiva hasta que la utilización perfora el crítico umbral de vecindad ($U \approx 0.85$). 
+
+La Figura \ref{fig:ejemplo_evento} aporta la evidencia visual concluyente de esta relación causal: la gráfica central y la inferior permanecen estables hasta el minuto 10, instante preciso en que la utilización cruzando la cota del 80\,\% (línea roja punteada) detona un colapso en el RTT y violentos picos de pérdida de paquetes, emulando con fidelidad matemática el colapso termodinámico de un enrutador del mundo real.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{ejemplo_evento_sintetico.png}
-    \caption{Ejemplo de un evento de congestión sintético: utilización, RTT y pérdida de paquetes, derivados mediante el modelo de teoría de colas de la Sección \ref{sec:congestion}.}
+    \caption{Disección causal de un evento sintético inyectado: la utilización estresa la red y detona determinísticamente el colapso del RTT y la pérdida de paquetes, validando la Teoría de Colas.}
     \label{fig:ejemplo_evento}
 \end{figure}
 
-La Figura \ref{fig:histograma_sintetico} presenta la distribución completa de utilización del \textit{dataset} sintético, contrastada contra el umbral $U_{th}=0.80$, evidenciando la presencia deliberada de masa de probabilidad más allá del umbral de congestión ---ausente por completo en los datos reales (Figura \ref{fig:histograma_real})---.
+Finalmente, la Figura \ref{fig:histograma_sintetico} presenta la radiografía estadística del \textit{dataset} sintético final, contrastando la masa poblacional contra el umbral crítico $U_{th}=0.80$. Esta representación logarítmica ilustra el éxito del diseño experimental: se conservó la abrumadora prevalencia de estados ociosos a la izquierda (respetando la física de la red), pero se construyó un montículo secundario de masa probabilística a la derecha del umbral, dotando a los algoritmos de clasificación ---por primera vez en todo el ciclo de vida del canal--- de eventos matemáticamente robustos a partir de los cuales aprender a discriminar la congestión.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{histograma_sintetico.png}
-    \caption{Distribución de utilización, \textit{dataset} sintético (37 días), contrastada contra $U_{th}=0.80$.}
+    \caption{Distribución probabilística de utilización en el \textit{dataset} sintético (37 días). Se observa la provisión deliberada de eventos a la derecha del umbral de congestión ($U_{th}=0.80$).}
     \label{fig:histograma_sintetico}
 \end{figure}
+
 
 \subsection*{Diseño de evaluación: preservando la integridad de los datos reales}
 
@@ -2025,20 +2044,18 @@ Esta segmentación resulta indispensable para calcular las variables de rezago, 
 \ref{sec:obtencion_exploracion}). Tras la limpieza y eliminación de observaciones incompletas en los bordes, el conjunto de entrenamiento quedó compuesto por 46\,872 observaciones.
 
 \subsubsection*{Normalización sin fuga de datos entre las cinco particiones}
+A diferencia del piloto, el diseño de evaluación dual establecido requiere que la normalización Min-Max se aplique de forma estructurada sobre \textbf{cinco} particiones (entrenamiento unificado, y pares de validación/prueba separados para regresión y clasificación). Para prevenir estrictamente la fuga de información temporal (\textit{data leakage}), los parámetros de escalamiento escalar (mínimo y máximo) se calcularon de manera exclusiva sobre la matriz de entrenamiento y se proyectaron, sin recálculo alguno, sobre las cuatro particiones de evaluación restantes.
 
-A diferencia del piloto, el diseño de evaluación dual establecido requiere que la normalización Min-Max se aplique sobre \textbf{cinco} particiones (entrenamiento, y validación/prueba para regresión y clasificación). Los parámetros de escala se calcularon exclusivamente a partir del conjunto de entrenamiento y se aplicaron sin recalcular sobre las 
-cuatro particiones de evaluación restantes.
-
-La Figura \ref{fig:comparativa_distribuciones} contrasta la distribución de la utilización normalizada resultante, evidenciando que las particiones de regresión (100\,\% reales) concentran su masa por debajo del umbral $U_{th}$ normalizado (línea roja discontinua), mientras que las de clasificación (100\,\% sintéticas) sí abarcan la región de congestión.
+La Figura \ref{fig:comparativa_distribuciones} expone la matriz de histogramas resultante de este proceso, ofreciendo una comprobación visual crítica de la asimetría del diseño experimental. La fila superior (paneles en gris) ilustra las particiones dominadas por el tráfico de fondo: mientras que el conjunto de entrenamiento (panel superior izquierdo) abarca todo el espectro [0, 1] debido a la inyección de anomalías, las particiones de regresión (100\,\% reales, paneles superior central y derecho) colapsan su densidad de probabilidad íntegramente hacia el extremo izquierdo, confirmando que la red operó muy por debajo del umbral de congestión $U_{th}=0.80$ (línea roja discontinua). En contraste, la fila inferior (paneles en naranja) corrobora la idoneidad de los conjuntos de clasificación (100\,\% sintéticos): aquí se aprecia cómo la masa anómala inyectada franquea exitosamente el umbral, dotando matemáticamente a la evaluación de los eventos necesarios para probar la capacidad de detección.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{comparativa_distribuciones_conjuntos.png}
-    \caption{Distribución de la utilización normalizada en las cinco particiones del \textit{dataset} primario.}
+    \caption{Matriz de distribución de utilización normalizada: contraste entre el espectro del entrenamiento (arriba izq.), la contención del tráfico real (arriba centro/der.) y la masa anómala inyectada (abajo).}
     \label{fig:comparativa_distribuciones}
 \end{figure}
 
-La Tabla \ref{tab:rangos_normalizados} resume los rangos resultantes. Valores mínimos ligeramente negativos o máximos distintos de 1 en las evaluaciones son la consecuencia directa e intencional de evitar la fuga de información desde el futuro.
+La Tabla \ref{tab:rangos_normalizados} resume los rangos topológicos resultantes. Es imperativo señalar que la existencia de máximos ínfimos en las particiones de regresión (apenas 0.0144) o de mínimos fraccionalmente negativos no constituye un error de procesamiento, sino la consecuencia analítica directa y deseada de haber congelado los escalares en el conjunto de entrenamiento, garantizando así una evaluación completamente ciega a magnitudes no observadas en el pasado.
 
 \begin{table}[H]
     \centering
@@ -2053,9 +2070,10 @@ La Tabla \ref{tab:rangos_normalizados} resume los rangos resultantes. Valores m�
         Prueba (clasificación) & $-$0.0000001 & 1.000000 & 10\,622 \\
         \hline
     \end{tabular}
-    \caption{Rango de utilización normalizada por partición, \textit{dataset} primario.}
+    \caption{Rango de utilización normalizada por partición, \textit{dataset} primario. Los valores atípicos certifican la ausencia de fuga de información metodológica.}
     \label{tab:rangos_normalizados}
 \end{table}
+\newpage
 
 \subsubsection*{Ventaneo secuencial oficial}
 
@@ -2113,8 +2131,7 @@ Ambos coeficientes resultaron estadísticamente significativos ($p<0.001$), y la
 
 \subsubsection*{Evaluación mediante pronóstico progresivo (Regresión)}
 
-La validación del modelo se implementó mediante un esquema iterativo de pronóstico progresivo (\textit{walk-forward validation}): para cada instante $t$, el modelo generó una predicción continua a horizonte $h=5$ minutos. Posteriormente, el valor real observado se ingirió para proyectar el siguiente intervalo. La Tabla \ref{tab:resultados_arima_regresion} 
-presenta las métricas de error continuo.
+La validación del modelo se implementó mediante un riguroso esquema iterativo de pronóstico progresivo (\textit{rolling forecast} o \textit{walk-forward validation}). Para cada instante $t$, el algoritmo generó una predicción continua del volumen de tráfico proyectada a un horizonte de $h=5$ pasos (segundos, en el caso del piloto MAWI). Inmediatamente después, el valor real observado en $t+h$ se ingirió en el modelo para recalibrar los pesos y proyectar el siguiente intervalo, emulando así el flujo de información de un despliegue en tiempo real. La Tabla \ref{tab:resultados_arima_regresion} presenta las métricas de error continuo resultantes.
 
 \begin{table}[H]
     \centering
@@ -2126,16 +2143,18 @@ presenta las métricas de error continuo.
         Prueba & 0.0282 & 0.0221 & 10.80\,\% \\
         \hline
     \end{tabular}
-    \caption{Métricas de desempeño en regresión de ARIMA(1,1,1), \textit{dataset} piloto MAWI.}
+    \caption{Métricas de desempeño en regresión continua del modelo ARIMA(1,1,1), evaluado sobre la partición de prueba del \textit{dataset} piloto MAWI.}
     \label{tab:resultados_arima_regresion}
 \end{table}
 
-La Figura \ref{fig:arima_prediccion} contrasta las predicciones continuas del modelo contra los valores reales observados en el conjunto de prueba, demostrando una consistencia (MAPE $\approx$ 10.80\,\%) que descarta un sobreajuste estructural.
+La Figura \ref{fig:arima_prediccion} contrasta visualmente la trayectoria de las predicciones continuas del modelo frente a los valores reales observados en el conjunto de prueba. Un análisis detallado de esta gráfica revela el comportamiento intrínseco de la topología estadística: la predicción de ARIMA (línea roja discontinua) actúa como un atractor suavizado del tráfico real (línea azul). Mientras que la utilización real exhibe la alta variabilidad y el estocasticismo transitorio característicos del ruido blanco (\textit{white noise}), el modelo filtra eficientemente dichas oscilaciones para trazar la tendencia central de fondo. 
+
+Este comportamiento de suavizado (\textit{smoothing}) confirma la solidez general del modelo, evidenciando una estabilidad del error porcentual (MAPE $\approx$ 10.80\,\%) que descarta categóricamente un sobreajuste (\textit{overfitting}) memorístico. No obstante, desde una perspectiva analítica orientada a la detección de anomalías, esta misma gráfica exhibe visualmente la debilidad estructural que se documentará más adelante: la inercia estadística de ARIMA lo hace lento para reaccionar ante picos súbitos, una característica que, si bien favorece la regresión continua del estado base, comprometerá severamente su \textit{Recall} a la hora de clasificar ráfagas de congestión abruptas.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_prediccion_vs_real.png}
-    \caption{ARIMA(1,1,1): predicción continua vs. valor real, conjunto de prueba.}
+    \caption{ARIMA(1,1,1): Evaluación de pronóstico progresivo ($h=5$). El modelo filtra el ruido estocástico de la señal real, capturando exitosamente la tendencia de fondo sin incurrir en sobreajuste.}
     \label{fig:arima_prediccion}
 \end{figure}
 
@@ -2151,7 +2170,7 @@ ARIMA rebasaba el umbral antes del evento real. La Tabla \ref{tab:resultados_ari
         \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
         \hline
         Precisión & 64.2\,\% \\
-        \textit{Recall} (Exhaustividad) & 41.5\,\% \\
+        \textit{Recall} & 41.5\,\% \\
         \textit{F1-score} & 50.4\,\% \\
         \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{1.2 minutos} \\
         \hline
@@ -2182,8 +2201,7 @@ residuos (curtosis de 249.4), atribuible a los eventos de congestión sintético
 
 \subsubsection*{Evaluación de regresión (datos reales)}
 
-Conforme al diseño de evaluación dual establecido en la Sección \ref{sec:obtencion_exploracion}, la capacidad de regresión del modelo se evaluó exclusivamente sobre las particiones reales de validación y prueba, mediante el esquema de pronóstico progresivo descrito en la Sección \ref{sec:evaluacion}. La Tabla \ref{tab:arima_primario_regresion} 
-presenta los resultados.
+Conforme al diseño de evaluación dual asimétrico establecido en la Sección \ref{sec:obtencion_exploracion}, la capacidad de regresión continua del modelo se evaluó exclusivamente sobre las particiones puras (100\,\% tráfico real) de validación y prueba, utilizando el estricto esquema de pronóstico progresivo (\textit{rolling forecast}) por bloques, descrito metodológicamente en la Sección \ref{sec:evaluacion}. La Tabla \ref{tab:arima_primario_regresion} presenta los resultados de esta evaluación.
 
 \begin{table}[H]
     \centering
@@ -2195,26 +2213,29 @@ presenta los resultados.
         Prueba (real) & 0.045872 & 0.015059 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de ARIMA(3,0,3) sobre el \textit{dataset} primario (escala original de utilización).}
+    \caption{Métricas de regresión del modelo ARIMA(3,0,3) sobre el \textit{dataset} primario (escala original de utilización).}
     \label{tab:arima_primario_regresion}
 \end{table}
 
-La Figura \ref{fig:arima_primario_regresion} contrasta visualmente las predicciones del modelo contra los valores reales observados en el conjunto de prueba de regresión.
+Es imperativo notar que se omite deliberadamente el Error Porcentual Absoluto Medio (MAPE) de esta tabla, en estricta congruencia con la advertencia matemática formulada en la Sección \ref{sec:evaluacion}: dado que la utilización real observada en esta partición gravita de manera asintótica hacia el cero (Sección \ref{sec:obtencion_exploracion}), el denominador de la ecuación del MAPE se vuelve numéricamente inestable, generando errores porcentuales astronómicos que carecen de cualquier valor interpretativo en el contexto de redes de baja utilización.
+
+La Figura \ref{fig:arima_primario_regresion} contrasta visualmente las predicciones del algoritmo contra los valores reales observados en el conjunto de prueba, revelando dos fenómenos estadísticos críticos del modelo ARIMA(3,0,3) al enfrentarse a la asimetría del diseño experimental.
+
+En primer lugar, se observa un sesgo sistemático de sobreestimación: la predicción de fondo (línea discontinua roja) flota constantemente por encima de la señal real plana (línea azul continua). Esto ocurre porque el modelo fue ajustado sobre la partición de entrenamiento unificada ---la cual incluye los eventos sintéticos masivos que rozan la saturación (0.98)--- obligando al algoritmo a internalizar una media incondicional ($\mbox{const}=0.0324$) que resulta artificialmente alta en comparación con el comportamiento letárgico típico del canal real. 
+
+En segundo lugar, la gráfica exhibe severas oscilaciones transitorias (picos agudos que alcanzan magnitudes cercanas a 0.7 y valles que perforan el eje negativo) espaciadas a intervalos regulares. Estas disrupciones no constituyen un error de código o un desbordamiento computacional, sino que son el artefacto matemático directo de la evaluación por bloques del pronóstico progresivo. Cada pico marca el inicio de un nuevo bloque de evaluación, instante en el cual el modelo debe reiniciar su estado autorregresivo (AR) y de media móvil (MA) asimilando de golpe las observaciones inmediatamente anteriores. Esta violenta compensación inercial eleva sustancialmente el RMSE general (0.0458) a cifras muy superiores a la utilización máxima real observada (1.44\,\%), confirmando que el paradigma estadístico sufre una severa penalización estructural cuando se evalúa sobre distribuciones asimétricas (entrenamiento estresado vs. prueba ociosa).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_regresion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \caption{ARIMA(3,0,3): Evaluación de regresión. Se evidencia el sesgo de sobreestimación basal y las severas oscilaciones transitorias producto del recálculo por bloques en el pronóstico progresivo.}
     \label{fig:arima_primario_regresion}
 \end{figure}
-
-Se omite deliberadamente el MAPE de esta tabla, en congruencia con la advertencia formulada en la Sección \ref{sec:evaluacion}: dado que la utilización real observada se encuentra sistemáticamente cercana a cero (Sección \ref{sec:obtencion_exploracion}, Tabla \ref{tab:estadisticas_real}), esta métrica se vuelve numéricamente inestable y 
-pierde valor interpretativo. Tanto el RMSE como el MAE resultan, en cambio, considerablemente mayores que el rango típico de la señal real (utilización máxima observada de apenas 1.44\,\%), evidenciando un sesgo sistemático de sobreestimación: al haber sido entrenado sobre una serie que incluye picos de congestión de hasta 0.98, el 
-modelo $\mbox{ARIMA}(3,0,3)$ internaliza una media incondicional ($\mbox{const}=0.0324$) muy superior al comportamiento típico de la red real, produciendo pronósticos que exceden consistentemente los valores reales observados.
+\newpage
 
 \subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
 
-La Tabla \ref{tab:arima_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización de las predicciones continuas en $U_{th}=0.80$, conforme al criterio de la Sección \ref{sec:evaluacion}.
+La Tabla \ref{tab:arima_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en $U_{th}=0.80$, conforme al criterio operativo definido en la Sección \ref{sec:evaluacion}.
 
 \begin{table}[H]
     \centering
@@ -2222,53 +2243,40 @@ La Tabla \ref{tab:arima_primario_clasificacion} presenta las métricas de clasif
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9741 & 0.9750 \\
+        Exactitud & 0.9741 & 0.9750 \\
         Precisión & 0.6667 & 1.0000 \\
-        \textit{Recall} (Exhaustividad) & 0.0357 & 0.0185 \\
+        \textit{Recall}  & 0.0357 & 0.0185 \\
         \textit{F1-score} & 0.0678 & 0.0364 \\
         AUC-ROC & 0.8905 & 0.8939 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de ARIMA(3,0,3), umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \caption{Métricas de clasificación de ARIMA(3,0,3), umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
     \label{tab:arima_primario_clasificacion}
 \end{table}
 
-La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_arima}) revela el patrón subyacente a estas métricas:
+Para comprender la verdadera implicación operativa de estas métricas ---especialmente la aparente contradicción entre una Exactitud sobresaliente (0.9750) y un \textit{Recall} abismal (0.0185)---, es necesario diseccionar la matriz de confusión sobre el conjunto de prueba, presentada en la Ecuación \ref{eq:confusion_arima}.
 
 \begin{equation}
     \begin{pmatrix} \mbox{VN}=2070 & \mbox{FP}=0 \\ \mbox{FN}=53 & \mbox{VP}=1 \end{pmatrix}
     \label{eq:confusion_arima}
 \end{equation}
 
-La Figura \ref{fig:arima_primario_clasificacion} ilustra este mismo comportamiento en el conjunto de prueba de clasificación, donde es visible cómo la predicción del modelo (línea discontinua) rara vez alcanza el umbral $U_{th}=0.80$ (línea punteada), incluso durante los eventos de congestión sintéticos claramente presentes en la serie.
+Esta matriz revela matemáticamente el comportamiento del modelo frente a un escenario de desbalance de clases:
+\begin{itemize}
+    \item \textbf{Verdaderos Negativos (VN=2070):} El modelo es sumamente eficaz para reconocer cuando la red está operando con normalidad.
+    \item \textbf{Falsos Positivos (FP=0):} El algoritmo no detonó ni una sola alerta preventiva injustificada, lo que explica su Precisión perfecta del 100\,\%.
+    \item \textbf{Falsos Negativos (FN=53):} Este es el fallo estructural crítico. De los 54 eventos de congestión inminente que el sistema debió haber alertado, el modelo guardó silencio en 53 ocasiones, dejando la red vulnerable ante el colapso.
+    \item \textbf{Verdaderos Positivos (VP=1):} A pesar de la presencia de múltiples anomalías sintéticas, el algoritmo únicamente logró clasificar con éxito una (1) sola crisis de congestión en toda la evaluación de prueba.
+\end{itemize}
+
+La Figura \ref{fig:arima_primario_clasificacion} aporta la evidencia visual que explica la abrumadora cantidad de falsos negativos y el paupérrimo \textit{Recall} del 1.85\,\%. Al observar los eventos anómalos, es evidente que la predicción del modelo (línea discontinua roja) intenta seguir la trayectoria de los picos de utilización, pero sufre de una severa amortiguación estadística. Dado que el componente de media móvil (MA) de ARIMA inherentemente suaviza el pronóstico empujándolo hacia la tendencia central de la serie, el modelo subestima sistemáticamente la magnitud de las ráfagas abruptas. En consecuencia, las predicciones rojas se quedan cortas y rara vez logran cruzar la barrera crítica de $U_{th}=0.80$ (línea punteada negra), concretando exactamente un solo Verdadero Positivo en todo el conjunto de prueba.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_clasificacion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \caption{ARIMA(3,0,3): Evaluación de clasificación. La amortiguación estadística del modelo impide que sus predicciones crucen el umbral de alerta (0.80), resultando en una proliferación de falsos negativos.}
     \label{fig:arima_primario_clasificacion}
 \end{figure}
-
-El patrón de alta precisión (100\,\%) combinado con un \textit{Recall} extremadamente bajo (1.85\,\%) es consistente con el hallazgo de la fase piloto: ARIMA, al suavizar sus pronósticos hacia la tendencia central de la serie mediante su componente de media móvil, rara vez genera predicciones puntuales que crucen el umbral crítico $U_{th}$, 
-incluso cuando la dinámica subyacente de la serie indica una tendencia de congestión. Esto resulta en un número inaceptable de falsos negativos (53 de 54 eventos reales de congestión no detectados en el conjunto de prueba).
-
-La Tabla \ref{tab:comparativa_arima_piloto_primario} contrasta el desempeño de ARIMA entre la fase piloto y el \textit{dataset} primario definitivo, confirmando su rol como la métrica base a vencer.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
-        \hline
-        Orden seleccionado & ARIMA(1,1,1) & ARIMA(3,0,3) \\
-        \textit{Recall} (clasificación) & N/A\footnotemark & 1.85\,\% \\
-        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.8939 \\
-        \hline
-    \end{tabular}
-    \caption{Comparación del modelo ARIMA entre la fase piloto y el \textit{dataset} primario.}
-    \label{tab:comparativa_arima_piloto_primario}
-\end{table}
-\footnotetext{No aplicable: el \textit{dataset} piloto de MAWI no contuvo casos naturales de congestión (Sección \ref{sec:obtencion_exploracion}), por lo que la formulación de clasificación formal no pudo evaluarse en esa fase.}
 
 \section{Construcción del modelo \textit{Random Forest}}
 \label{sec:rf_desarrollo}
