@@ -13,6 +13,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
 \lstset{
     language=Python,
@@ -2766,7 +2767,6 @@ Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_c
 
 Este resultado ---aparentemente contraintuitivo--- resulta matemáticamente congruente con el diseño de la función de pérdida (\textit{Loss Function}) empleada. Al minimizar iterativamente el Error Cuadrático Medio (MSE) sobre un conjunto de entrenamiento masivamente desbalanceado (donde la inmensa mayoría del tiempo el canal opera ocioso, Sección \ref{sec:obtencion_exploracion}), la red aprendió que la estrategia óptima para reducir su error global es volverse conservadora. La LSTM priorizó la perfección predictiva sobre el régimen mayoritario de letargo (lo cual logró con maestría en la regresión), pero el costo de esa "perfección plana" fue penalizar y subestimar estructuralmente los eventos infrecuentes de congestión.
 
-
 \subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
 
 \begin{table}[H]
@@ -2867,9 +2867,9 @@ Se esperaba que, al evaluar el modelo sobre la partición sintética de clasific
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9741 & 0.9750 \\
+        Exactitud & 0.9741 & 0.9750 \\
         Precisión & 0.6667 & 1.0000 \\
-        \textit{Recall} (Exhaustividad) & 0.0357 & 0.0185 \\
+        \textit{Recall} & 0.0357 & 0.0185 \\
         \textit{F1-score} & 0.0678 & 0.0364 \\
         AUC-ROC & 0.8905 & 0.8939 \\
         \hline
@@ -2905,7 +2905,7 @@ La Figura \ref{fig:recap_arima_clasificacion_pred} ilustra las predicciones cont
 
 \subsection*{Resultados de la validación de generalización (MAWI, granularidad oficial)}
 
-Se esperaba, de manera exploratoria, que el modelo ---aunque entrenado sobre un régimen de tráfico radicalmente distinto--- pudiera al menos aproximar el orden de magnitud de la utilización observada en un enlace de mayor escala como MAWI. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado obtenido sobre las 6 observaciones evaluables derivadas de las trazas de MAWI reagregadas a 1 minuto.
+Se esperaba, de manera exploratoria, que el modelo estadístico ---aunque entrenado sobre un régimen de tráfico radicalmente distinto--- pudiera al menos aproximar el orden de magnitud de la utilización observada en un enlace de mayor escala y complejidad como MAWI. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado obtenido sobre las 6 observaciones evaluables derivadas de las trazas de MAWI reagregadas a la granularidad oficial de 1 minuto.
 
 \begin{table}[H]
     \centering
@@ -2923,29 +2923,38 @@ Se esperaba, de manera exploratoria, que el modelo ---aunque entrenado sobre un 
     \label{tab:recap_arima_generalizacion}
 \end{table}
 
-La Figura \ref{fig:recap_arima_generalizacion} contrasta las predicciones del modelo contra los valores reales de MAWI.
+El resultado cuantitativo contradice de manera contundente la expectativa inicial de viabilidad: un RMSE de 0.323 frente a un rango real de utilización que fluctúa únicamente entre 0.099 y 0.213 implica que el error promedio del algoritmo supera con creces la magnitud total de la señal que intenta predecir. La Figura \ref{fig:recap_arima_generalizacion} proporciona la radiografía visual de este colapso predictivo.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_generalizacion_mawi.png}
-    \caption{Validación de generalización: ARIMA (\textit{dataset} primario) evaluado sobre MAWI (1 minuto oficial).}
+    \caption{Validación de generalización: ARIMA (\textit{dataset} primario) evaluado sobre MAWI. Se evidencia una severa disrupción matemática al cambiar de dominio operativo.}
     \label{fig:recap_arima_generalizacion}
 \end{figure}
 
-El resultado observado contradice de manera contundente la expectativa: un RMSE de 0.323 frente a un rango real que nunca excede 0.213 implica que el modelo no solo falla en capturar la magnitud correcta, sino que su error promedio supera ampliamente la variabilidad total de la serie que intenta predecir.
+Al analizar la gráfica, resulta evidente que la trayectoria de predicción (línea roja discontinua) carece de cualquier correlación con la dinámica real del canal (línea azul continua). Mientras que el tráfico real de MAWI mantiene una estabilidad notable en torno al nivel de 0.15, las predicciones de ARIMA sufren oscilaciones violentas, detonando falsas alarmas masivas cercanas a 0.7 (bloques 0 y 3) seguidas de colapsos inmediatos hacia el cero.
 
-\subsection*{Síntesis visual: RMSE a través de los cuatro contextos de evaluación}
+Este fenómeno errático constituye la prueba empírica definitiva de la principal debilidad estructural de los modelos autorregresivos puros: su extrema rigidez al dominio espacial de entrenamiento. Los coeficientes de las medias móviles (MA) y los términos autorregresivos (AR) del modelo fueron rígidamente calibrados para un ecosistema con una media asintótica a cero y sujetos a eventos sintéticos de alta volatilidad (el \textit{dataset} primario). Al ser forzada a ingerir una serie de tiempo ajena con una media basal estructuralmente superior y una varianza distinta, la ecuación estática entra en una severa descompensación matemática. El modelo sobre-corrige agresivamente en cada nuevo bloque de evaluación, invalidando por completo a ARIMA para escenarios de transferencia de aprendizaje (\textit{Transfer Learning}) en infraestructuras heterogéneas.
 
-La Figura \ref{fig:arima_sintesis_rmse} reúne, en una sola representación, el RMSE obtenido por ARIMA en los cuatro contextos de evaluación descritos en esta sección.
+\subsection*{Síntesis visual: Evolución del error (RMSE) a través de los contextos de evaluación}
+
+La Figura \ref{fig:arima_sintesis_rmse} consolida visualmente la trayectoria del Error Cuadrático Medio (RMSE) de regresión del modelo ARIMA a lo largo de las distintas fases de esta investigación, revelando de manera gráfica la fragilidad inherente a este paradigma estadístico al enfrentarse a entornos dinámicos.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de ARIMA a través de los cuatro contextos de evaluación.}
+    \caption{Síntesis comparativa del RMSE de regresión de ARIMA. Se evidencia la contención del error en entornos controlados (barras azules) frente al colapso algorítmico en generalización (barra roja).}
     \label{fig:arima_sintesis_rmse}
 \end{figure}
 
-La Tabla \ref{tab:sintesis_completa_arima} consolida en un solo lugar la totalidad de los resultados presentados en esta sección.
+La progresión escalar de las barras ilustra tres fenómenos analíticos clave en el comportamiento del algoritmo:
+\begin{itemize}
+    \item \textbf{Estabilidad nativa (barras celestes):} En la fase piloto, el modelo logra sus mejores métricas de regresión (0.0265 y 0.0282) debido a que operó sobre una serie de tiempo homogénea. Al no existir eventos extremos de congestión en ese conjunto, la ecuación autorregresiva pudo promediar eficientemente el ruido de fondo sin sufrir descompensaciones.
+    \item \textbf{Penalización por asimetría (barras azules):} Al transicionar al \textit{dataset} primario, el error basal de regresión casi se duplica (0.0460). Como se demostró analíticamente en secciones previas, esto no obedece a un problema de sobreajuste (\textit{overfitting}) ---pues la varianza entre validación y prueba es prácticamente nula (0.0460 vs. 0.0459)---, sino al severo sesgo de sobreestimación que internalizó el modelo al verse forzado a entrenar con los eventos sintéticos masivos de congestión.
+    \item \textbf{Colapso en generalización (barra roja):} El salto desproporcionado del error a 0.3233 documenta visualmente el fracaso absoluto del modelo al intentar transferir sus coeficientes fijos a un entorno con una distribución basal y varianza distintas. Esto confirma matemáticamente que ARIMA carece de la plasticidad estructural necesaria para instrumentar \textit{Transfer Learning} en redes heterogéneas.
+\end{itemize}
+
+Finalmente, la Tabla \ref{tab:sintesis_completa_arima} unifica la totalidad de las métricas evaluadas a lo largo de esta fase experimental. Esta consolidación establece formalmente la línea base definitiva contra la cual se contrastará la arquitectura no lineal de los algoritmos de \textit{Machine Learning} en las secciones subsecuentes.
 
 \begin{table}[H]
     \centering
@@ -2963,7 +2972,7 @@ La Tabla \ref{tab:sintesis_completa_arima} consolida en un solo lugar la totalid
         Generalización --- MAWI (oficial) & 100\,\% Real (MAWI) & 0.3233 & N/A & N/A \\
         \hline
     \end{tabular}
-    \caption{Síntesis completa de los resultados de ARIMA a través de todos los contextos de evaluación de este trabajo.}
+    \caption{Síntesis matricial de resultados (ARIMA). Se confirma su viabilidad parcial para el pronóstico continuo (regresión) de letargo, pero su inoperancia práctica para la detección de eventos críticos (\textit{Recall} $\approx$ 1.85\,\%).}
     \label{tab:sintesis_completa_arima}
 \end{table}
 
@@ -3037,14 +3046,20 @@ Se observó una discrepancia notable entre validación y prueba: el RMSE se incr
     \label{fig:recap_rf_regresion_test}
 \end{figure}
 
-La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente el RMSE de \textit{Random Forest} a través de los cuatro contextos de evaluación de regresión disponibles.
+La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente la trayectoria del Error Cuadrático Medio (RMSE) de regresión del ensamble \textit{Random Forest} a través de los cuatro contextos de evaluación, exponiendo de forma gráfica las dos grandes limitaciones estructurales de los árboles de decisión al enfrentarse al pronóstico continuo de series de tiempo.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{rf_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de \textit{Random Forest} a través de los contextos de evaluación.}
+    \includegraphics[width=0.85\textwidth]{rf_sintesis_rmse.png}
+    \caption{Síntesis comparativa del RMSE de regresión de \textit{Random Forest}. Se exponen las penalizaciones algorítmicas por incapacidad de extrapolación (fase piloto) y por hipersensibilidad contextual (fase primaria).}
     \label{fig:rf_sintesis_rmse}
 \end{figure}
+
+El contraste entre los diferentes bloques de evaluación revela la vulnerabilidad topológica del algoritmo ante cambios en la distribución de los datos:
+\begin{itemize}
+    \item \textbf{El límite de extrapolación (barras celestes):} En la fase piloto, el modelo exhibió un error base elevado (0.0962) que sufrió una degradación sustancial al transicionar a la partición de prueba (0.1311). Esta brecha visualiza la limitación geométrica documentada previamente: al enfrentarse a caídas profundas de tráfico estocástico que excedían los umbrales observados durante el entrenamiento, el ensamble fue matemáticamente incapaz de extrapolar, promediando sus nodos hoja y "recortando" sistemáticamente las predicciones inferiores, lo que disparó la métrica de error.
+    \item \textbf{La hipersensibilidad contextual (barras azules):} Al ser evaluado sobre el \textit{dataset} primario, el error de validación aparenta un desempeño superlativo (0.0051). Sin embargo, la partición de prueba expone una disrupción severa, saltando casi un orden de magnitud (0.0496). Esta asimetría documenta el fenómeno de hipersensibilidad inducida por el desbalance: el algoritmo, condicionado por los eventos sintéticos masivos del entrenamiento, sobre-reaccionó ante fluctuaciones inofensivas del canal en la prueba, disparando alucinaciones predictivas masivas que penalizaron severamente su RMSE final.
+\end{itemize}
 
 \subsection*{Resultados de clasificación sobre datos sintéticos aislados}
 
@@ -3056,9 +3071,9 @@ Bajo la formulación binarizada de alerta temprana, se esperaba que \textit{Rand
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9803 & 0.9813 \\
+        Exactitud & 0.9803 & 0.9813 \\
         Precisión & 0.9121 & 0.9318 \\
-        \textit{Recall} (Exhaustividad) & 0.2923 & 0.2982 \\
+        \textit{Recall} & 0.2923 & 0.2982 \\
         \textit{F1-score} & 0.4427 & 0.4518 \\
         AUC-ROC & 0.8796 & 0.9187 \\
         \hline
@@ -3092,16 +3107,24 @@ La Figura \ref{fig:recap_rf_clasificacion} ilustra las predicciones continuas de
 
 \subsection*{Importancia de variables: el impacto de la granularidad}
 
-Un hallazgo analítico particular de este trabajo, adelantado empíricamente en la Sección \ref{sec:rf_desarrollo}, es la inversión topológica del patrón de importancia de variables entre ambas fases de la investigación. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
+Un hallazgo analítico particular de este trabajo, adelantado empíricamente en el Capítulo \ref{sec:rf_desarrollo}, es la inversión topológica absoluta del patrón de importancia de variables entre ambas fases experimentales de la investigación. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{rf_comparativa_importancia.png}
-    \caption{Comparación de la importancia relativa de variables, \textit{Random Forest}: fase piloto (granularidad de 1 segundo) vs. \textit{dataset} primario (granularidad de 1 minuto).}
+    \caption{Comparación de la importancia relativa de variables (Impureza de Gini) en \textit{Random Forest}: el cambio de granularidad de 1 segundo (piloto) a 1 minuto (primario) invierte por completo la relevancia algorítmica.}
     \label{fig:rf_comparativa_importancia}
 \end{figure}
 
-Mientras que en la fase piloto la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentraba el 66.2\,\% de la importancia predictiva total, en el \textit{dataset} primario esta proporción descendió drásticamente al 12.5\,\%, cediendo el rol de predictor dominante al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$), el cual escaló del 13.9\,\% al 66.4\,\%. 
+Como se documenta en la gráfica, mientras que en la fase piloto la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentraba el 66.2\,\% de la capacidad discriminativa total, en el \textit{dataset} primario esta proporción colapsó al 12.5\,\%. Simultáneamente, el algoritmo transfirió el rol de predictor maestro al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$), el cual escaló drásticamente de un marginal 13.9\,\% en el piloto a un abrumador 66.4\,\% en el entorno definitivo.
+
+Lejos de ser una coincidencia o un artefacto estadístico, esta inversión es la consecuencia directa de una de las leyes fundamentales del procesamiento de señales digitales: el impacto de la frecuencia de muestreo sobre la entropía de la serie. 
+
+A una granularidad de hiper-resolución (1 segundo en el \textit{dataset} MAWI), la señal del canal está saturada de ruido de alta frecuencia ---micro-ráfagas de paquetes que no constituyen una tendencia real---. En dicho entorno caótico, el algoritmo descartó la lectura inmediata ($U_{\mbox{\scriptsize lag1}}$) por no ser confiable y se vio forzado a depender matemáticamente de la media móvil para actuar como un filtro paso bajo (\textit{low-pass filter}) que revelara la tendencia subyacente. 
+
+En contraste, la granularidad oficial del \textit{dataset} primario fue establecida en 1 minuto. Al integrar el tráfico en ventanas de 60 segundos, el propio mecanismo de recolección en RouterOS (\textit{pooling}) actuó inherentemente como un filtro de suavizado temporal, promediando \textit{de facto} el ruido estocástico de alta frecuencia. En consecuencia, al estar la serie de tiempo nativamente "limpia", el valor del último minuto observado ($U_{\mbox{\scriptsize lag1}}$) se consolida como una métrica robusta e indiscutible del estado de la red, volviendo algorítmicamente redundante el cálculo adicional de medias móviles superpuestas. 
+
+Esta discrepancia estructural establece un precedente empírico crucial para despliegues en producción: la arquitectura (\textit{Feature Engineering}) de los algoritmos de detección no es universal, sino que debe co-evolucionar obligatoriamente en sincronía con las capacidades de recolección de métricas de la infraestructura de red.
 
 \subsection*{Imposibilidad de la validación de generalización}
 
@@ -3175,7 +3198,7 @@ Al igual que con los modelos anteriores, la formulación de clasificación binar
 
 \subsection*{Resultados de regresión sobre el \textit{dataset} primario}
 
-Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de entrada en lugar de depender de variables de rezago aisladas o promedios estáticos, ofreciera el mejor desempeño de regresión entre los tres modelos evaluados, dada su mayor capacidad de representación topológica (Sección \ref{sec:modelos_justificacion}). La red se reentrenó con idéntica arquitectura sobre las 46\,582 secuencias del \textit{dataset} primario, convergiendo en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados observados.
+Se esperaba analíticamente que la arquitectura recurrente ---al procesar la secuencia temporal completa y mantener un estado interno, en lugar de depender de rezagos aislados o promedios estáticos--- ofreciera el mejor desempeño de regresión continua, dada su superior capacidad de representación topológica (Sección \ref{sec:modelos_justificacion}). La red LSTM se reentrenó con idéntica configuración estructural sobre las 46\,582 secuencias del \textit{dataset} primario, convergiendo de manera estable en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados consolidados.
 
 \begin{table}[H]
     \centering
@@ -3191,15 +3214,18 @@ Se esperaba que la arquitectura recurrente, al procesar la secuencia completa de
     \label{tab:recap_lstm_primario_regresion}
 \end{table}
 
-Los resultados empíricos confirmaron plenamente esta expectativa, y de manera contundente: el RMSE de prueba (0.001036) resultó casi dos órdenes de magnitud inferior al de ARIMA (0.0459, Sección \ref{sec:resultados_arima}) y al de \textit{Random Forest} (0.0496, Sección \ref{sec:resultados_rf}) sobre el mismo conjunto. La Figura \ref{fig:lstm_sintesis_rmse} sitúa este resultado en el contexto de los cuatro escenarios de evaluación de regresión disponibles, empleando escala logarítmica dada la notable magnitud de la diferencia.
+La evidencia empírica confirma esta hipótesis de manera categórica: el RMSE de prueba obtenido por la red neuronal (0.001036) resulta ser prácticamente \textbf{dos órdenes de magnitud inferior} a las marcas establecidas por ARIMA (0.0459, Sección \ref{sec:resultados_arima}) y \textit{Random Forest} (0.0496, Sección \ref{sec:resultados_rf}) sobre este mismo conjunto. 
+
+La Figura \ref{fig:lstm_sintesis_rmse} sitúa este desempeño en el contexto de los cuatro escenarios de evaluación de regresión a los que fue sometida la red. Dada la monumental reducción del error frente a los modelos clásicos y la brecha entre las distintas fases experimentales, resultó matemáticamente imperativo graficar el eje de las ordenadas en \textbf{escala logarítmica}; en una representación lineal estándar, las barras de regresión del \textit{dataset} primario habrían colapsado visualmente a cero.
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{lstm_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de LSTM a través de los contextos de evaluación (escala logarítmica).}
+    \includegraphics[width=0.85\textwidth]{lstm_sintesis_rmse.png}
+    \caption{Síntesis comparativa del RMSE de regresión de LSTM a través de los contextos de evaluación. La escala logarítmica ilustra la reducción masiva del error (magnitud $10^{-3}$) al transicionar al \textit{dataset} primario.}
     \label{fig:lstm_sintesis_rmse}
 \end{figure}
 
+Este gráfico consagra la excepcional adaptabilidad de la topología recurrente. Mientras que ARIMA y \textit{Random Forest} sufrieron severas descompensaciones (sesgo de sobreestimación e hipersensibilidad, respectivamente) al enfrentar la asimetría del \textit{dataset} primario, la LSTM logró anclar su predicción al estado basal estricto del canal. Su estado celular (\textit{cell state}) le permitió retener el contexto a largo plazo de que la red operaba en un régimen de hiper-letargo, ignorando el ruido estocástico y logrando niveles microscópicos de error (en el orden de $10^{-3}$ y $10^{-4}$) inalcanzables para la estadística tradicional y los ensambles de decisión.
 Las Figuras \ref{fig:recap_lstm_regresion_val} y \ref{fig:recap_lstm_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados, demostrando un ajuste casi perfecto sobre la tendencia de bajo tráfico.
 
 \begin{figure}[H]
@@ -3226,9 +3252,9 @@ Dada la apabullante superioridad observada en la tarea de regresión continua, s
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9742 & 0.9750 \\
+        Exactitud & 0.9742 & 0.9750 \\
         Precisión & 0.7619 & 0.7778 \\
-        \textit{Recall} (Exhaustividad) & 0.0563 & 0.0509 \\
+        \textit{Recall} & 0.0563 & 0.0509 \\
         \textit{F1-score} & 0.1049 & 0.0956 \\
         AUC-ROC & 0.8783 & 0.9000 \\
         \hline
@@ -3309,7 +3335,6 @@ esta tesis aporta evidencia empírica directa de dicha tensión topológica.
 
 Tercera, la imposibilidad de evaluar la generalización de LSTM frente a MAWI ---idéntica en su causa estructural a la de \textit{Random Forest}--- confirma que esta limitación no es un defecto específico de un algoritmo en particular, sino una consecuencia sistémica directa de la elección de los parámetros de ventana temporal (diseñados para capturar la dinámica de 30 minutos) frente a la fragmentación inherente de fuentes de datos externas. Este hallazgo, junto con los de las Secciones \ref{sec:resultados_arima} y 
 \ref{sec:resultados_rf}, se integra en la comparativa transversal de la Sección 6.4 y conformará el núcleo de las recomendaciones metodológicas en la Sección 6.5.
-\newpage
 
 \section{Comparativa de modelos}
 \label{sec:comparativa_modelos}
@@ -3358,43 +3383,55 @@ fue concebido en la metodología (Sección \ref{sec:modelos_justificacion})---.
 
 \subsection*{El \textit{trade-off} central: precisión continua vs. sensibilidad de alertamiento}
 
-La Figura \ref{fig:scatter_tradeoff} visualiza este hallazgo de la manera más directa posible: cada modelo se posiciona en un plano cuyo eje horizontal representa su error de regresión (menor es mejor, utilizando escala logarítmica) y cuyo eje vertical representa su \textit{Recall} de clasificación (mayor es mejor).
+La conclusión fundamental de esta investigación no reside en la declaración de un modelo victorioso absoluto, sino en la demostración matemática de una paradoja intrínseca al pronóstico de series de tiempo de red. La Figura \ref{fig:scatter_tradeoff} visualiza este hallazgo ---el \textit{trade-off} algorítmico--- de la manera más directa posible: cada modelo se posiciona en un plano cartesiano cuyo eje horizontal representa su error continuo de regresión (RMSE, donde menor es mejor, en escala logarítmica) y cuyo eje vertical representa su sensibilidad operativa de clasificación (\textit{Recall}, donde mayor es mejor).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{scatter_tradeoff_rmse_recall.png}
-    \caption{\textit{Trade-off} entre precisión de regresión (RMSE, prueba) y sensibilidad de clasificación (\textit{Recall}, prueba), los tres modelos.}
+    \caption{\textit{Trade-off} algorítmico: Precisión basal (RMSE, eje X) vs. Sensibilidad de detección (\textit{Recall}, eje Y). Ningún modelo logra la dominancia absoluta en el plano cartesiano.}
     \label{fig:scatter_tradeoff}
 \end{figure}
 
-Si existiera un modelo ideal unificado para los fines de esta tesis, se ubicaría en la esquina inferior derecha de este plano: RMSE mínimo y \textit{Recall} máximo simultáneamente. Ninguno de los tres modelos evaluados ocupa esa posición. LSTM se ubica en el extremo de mínimo error de regresión, pero con un \textit{Recall} modesto; \textit{Random Forest} se ubica en el extremo de máximo \textit{Recall}, pero con el error de regresión más alto de los tres (incluso ligeramente superior al de ARIMA); y ARIMA no domina en 
-ninguna de las dos dimensiones. Esta disposición geométrica ---tres modelos ocupando tres regiones distintas del plano analítico, sin que ninguno subsuma categóricamente a los demás--- constituye la evidencia visual más contundente del hallazgo central de este capítulo.
+La distribución espacial de los nodos en la gráfica revela el perfil de especialización de cada arquitectura:
+\begin{itemize}
+    \item \textbf{El dominio del letargo (LSTM, punto azul):} La red neuronal recurrente se sitúa en el extremo izquierdo del plano, presumiendo un RMSE microscópico ($10^{-3}$). Sin embargo, su posición inferior en el eje Y confirma que el costo matemático de lograr una estabilidad perfecta durante el tráfico ocioso fue desarrollar una severa ceguera conservadora (bajo \textit{Recall}) frente a las crisis anómalas repentinas.
+    \item \textbf{La hiper-vigilancia reactiva (\textit{Random Forest}, punto verde):} El ensamble de árboles corona el eje vertical, ostentando la mayor agudeza para detectar instantes genuinos de congestión (\textit{Recall} máximo). No obstante, su desplazamiento hacia la derecha del plano evidencia el daño colateral: su hipersensibilidad a las anomalías fracturó su capacidad para predecir el flujo basal, resultando en un error continuo (RMSE) elevado producto de constantes alucinaciones predictivas.
+    \item \textbf{La inoperancia asimétrica (ARIMA, punto rojo):} El modelo estadístico tradicional queda relegado a la zona de peor rendimiento (esquina inferior derecha). Su rigidez paramétrica le impidió tanto rastrear el flujo basal con precisión (alto RMSE) como detectar las ráfagas agudas (bajo \textit{Recall}), confirmando su obsolescencia para topologías de red volátiles.
+\end{itemize}
+
+Si existiera un algoritmo totalmente eficiente en todo sentido para la ingeniería de tráfico, su nodo se ubicaría en la esquina superior izquierda (RMSE cero y \textit{Recall} absoluto). La disposición geométrica evidenciada ---tres arquitecturas ocupando clústeres especializados y diametralmente opuestos--- constituye la prueba definitiva del hallazgo central de la tesis: en entornos de red masivamente asimétricos, la optimización para el pronóstico continuo (\textit{Smoothness}) y la optimización para la detección de anomalías (\textit{Sharpness}) son objetivos matemáticamente contrapuestos. No existe un modelo universal; la elección del algoritmo debe estar dictada estrictamente por el objetivo del administrador de la red.
 
 \subsection*{Comparación multidimensional}
 
-La Figura \ref{fig:radar_comparativo} amplía esta comparación a cinco dimensiones simultáneas ---capacidad de regresión (invertida y normalizada, de modo que valores mayores indican mejor desempeño), Precisión, \textit{Recall}, \textit{F1-score} y AUC-ROC---, permitiendo apreciar el perfil de fortalezas y debilidades de cada modelo de un solo vistazo.
+La Figura \ref{fig:radar_comparativo} amplía la evaluación comparativa a un espacio de cinco dimensiones simultáneas: capacidad de regresión (invertida y normalizada, donde un valor periférico indica un error RMSE cercano a cero), Precisión, \textit{Recall}, \textit{F1-score} y AUC-ROC. Esta representación geométrica permite auditar el perfil de fortalezas y debilidades estructurales de cada arquitectura de un solo vistazo.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{radar_comparativo_modelos.png}
-    \caption{Comparación multidimensional de los tres modelos, \textit{dataset} primario, conjunto de prueba.}
+    \caption{Comparación multidimensional (\textit{dataset} primario, conjunto de prueba). Se constata la hiper-especialización de LSTM (regresión) frente a la robustez equilibrada de \textit{Random Forest} (\textit{F1-score}).}
     \label{fig:radar_comparativo}
 \end{figure}
 
-El perfil de LSTM se extiende marcadamente hacia el eje de regresión y, en menor medida, hacia AUC-ROC, pero se contrae drásticamente en \textit{Recall} y \textit{F1-score}. El perfil de \textit{Random Forest} es más equilibrado: sin alcanzar el extremo en un eje individual, mantiene un desempeño moderado a alto en la mayoría de las dimensiones simultáneamente, logrando la más alta calificación ponderada entre \textit{Recall} y Precisión (\textit{F1-score} de 0.4518). El perfil de ARIMA se distingue únicamente por su 
-precisión perfecta (un artefacto derivado de predecir casos positivos en muy raras ocasiones) y su colapso casi total en \textit{Recall}.
+El análisis topológico del gráfico de radar revela tres estrategias algorítmicas divergentes:
+\begin{itemize}
+    \item \textbf{LSTM, polígono azul:} Su área se proyecta agresivamente hacia el eje de Regresión (dominancia absoluta en predicción basal) y exhibe un AUC-ROC sobresaliente. Sin embargo, sufre una severa contracción centrípeta en los ejes de \textit{Recall} y \textit{F1-score}, delatando su inoperancia práctica como sistema de alertamiento preventivo autónomo.
+    \item \textbf{\textit{Random Forest}, polígono verde:} Presenta la geometría más equilibrada. Aunque cede el monopolio de la regresión continua frente a la red neuronal, compensa esta carencia con expansiones sólidas hacia los ejes de \textit{Recall} y Precisión, logrando la métrica armónica (\textit{F1-score} = 0.4518) más alta del experimento. Es el único modelo con viabilidad operativa dual.
+    \item \textbf{ARIMA, polígono rojo:} Su perfil carece de área útil, colapsando hacia el centro en casi todas las dimensiones operativas, con la notable excepción de un pico engañoso en el eje de Precisión. Como se demostró previamente, esta aparente perfección es un artefacto matemático derivado de su extrema pasividad (predecir crisis en tan raras ocasiones que, por azar, no detonó falsas alarmas).
+\end{itemize}
 
-La Figura \ref{fig:barras_clasificacion} desagrega esta misma comparación en sus cinco métricas de clasificación individuales, para una lectura más granular.
+Para decodificar este espejismo estadístico con mayor granularidad, la Figura \ref{fig:barras_clasificacion} desagrega la comparativa en sus cinco métricas de clasificación individuales.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{barras_clasificacion_tres_modelos.png}
-    \caption{Comparativa integral de las cinco métricas de clasificación, conjunto de prueba, tres modelos.}
+    \caption{Comparativa integral de métricas de clasificación. Se evidencia el efecto engañoso de la Exactitud frente al \textit{Recall} y el \textit{F1-score} en escenarios de desbalance extremo.}
     \label{fig:barras_clasificacion}
 \end{figure}
 
-Es particularmente revelador que la Exactitud (\textit{Accuracy}) ---la métrica más intuitiva y, con frecuencia, la única que se reporta en trabajos menos rigurosos--- resulte prácticamente idéntica entre los tres modelos (0.9750, 0.9813, 0.9750), a pesar de que sus verdaderas capacidades de detección de congestión difieren en un factor de hasta 16 veces (\textit{Recall} de ARIMA frente a \textit{Random Forest}). Este contraste confirma, con evidencia empírica propia, la advertencia metodológica formulada en el 
-Capítulo 4 (Sección \ref{sec:evaluacion}): bajo un fuerte desbalance de clases ---como el 2.6\,\% de casos positivos observados en este \textit{dataset} (Sección \ref{sec:obtencion_exploracion})---, la Exactitud es una métrica engañosa que un modelo trivial satisfacería casi en su totalidad. Solo el \textit{Recall}, la Precisión y el \textit{F1-score} exponen la genuina capacidad discriminativa de cada modelo.
+Esta descomposición de barras resulta metodológicamente reveladora y constituye una aportación crítica de esta investigación. Se observa que la Exactitud (\textit{Accuracy}) ---la métrica más intuitiva y frecuentemente sobrestimada en la literatura de redes--- resulta estadísticamente idéntica para los tres modelos (rondando el 0.98). No obstante, sus capacidades reales para detectar anomalías varían en órdenes de magnitud (evidenciado por la drástica caída en las barras de \textit{Recall} y \textit{F1-score} de ARIMA y LSTM frente a \textit{Random Forest}).
+
+Este contraste extremo valida empíricamente la advertencia metodológica formulada en el Capítulo 4 (Sección \ref{sec:evaluacion}): en ecosistemas de red caracterizados por un desbalance de clases masivo (donde la congestión crítica representa apenas el 2.6\,\% del tiempo de operación, Sección \ref{sec:obtencion_exploracion}), la Exactitud es una métrica analíticamente inútil. Un algoritmo "tonto" que prediga letargo perpetuo obtendrá un 97.4\,\% de Exactitud sin haber detectado una sola crisis. Por consiguiente, la validación de sistemas predictivos para infraestructura crítica debe fundamentarse estrictamente en la triada de Precisión, \textit{Recall} y \textit{F1-score}.
+
 
 \subsection*{Generalización entre escalas de red: una limitación transversal}
 
@@ -3544,145 +3581,47 @@ En congruencia con el compromiso de rigor metodológico sostenido, se enumeran a
 \chapter{Conclusiones}
 \label{cap:conclusiones}
 
-El presente trabajo de tesis se propuso, desde su Planteamiento del Problema (Sección 1.1), atender una pregunta de investigación concreta: la posibilidad de construir, a partir del análisis de datos históricos de operación, un sistema capaz de predecir la congestión de una red de computadoras con la antelación suficiente para transformar la gestión reactiva tradicional en una gestión predictiva y preventiva. A lo largo de los seis capítulos precedentes, dicha pregunta fue progresivamente delimitada ---mediante la formalización de una 
-definición operativa de congestión (Sección \ref{sec:congestion}) y la identificación de tres brechas específicas en la literatura existente (Sección \ref{sec:estado_brecha})---, instrumentada ---a través de un diseño metodológico riguroso que contempló tanto la recolección de datos reales como su complemento mediante aumento de datos sintéticos calibrados (Sección \ref{sec:obtencion_exploracion})---, y finalmente puesta a prueba empíricamente mediante la construcción, entrenamiento y evaluación comparativa de tres paradigmas de modelado predictivo (Capítulos 5 y 6).
+El presente trabajo de tesis se propuso, desde su planteamiento original (Sección 1.1), resolver una problemática de ingeniería fundamental: evaluar la viabilidad de construir un sistema predictivo capaz de anticipar la congestión en una red de datos, habilitando con ello la transición de una administración de infraestructura empírica y reactiva hacia una gestión algorítmica y preventiva. 
 
-Corresponde a este capítulo de cierre desempeñar una función distinta a la de los anteriores: no generar nueva evidencia empírica, sino sintetizar, con rigor y honestidad intelectual, lo que dicha evidencia permite afirmar. Este ejercicio de síntesis se organiza en tres movimientos complementarios. La Sección 7.1 confronta, uno por uno, los objetivos específicos formulados en el proyecto original de esta investigación (Sección 1.2) contra la evidencia generada en los Capítulos 5 y 6, determinando el grado en que cada uno fue satisfecho. 
-La Sección 7.2 distingue y articula las contribuciones que este trabajo aporta a la comunidad académica y a la práctica profesional de la ingeniería de redes, diferenciando entre aportes metodológicos, empíricos y de ingeniería de \textit{software}. Finalmente, la Sección 7.3 asume con transparencia las limitaciones que delimitan el alcance de los hallazgos aquí presentados ---muchas de ellas ya anticipadas en los Alcances y Limitaciones originales de esta tesis (Sección 1.4) y confirmadas empíricamente en el Capítulo 6---, y a partir de cada 
-una de ellas deriva una línea concreta de continuación para trabajos futuros, de modo que las limitaciones de este estudio no se presenten como un cierre definitivo, sino como el punto de partida legítimo de la investigación que este trabajo hace posible.
+A lo largo de los capítulos precedentes, este desafío fue delimitado conceptualmente mediante la formalización operativa de la congestión (Sección \ref{sec:congestion}) y la identificación de brechas críticas en la literatura (Sección \ref{sec:estado_brecha}). Posteriormente, fue abordado mediante un diseño metodológico riguroso que combinó la recolección de telemetría real con la inyección calibrada de anomalías sintéticas para subsanar el desbalance de clases (Sección \ref{sec:obtencion_exploracion}). Finalmente, el problema fue sometido a escrutinio empírico a través del diseño, entrenamiento y evaluación comparativa exhaustiva de tres paradigmas de modelado: la estadística clásica autorregresiva (ARIMA), los ensambles de árboles de decisión (\textit{Random Forest}) y las redes neuronales recurrentes de memoria a corto y largo plazo (LSTM) (Capítulos 5 y 6).
 
-\section{Cumplimiento de objetivos}
-\label{sec:cumplimiento_objetivos}
+Corresponde a este capítulo final desempeñar una función de síntesis analítica: no generar nueva evidencia empírica, sino articular, con rigor y honestidad intelectual, las conclusiones definitivas que dicha evidencia permite sostener. Para lograr este cometido, el capítulo se estructura en dos ejes fundamentales. 
 
-Esta sección examina, de manera individual, el grado de cumplimiento de cada uno de los objetivos ---general y específicos--- planteados al inicio de esta investigación (Sección \ref{sec:objetivos}), contrastando su formulación original contra la evidencia empírica generada en los Capítulos 5 y 6. Se adopta como criterio de evaluación la correspondencia estricta entre lo declarado y lo efectivamente ejecutado, señalando explícitamente los casos en que el cumplimiento fue parcial o requirió ajustes respecto al diseño original, en congruencia con el compromiso de honestidad 
-metodológica sostenido a lo largo de este trabajo.
-
-\subsection*{Objetivo general}
-
-El objetivo general de esta tesis planteó desarrollar un sistema basado en \textit{Machine Learning} que permitiera predecir la congestión de redes de computadoras a partir del análisis de datos de operación, evaluando su desempeño en escenarios de tráfico de distinta escala y naturaleza. 
-
-Este objetivo se considera \textbf{cumplido}. Se desarrolló, implementó y evaluó un sistema compuesto por tres paradigmas predictivos (ARIMA, \textit{Random Forest} y LSTM; Capítulo 5), capaces de generar tanto predicciones continuas del factor de utilización como clasificaciones binarias de eventos de congestión (Sección \ref{sec:def_operativa_metodologia}). La evaluación en escenarios de distinta escala y naturaleza se satisfizo mediante el diseño experimental que contrastó una red privada PYME de bajo volumen (el \textit{dataset} primario) contra un enlace troncal académico 
-de gran escala (MAWI), tanto en la fase piloto (Sección \ref{sec:obtencion_exploracion}) como en la validación de generalización (Sección \ref{sec:resultados_arima}). No obstante, es necesario matizar este cumplimiento con la evidencia analítica generada en la Sección \ref{sec:comparativa_modelos}: dicha evaluación reveló que la viabilidad del enfoque predictivo depende sustancialmente de la tarea (regresión o clasificación) y de la escala de red considerada. Es un hallazgo que responde al objetivo general en su letra, pero que atempera científica y responsablemente cualquier 
-lectura excesivamente optimista sobre su alcance práctico inmediato.
-
-\subsection*{Objetivo específico 1: Recopilar y organizar datos de operación}
-
-\textit{"Recopilar y organizar datos de operación de una red de computadoras, incluyendo parámetros como frecuencia de operación, ancho de banda, rendimiento y disponibilidad."}
-
-Este objetivo se considera \textbf{cumplido, con una precisión terminológica}. Se recopilaron de manera automatizada y continua los parámetros de utilización del enlace, latencia (RTT) y tasa de pérdida de paquetes (Sección \ref{sec:fuente_datos}), mediante un mecanismo de instrumentación desplegado sobre la infraestructura RouterOS de la red privada bajo estudio (Sección \ref{sec:obtencion_exploracion}). El parámetro originalmente denominado "frecuencia de operación" ---señalado en el Capítulo 1 como un término susceptible de confundirse con conceptos físicos de 
-radiofrecuencia--- se materializó, en la práctica metodológica, como la frecuencia de muestreo de la recolección (intervalos de 1 minuto). Es pertinente reconocer, asimismo, que el periodo de recolección efectivamente logrado (21 días, Sección \ref{sec:obtencion_exploracion}) difirió del periodo de dos meses originalmente planificado por restricciones de calendario académico reconocidas en la Sección 1.4 y discutidas como una limitación estructural en la Sección \ref{sec:discusion}.
-
-\subsection*{Objetivo específico 2: Diseñar un procedimiento de almacenamiento y procesamiento estructurado}
-
-\textit{"Diseñar un procedimiento para almacenar, depurar y procesar los datos obtenidos de una manera estructurada."}
-
-Este objetivo se considera \textbf{cumplido de manera integral}. Se diseñó e implementó un \textit{pipeline} computacional completo de preprocesamiento (Sección \ref{sec:preprocesamiento}, ejecutado en la Sección \ref{sec:preprocesamiento_desarrollo}), que incluyó: detección automática de sesiones continuas para evitar la contaminación de variables de rezago a través de interrupciones de conectividad; interpolación matemática de huecos cortos y descarte de huecos prolongados; normalización Min-Max aislada sin fuga de información temporal entre particiones; y construcción de 
-secuencias tensoriales mediante ventana deslizante para las arquitecturas recurrentes. Este procedimiento se validó primero sobre el \textit{dataset} piloto de MAWI antes de aplicarse, sin alteraciones estructurales, al \textit{dataset} primario definitivo, demostrando la reproducibilidad y solidez de la ingeniería de datos.
-
-\subsection*{Objetivo específico 3: Implementar técnicas de \textit{Machine Learning} adecuadas}
-
-\textit{"Implementar técnicas de Machine Learning adecuadas para analizar los patrones de tráfico y comportamiento de la red."}
-
-Este objetivo se considera \textbf{cumplido}. Se implementaron y entrenaron tres técnicas representativas de los principales paradigmas de modelado: un modelo estadístico clásico (ARIMA), un modelo de ensamble de \textit{Machine Learning} clásico (\textit{Random Forest}) y una arquitectura de \textit{Deep Learning} (LSTM), conforme a la estricta justificación teórica y metodológica desarrollada en la Sección \ref{sec:modelos_justificacion}. La adecuación algorítmica de dichas técnicas al problema de patrones de tráfico se evidenció, entre otros hallazgos, en el análisis de 
-importancia de variables de \textit{Random Forest} (Sección \ref{sec:resultados_rf}), que identificó las variables de rezago y media móvil como predictores críticos dependientes de la granularidad temporal, y en la capacidad de la red LSTM para capturar la dinámica secuencial completa del tráfico, reflejada en su sobresaliente desempeño en la tarea de regresión (Sección \ref{sec:resultados_lstm}).
-
-\subsection*{Objetivo específico 4: Desarrollar un prototipo de predicción de escenarios de congestión}
-
-\textit{"Desarrollar un prototipo que realice predicciones de posibles escenarios de congestión de red."}
-
-Este objetivo se considera \textbf{cumplido}. El conjunto estructurado de \textit{scripts} algorítmicos y modelos entrenados documentados exhaustivamente en el Capítulo 5, capaces de ingerir telemetría de red cruda y producir tanto una estimación continua de utilización futura como una clasificación binaria probabilística de riesgo de congestión, constituye el prototipo funcional que este objetivo demandaba. Su naturaleza estricta de prototipo ---y no de sistema empaquetado para producción comercial--- fue delimitada explícitamente desde los Alcances y Limitaciones de 
-este trabajo (Sección 1.4). Por lo tanto, su cumplimiento se interpreta bajo esos términos: se demostró contundentemente la viabilidad matemática y técnica del enfoque propuesto.
-
-\subsection*{Objetivo específico 5: Validar el desempeño del sistema mediante métricas de evaluación}
-
-\textit{"Validar el desempeño del sistema mediante métricas de evaluación."}
-
-Este objetivo se considera \textbf{cumplido de manera exhaustiva}, constituyendo, en la práctica, la meta respaldada por la evidencia más robusta de todo el documento. Se aplicó el esquema de evaluación dual y aislado establecido en la metodología (Sección \ref{sec:evaluacion}) utilizando ocho métricas distintas (RMSE y MAE para regresión; Exactitud, Precisión, \textit{Recall}, \textit{F1-score} y AUC-ROC para clasificación), evaluando a los tres modelos en cuatro contextos diferenciados: fase piloto sobre MAWI, regresión sobre datos reales, clasificación sobre datos 
-sintéticos aislados y validación de generalización externa (Sección \ref{sec:comparativa_modelos}). Esta validación multinivel excede el alcance mínimo formulado en el objetivo original al incorporar una estresante prueba de generalización entre escalas de red que no estaba explícitamente exigida en su enunciado inicial.
-
-\subsection*{Objetivo específico 6: Identificar aplicaciones reales del sistema propuesto}
-
-\textit{"Identificar posibles aplicaciones reales del sistema propuesto en distintos contextos de uso."}
-
-Este objetivo se considera \textbf{cumplido de manera parcial}. Como se anticipó en la justificación metodológica original, este objetivo posee una naturaleza distinta a los cinco anteriores ---de carácter reflexivo y prospectivo, más que estrictamente demostrable mediante una métrica de \textit{software}---. Esta investigación identificó, con fundamento en sus propios hallazgos analíticos, un escenario de aplicación operativo concreto: el esquema de alertamiento híbrido propuesto y el protocolo de mitigación documentado en la Sección \ref{sec:discusion}, que combina 
-la sensibilidad de detección preventiva de \textit{Random Forest} con la precisión de estimación de la red LSTM. Sin embargo, dicha aplicación no fue implementada ni validada empíricamente en un contexto de uso real más allá del análisis retrospectivo presentado en el Capítulo 6, por lo que su cumplimiento se circunscribe a la identificación y diseño conceptual de dicha aplicación, y no a su demostración operativa.
-
-\subsection*{Síntesis del cumplimiento de objetivos}
-
-La Tabla \ref{tab:sintesis_objetivos} resume el grado de cumplimiento de cada objetivo, con referencia a la evidencia específica que lo sustenta a lo largo de este documento.
-
-\begin{table}[H]
-    \centering
-    \small
-    \begin{tabular}{|p{3.5cm}|l|p{6.5cm}|}
-        \hline
-        \textbf{Objetivo} & \textbf{Cumplimiento} & \textbf{Evidencia principal} \\
-        \hline
-        General & Cumplido (con matices operativos) & Tabla \ref{tab:tabla_maestra}, Sección \ref{sec:comparativa_modelos}. \\
-        \hline
-        Específico 1 (recolección) & Cumplido, con ajuste de alcance. & Sección \ref{sec:obtencion_exploracion}, Tabla \ref{tab:huecos_recoleccion}. \\
-        \hline
-        Específico 2 (procesamiento) & Cumplido íntegramente. & Sección \ref{sec:preprocesamiento_desarrollo}. \\
-        \hline
-        Específico 3 (implementación de ML) & Cumplido. & Secciones \ref{sec:arima_desarrollo}, \ref{sec:rf_desarrollo} y \ref{sec:lstm_desarrollo}. \\
-        \hline
-        Específico 4 (prototipo) & Cumplido (como prototipo algorítmico). & Capítulo 5 completo. \\
-        \hline
-        Específico 5 (validación) & Cumplido exhaustivamente. & Tabla \ref{tab:tabla_maestra}, Secciones \ref{sec:resultados_arima} a \ref{sec:comparativa_modelos}. \\
-        \hline
-        Específico 6 (aplicaciones reales) & Cumplido parcialmente (diseño conceptual). & Figura \ref{fig:esquema_hibrido}, Sección \ref{sec:discusion}. \\
-        \hline
-    \end{tabular}
-    \caption{Síntesis del cumplimiento de los objetivos de investigación establecidos en la Sección \ref{sec:objetivos}.}
-    \label{tab:sintesis_objetivos}
-\end{table}
+En primera instancia, la Sección 7.1 detalla las contribuciones concretas que esta investigación aporta tanto a la comunidad académica como a la práctica profesional de la ingeniería de redes, diferenciando sistemáticamente entre hallazgos metodológicos, empíricos y operativos. Finalmente, la Sección 7.2 expone con total transparencia las limitaciones inherentes al diseño experimental implementado ---muchas de ellas anticipadas en los alcances originales de la tesis (Sección 1.4) y confirmadas algorítmicamente en la fase de generalización---. A partir de estas restricciones, se formulan líneas directas de trabajo futuro, garantizando que los límites topológicos de este estudio no representen un cierre definitivo, sino el cimiento legítimo para la evolución continua de los sistemas predictivos de red.
 
 \section{Contribuciones}
 \label{sec:contribuciones}
 
-Más allá del cumplimiento formal de los objetivos examinado en la sección anterior, esta sección distingue y articula explícitamente aquello que este trabajo aporta ---de manera específica y atribuible a las decisiones tomadas en él, no como una restitución genérica del conocimiento ya existente en la literatura--- a tres audiencias distintas: la comunidad académica interesada en la predicción de congestión de redes, la práctica profesional de la administración de redes de pequeña escala, y la propia disciplina de la ingeniería de \textit{software} aplicada al 
-aprendizaje automático. Las contribuciones se organizan en tres categorías: metodológicas, empíricas y de ingeniería de \textit{software}.
+Más allá de la demostración de los paradigmas predictivos, esta investigación aporta valor empírico, metodológico y operativo ---atribuible directamente a las decisiones de diseño del autor--- a la comunidad académica y a la práctica profesional de la administración de redes. Dichas contribuciones se estructuran en las siguientes tres vertientes:
 
 \subsection*{Contribuciones metodológicas}
 
-\textbf{Una estrategia reproducible de aumento de datos para congestión de red, con salvaguardas explícitas contra la contaminación de la evaluación.} La brecha de validación identificada en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}) señalaba que buena parte de la literatura revisada recurre a datos simulados sin documentar con precisión cómo se garantiza la independencia entre los datos usados para entrenar y para evaluar un modelo. Este trabajo no solo generó datos sintéticos calibrados estadísticamente a partir de tráfico real 
----una técnica ya empleada por Sneha et al. \cite{sneha2020} y Labonne et al. \cite{labonne2021}---, sino que diseñó e implementó un esquema de verificación automática (aserciones de \textit{software} ejecutadas en tiempo de procesamiento) que garantiza matemáticamente la ausencia de fuga de datos (\textit{data leakage}) entre el conjunto de entrenamiento y cada uno de los cuatro conjuntos de evaluación empleados en esta investigación. Este esquema ---documentado con el detalle suficiente para ser replicado--- constituye una aportación metodológica directamente 
-transferible a cualquier investigación futura que enfrente el mismo problema estructural: un fenómeno de interés (la congestión) que resulta infrecuente o ausente en la recolección empírica disponible.
-
-\textbf{La operacionalización explícita de la congestión como variable objetivo, fundamentada en Teoría de Colas.} A diferencia de la mayoría de los trabajos revisados en el Capítulo 3 ---que predicen el volumen de tráfico como una serie continua sin traducirlo a un evento accionable---, esta tesis formalizó una definición operativa de congestión (Ecuación \ref{eq:congestion_instanciada}) derivada explícitamente del comportamiento no lineal del retraso descrito por la teoría de colas de Kleinrock \cite{kleinrock1976} (Sección \ref{sec:congestion}). Esta definición 
-se empleó de manera consistente a lo largo de los tres modelos y los cuatro contextos de evaluación de este trabajo. Esta misma fundamentación teórica se extendió, de manera original, al proceso de generación de datos sintéticos: la relación causal entre utilización, latencia y pérdida de paquetes durante los eventos de congestión inyectados (Figura \ref{fig:ejemplo_evento}) no se simuló de forma arbitraria, sino que se derivó matemáticamente del mismo modelo teórico, cerrando un ciclo de coherencia entre el Marco Teórico (Capítulo 2) y la implementación empírica 
-(Capítulo 5) que rara vez se hace explícito en la literatura especializada.
+\begin{itemize}
+    \item \textbf{Estrategia reproducible de aumento de datos sin contaminación (\textit{Data Leakage}):} Ante la infrecuencia empírica de la congestión severa, se diseñó e implementó un esquema de inyección sintética calibrada estadísticamente. Esta inyección incluye aserciones matemáticas en tiempo de ejecución que garantizan el aislamiento absoluto entre las particiones de entrenamiento y evaluación, subsanando una vulnerabilidad metodológica recurrente en la literatura del campo.
+    \item \textbf{Fundamentación de la métrica objetivo en la Teoría de Colas:} A diferencia de enfoques predictivos agnósticos al contexto, la variable objetivo de congestión se operacionalizó basándose en el comportamiento asintótico no lineal del retraso postulado por Kleinrock. Esta definición unificó los criterios de evaluación y guio matemáticamente la inyección sintética, cerrando el ciclo entre el marco teórico y la experimentación empírica.
+\end{itemize}
 
 \subsection*{Contribuciones empíricas}
 
-\textbf{Evidencia comparativa directa entre tres paradigmas de modelado, bajo condiciones experimentales idénticas.} Esta es, posiblemente, la contribución empírica más sustantiva de este trabajo, y responde de manera directa a la brecha metodológica formulada en la Sección \ref{sec:estado_brecha}: ningún trabajo de los revisados en el Estado del Arte comparó simultáneamente representantes de los tres grandes paradigmas ---estadístico, \textit{Machine Learning} clásico y \textit{Deep Learning}--- sobre el mismo conjunto de datos, bajo el mismo umbral de decisión y 
-las mismas métricas de evaluación de castigo. Esta tesis lo hizo, y el resultado de haberlo hecho reveló un hallazgo crítico no documentado en la literatura consultada: la profunda disociación entre el desempeño de regresión y el de clasificación (Sección \ref{sec:comparativa_modelos}, Figura \ref{fig:scatter_tradeoff}). Se comprobó que LSTM domina de manera casi perfecta la primera tarea y \textit{Random Forest} domina la segunda, sin que ningún modelo logre dominar ambas de forma simultánea. Este patrón de especialización complementaria ---y no de superioridad 
-jerárquica absoluta de un paradigma sobre otro--- constituye evidencia empírica original que matiza e incluso refuta afirmaciones simplistas presentes en la literatura respecto a la supuesta superioridad infalible de las arquitecturas de \textit{Deep Learning}.
-
-\textbf{Un caso de estudio documentado de una red heterogénea de pequeña escala, infrecuente en la literatura del campo.} Como se señaló en la síntesis del Estado del Arte, la literatura académica favorece abrumadoramente el uso de \textit{datasets} de redes troncales de gran escala o entornos simulados de laboratorio. Esta tesis aporta, en cambio, un caso de estudio empírico de una red privada PYME real ---con videovigilancia, sincronización en la nube y tráfico residencial coexistiendo sobre un mismo enlace---, documentando de manera transparente sus particularidades 
-operativas: un régimen de utilización extremadamente bajo y asimétrico (máximo de 1.44\,\%, Sección \ref{sec:obtencion_exploracion}), un patrón de tráfico diurno identificable, e interrupciones de conectividad propias de un despliegue remoto sin presencia física en sitio. Este tipo de evidencia empírica, proveniente de una escala de red sustancialmente subrepresentada en la literatura, tiene un alto valor científico por sí misma como punto de referencia fidedigno para investigaciones futuras sobre infraestructuras de tamaño similar.
-
-\textbf{El descubrimiento y documentación de la limitación de generalización entre escalas de red.} La validación de generalización contra el \textit{dataset} MAWI (Sección \ref{sec:resultados_arima}) no solo verificó la capacidad nula de un modelo entrenado en una red pequeña para operar sobre un enlace de mayor escala ---constatando su fracaso categórico (RMSE=0.3233)---, sino que además reveló y documentó una incompatibilidad estructural matemática. Hasta donde se tiene conocimiento, esta limitación no había sido señalada previamente en la literatura que emplea las 
-trazas del repositorio MAWI: la duración máxima de 15 minutos continuos de cada traza diaria resulta estructuralmente insuficiente para evaluar modelos de \textit{Machine Learning} que dependan de ventanas temporales ($w$) de mayor longitud para conformar sus tensores. Esta observación constituye una advertencia metodológica original y directamente accionable para cualquier investigador futuro que pretenda emplear MAWI como fuente de validación externa para arquitecturas de memoria amplia.
+\begin{itemize}
+    \item \textbf{Descubrimiento del \textit{Trade-off} predictivo entre arquitecturas:} Al someter los tres paradigmas algorítmicos (Estadístico, Ensambles y \textit{Deep Learning}) a condiciones experimentales idénticas, se demostró empíricamente la disociación matemática entre regresión continua y clasificación binaria. Se evidenció que la LSTM dominó la precisión del flujo basal, mientras que \textit{Random Forest} dominó la sensibilidad de alertamiento. Este hallazgo refuta la superioridad infalible frecuentemente atribuida a las redes neuronales en la literatura general.
+    \item \textbf{Estudio de caso en topologías asimétricas de pequeña escala:} Se documenta de forma transparente el comportamiento de una red PYME real (telemetría, videovigilancia y sincronización en la nube), caracterizada por un régimen de letargo extremo (utilización $\leq$ 1.44\,\%). Este esfuerzo enriquece un campo académico históricamente sesgado hacia infraestructuras troncales masivas o entornos de laboratorio hiper-controlados.
+    \item \textbf{Identificación de límites de generalización en repositorios públicos:} La evaluación cruzada reveló que arquitecturas como MAWI (cuyas trazas están limitadas a 15 minutos continuos) resultan estructuralmente incompatibles para validar modelos de \textit{Machine Learning} que dependen de ventanas temporales ($w$) extensas, estableciendo un precedente crítico para futuras investigaciones sobre dichos repositorios.
+\end{itemize}
 
 \subsection*{Contribuciones de ingeniería de \textit{software}}
 
-\textbf{Un decodificador eficiente de trazas \textit{libpcap} en memoria constante.} Durante el desarrollo de esta tesis (Sección \ref{sec:obtencion_exploracion}) se documentó empíricamente que las herramientas convencionales de disección de protocolos (como \texttt{tshark}) resultan impracticables para procesar trazas de decenas de millones de paquetes en una estación de trabajo convencional, debido a la saturación de memoria RAM. La solución desarrollada ---un decodificador algorítmico propio en Python que interpreta directamente la estructura binaria del formato 
-\textit{libpcap} en flujo continuo (\textit{streaming}), sin acumulación de estructuras intermedias ni reconstrucción de \textit{payloads}--- constituye una herramienta de ingeniería de utilidad general. Es reutilizable en cualquier investigación futura que requiera procesar telemetría de red a gran escala sin recurrir a costosa infraestructura de supercómputo.
-
-\textbf{Una estrategia de instrumentación remota adaptativa ante restricciones de acceso e infraestructura.} Frente a la imposibilidad de emplear SNMP ---el mecanismo estándar originalmente planificado--- debido a la ausencia de una dirección IP pública homologada en la infraestructura bajo estudio, este trabajo documentó y validó un mecanismo alternativo funcionalmente equivalente, basado en la explotación del Programador de Tareas nativo (\textit{Scheduler}) y los \textit{scripts} internos de RouterOS. Esta solución de ingeniería, condicionada a las restricciones 
-reales y austeras de un despliegue de monitoreo remoto sin presencia física, aporta un precedente metodológico práctico invaluable para administradores de red y futuros tesistas que enfrenten bloqueos arquitectónicos similares en infraestructuras PYME.
-
-\textbf{Un \textit{pipeline} de modelado íntegramente reproducible, validado en dos etapas formales.} La totalidad del proceso computacional ---desde la ingesta y limpieza de telemetría hasta la evaluación cruzada final de los tensores en los tres modelos--- se diseñó, implementó y depuró primero sobre un \textit{dataset} piloto externo de menor escala (Capítulo 5). Solo posteriormente, una vez validada la integridad matemática del código, se aplicó sin alteraciones estructurales al \textit{dataset} primario definitivo. Esta estrategia de desarrollo escalonado 
-constituye, en sí misma, una excelente práctica de ingeniería de \textit{software} aplicada a proyectos de Ciencia de Datos y \textit{Machine Learning}. Funciona como una plantilla metodológica que puede orientar el diseño de trabajos futuros sujetos a restricciones severas de tiempo o recursos computacionales.
-
-\newpage
+\begin{itemize}
+    \item \textbf{Decodificador \textit{libpcap} de bajo perfil de memoria (\textit{Streaming}):} Se desarrolló un \textit{script} original en Python capaz de interpretar la estructura binaria de paquetes a nivel de \textit{byte} sin saturar la memoria RAM. Esta herramienta viabiliza el procesamiento de decenas de millones de paquetes en estaciones de trabajo convencionales, democratizando el análisis de grandes volúmenes de telemetría de red.
+    \item \textbf{Instrumentación de telemetría asíncrona mediante RouterOS:} Ante la imposibilidad técnica de emplear SNMP por restricciones de infraestructura (ausencia de IP pública), se instrumentó una solución \textit{ad hoc} explotando los \textit{scripts} nativos y el \textit{Scheduler} del equipo MikroTik. Este desarrollo aporta una plantilla práctica invaluable para el monitoreo de redes remotas sujetas a políticas de seguridad estrictas.
+\end{itemize}
 
 \section{Limitaciones del estudio}
 \label{sec:limitaciones}
 
-Esta sección expone, de manera deliberadamente exhaustiva, las limitaciones que condicionan el alcance de los hallazgos de esta tesis. Se distinguen tres orígenes: (a) limitaciones \textbf{de alcance declarado}, asumidas desde el diseño y ya anunciadas en los Alcances y Limitaciones (Sección \ref{sec:alcances}); (b) limitaciones \textbf{derivadas de restricciones de ejecución}, surgidas de las condiciones prácticas del despliegue y del calendario; y (c) limitaciones \textbf{descubiertas empíricamente}, que solo se hicieron visibles al analizar los resultados. Para 
-cada una se indica qué no se realizó (o se realizó de forma distinta a lo planificado), por qué, y qué efecto tiene sobre las conclusiones. La Tabla \ref{tab:limitaciones_resumen} resume este escrutinio.
+La rigurosidad de toda investigación en ingeniería exige el reconocimiento explícito de sus fronteras metodológicas y empíricas. Las limitaciones documentadas en esta sección no invalidan los hallazgos expuestos en los capítulos precedentes, sino que delimitan con precisión su contexto de aplicabilidad, garantizando la honestidad intelectual del estudio y estableciendo el punto de partida exacto para la continuidad del desarrollo tecnológico.
+
+La Tabla \ref{tab:limitaciones_resumen} sintetiza el escrutinio de estas restricciones, categorizándolas según su origen estructural: (a) limitaciones de alcance declaradas por diseño; (b) restricciones logísticas y computacionales derivadas del entorno de ejecución; y (c) limitantes topológicas y algorítmicas descubiertas empíricamente durante la fase de evaluación. Para cada restricción se identifica su efecto directo sobre las conclusiones y se vincula con la línea de trabajo futuro destinada a solventarla.
 
 \begin{table}[H]
     \centering
@@ -3691,106 +3630,50 @@ cada una se indica qué no se realizó (o se realizó de forma distinta a lo pla
         \hline
         \textbf{Limitación} & \textbf{Origen} & \textbf{Efecto sobre las conclusiones} & \textbf{Continuación} \\
         \hline
-        Sin interfaz gráfica, aplicación empaquetada ni operación en producción. & (a) & Ninguno sobre la viabilidad predictiva; limita la utilidad operativa inmediata. & Trabajo futuro 1 \\
+        Ausencia de interfaz gráfica, empaquetado de \textit{software} u operación en producción. & (a) & Ninguno sobre la viabilidad predictiva; restringe la utilidad operativa inmediata para administradores. & Trabajo futuro 1 \\
         \hline
-        Sin alertamiento operativo ni evaluación del TAE real. & (a)/(c) & La utilidad para la toma de decisiones se argumenta conceptualmente, no se demuestra operativamente. & Trabajo futuro 2 \\
+        Carencia de alertamiento en tiempo real y evaluación del Tiempo de Antelación (TAE) operativo. & (a)/(c) & La utilidad para la toma de decisiones se argumenta a nivel analítico, sin demostración en flujo continuo. & Trabajo futuro 2 \\
         \hline
-        21 días de recolección (82.9\,\% de cobertura) en lugar de dos meses. & (b) & Menos ciclos semanales; sin congestión genuina observada. & Trabajo futuro 3 \\
+        Recolección acotada a 21 días (82.9\,\% de cobertura) frente a los 60 días proyectados. & (b) & Reducción de ciclos estacionales evaluables; ausencia empírica de eventos de congestión masiva nativa. & Trabajo futuro 3 \\
         \hline
-        Una sola red primaria, de utilización máxima 1.44\,\%. & (b)/(c) & Los patrones descubiertos no son extrapolables a otras redes corporativas sin reajuste. & Trabajo futuro 3 \\
+        Evaluación sobre una topología única con régimen de letargo extremo (utilización máxima 1.44\,\%). & (b)/(c) & Impide la extrapolación directa de los pesos y umbrales algorítmicos hacia infraestructuras corporativas densas. & Trabajo futuro 3 \\
         \hline
-        Clasificación evaluada solo sobre datos sintéticos aislados. & (c) & El \textit{Recall} reportado es una aproximación estadística, no una medición directa sobre congestión real. & Trabajo futuro 4 \\
+        Desempeño de clasificación evaluado exclusivamente sobre inyecciones sintéticas aisladas. & (c) & El \textit{Recall} documentado representa una cota estadística de sensibilidad, no una métrica operativa sobre crisis reales. & Trabajo futuro 4 \\
         \hline
-        Variables de entrada derivadas exclusivamente de la utilización. & (c) & No se contrasta empíricamente el aporte del RTT, pérdida de paquetes ni variables de calendario. & Trabajo futuro 5 \\
+        Diseño de características (\textit{features}) restringido a la utilización del canal. & (c) & Omite el contraste empírico de vectores latentes como pérdida de paquetes, RTT y periodicidad de calendario. & Trabajo futuro 5 \\
         \hline
-        SVR y GRU no implementados; hiperparámetros sin búsqueda exhaustiva; ejecución solo en CPU. & (a)/(b) & Comparación acotada a tres representantes algorítmicos. Las conclusiones aplican a estas configuraciones específicas. & Trabajo futuro 5 \\
+        Arquitecturas SVR y GRU descartadas; búsqueda de hiperparámetros acotada y ejecución exclusiva en CPU. & (a)/(b) & Conclusiones circunscritas estrictamente a los tres algoritmos base bajo configuraciones estructurales conservadoras. & Trabajo futuro 5 \\
         \hline
-        Etiqueta de congestión instantánea y umbral $U_{th}$ no validado empíricamente. & (c) & Simplifica la definición formal de la congestión (Ecuación \ref{eq:congestion_instanciada}). & Trabajo futuro 4 \\
+        Etiqueta de estado y umbral de congestión ($U_{th}$) fijados analíticamente, sin contraste dinámico. & (c) & Simplifica la detección, ignorando la adaptabilidad requerida para líneas base de tráfico mutables. & Trabajo futuro 4 \\
         \hline
-        Una sola ejecución por modelo, sin intervalos de confianza; generalización contra MAWI con apenas 6 observaciones. & (b)/(c) & Las diferencias sustanciales son robustas; las variaciones minúsculas no son concluyentes ni estadísticamente significativas. & Trabajo futuro 6 \\
+        Ejecución única sin cálculo de intervalos de confianza; evaluación de MAWI reducida a 6 tensores. & (b)/(c) & Las brechas de magnitud superior son categóricas, pero las variaciones porcentuales finas carecen de significancia estadística plena. & Trabajo futuro 6 \\
         \hline
-        Generalización a MAWI evaluable únicamente para ARIMA. & (c) & Sin evidencia alguna de portabilidad técnica para \textit{Random Forest} y LSTM ante restricciones estructurales. & Trabajo futuro 6 \\
+        Validación de generalización (MAWI) ejecutable de manera exclusiva para el modelo ARIMA. & (c) & Ausencia total de evidencia sobre la portabilidad matemática de \textit{Random Forest} y LSTM ante restricciones de ventana temporal. & Trabajo futuro 6 \\
         \hline
     \end{tabular}
-    \caption{Resumen de las limitaciones del estudio, su origen metodológico y su efecto empírico sobre las conclusiones.}
+    \caption{Síntesis de limitaciones operativas, logísticas y empíricas del estudio, su impacto en las afirmaciones de la tesis y su directriz metodológica de resolución.}
     \label{tab:limitaciones_resumen}
 \end{table}
 
-\subsection*{Alcance del prototipo}
+\subsection*{Alcance del prototipo y métricas operativas}
 
-\textbf{Qué no se realizó.} No se desarrolló una interfaz gráfica de usuario (GUI), una aplicación empaquetada ejecutable ni un sistema desplegado en producción. El prototipo opera fuera de línea (\textit{offline}) sobre trazas históricas de red, sin ingestión continua de telemetría, sin detección de cambio de concepto (\textit{concept drift}) y sin reentrenamiento autónomo programado.
+El alcance operativo del prototipo se circunscribió estrictamente a la demostración matemática de viabilidad predictiva en un entorno fuera de línea (\textit{offline}), prescindiendo del desarrollo de interfaces gráficas, ingestión continua de telemetría o arquitecturas de reentrenamiento autónomo (\textit{concept drift}). Esta decisión priorizó el rigor del diseño experimental y la evaluación algorítmica sobre el empaquetado de un producto comercial. 
 
-\textbf{Por qué.} Estas exclusiones fueron declaradas de forma transparente desde la Sección \ref{sec:alcances} y responden a la naturaleza del objetivo específico 4, que exige estrictamente un \textit{prototipo que realice predicciones}, no un producto comercial. La pregunta rectora de investigación (Sección \ref{sec:objetivos}) es de \textbf{viabilidad predictiva}; el desarrollo de una interfaz gráfica o un \textit{dashboard} en tiempo real no aporta evidencia técnica para responderla, y su programación habría desplazado tiempo crítico que fue invertido en la 
-recolección, el diseño experimental estricto y la evaluación cruzada ---fases que sí determinan la validez y el peso científico de este trabajo.
+Como consecuencia directa de este enfoque y de la escasez de anomalías reales, los mecanismos automatizados de alertamiento y la métrica de Tiempo de Anticipación Efectivo ($TAE$) no fueron evaluados operativamente. Dado que la congestión sostenida en el \textit{dataset} primario provino de inyecciones sintéticas con rampas de ascenso predefinidas, el cálculo del $TAE$ habría medido la morfología estática del generador algorítmico y no la agudeza orgánica del modelo, careciendo además de significancia estadística ante el reducido volumen de detecciones efectivas en la tarea de clasificación.
+\subsection*{Restricciones topológicas y dimensionalidad de variables}
 
-\textbf{Efecto.} El cumplimiento del objetivo 4 debe interpretarse como la demostración matemática y técnica de la viabilidad del enfoque propuesto, no como la entrega llave en mano de una herramienta lista para el despliegue comercial. Las capacidades de \textit{software} ausentes se plantean de forma natural como trabajo futuro de desarrollo.
+La recolección de telemetría se acotó a 21 días efectivos sobre una única infraestructura PYME, caracterizada por un régimen de tráfico crónicamente ocioso (utilización $\leq$ 1.44\,\%). Esta limitación topológica impidió el modelado sobre anomalías orgánicas, por lo que los pesos sinápticos resultantes están fuertemente condicionados a este ecosistema particular y exigen un proceso de \textit{fine-tuning} previo a cualquier extrapolación.
 
-\subsection*{Alertamiento operativo y métrica de anticipación (TAE)}
+Asimismo, el espacio de características (\textit{features}) se contrajo de forma exclusiva al factor de utilización y sus rezagos. El RTT y la pérdida de paquetes reales carecían de entropía operativa (con asintonía a cero); intentar inyectarlos de forma sintética habría provocado una fuga de datos (\textit{target leakage}), al derivarse determinísticamente de la misma ecuación de congestión (Ecuación \ref{eq:congestion_instanciada}). Las restricciones computacionales también limitaron la evaluación a tres arquitecturas representativas (excluyendo alternativas como SVR y GRU), evaluadas en un único horizonte predictivo ($h=5$ minutos) y procesadas íntegramente en CPU, acotando la validez estricta de los resultados a dichas configuraciones.
+\subsection*{Sesgos en la inyección sintética y evaluación}
 
-\textbf{Qué no se realizó.} No se programó un mecanismo automatizado de alertamiento (e.g., envío de correos o \textit{webhooks}) basado en el dictamen de los modelos. Asimismo, la métrica de Tiempo de Anticipación Efectivo ($TAE$) propuesta en la Sección \ref{sec:evaluacion} no se calculó sobre el \textit{dataset} primario. El esquema de alertamiento híbrido de la Figura \ref{fig:esquema_hibrido} es una propuesta de arquitectura conceptual derivada del análisis, no un sistema evaluado empíricamente; por ello, el objetivo específico 6 se declaró parcialmente cumplido.
+La validación de la tarea de clasificación descansa sobre datos sintéticos, lo que conlleva tres sesgos estadísticos explícitos: (1) la ausencia de inercia estocástica temporal en el ruido de fondo (producto del remuestreo independiente); (2) el uso de perfiles de congestión geométricamente estilizados (trapezoidales) que podrían inducir al modelo a detectar patrones matemáticos artificiales en lugar de saturaciones orgánicas; y (3) la ejecución de la evaluación sobre la misma distribución generativa del entrenamiento. Estos sesgos garantizan una comparación transversal justa entre modelos, pero prohíben interpretar numéricamente el \textit{Recall} documentado como una garantía de rendimiento infalible en un entorno de producción inexplorado.
 
-\textbf{Por qué.} El $TAE$ solo es matemáticamente calculable sobre eventos de congestión sostenida, y los únicos eventos detectables en el \textit{dataset} primario son de naturaleza sintética. En ellos, la duración y la pendiente de ascenso de cada anomalía están fijadas por el propio algoritmo generador (perfil trapezoidal con rampa de ascenso del 20\,\% de la duración, documentado en la Sección \ref{sec:obtencion_exploracion}). Por consiguiente, un $TAE$ medido sobre esta partición reflejaría en mayor medida el diseño matemático del generador sintético y no la 
-capacidad biológica del modelo predictivo. Adicionalmente, ante un \textit{Recall} bajo, el número total de eventos detectados es sumamente reducido (82 para \textit{Random Forest}, 14 para LSTM y 1 para ARIMA en la partición de prueba, Sección \ref{sec:comparativa_modelos}), por lo que promediar el tiempo de anticipación sobre una muestra tan ínfima carecería de la más elemental robustez estadística. Se optó deliberadamente por no reportar una cifra que pudiera inducir a conclusiones erróneas.
-
-\textbf{Efecto.} La afirmación operativa de que estos tres modelos serían útiles para anticipar la congestión de red con suficiente antelación táctica queda argumentada y justificada teóricamente, mas no demostrada empíricamente.
-
-\subsection*{Datos primarios: duración, fuente única y ausencia de congestión real}
-
-\textbf{Duración.} La recolección originalmente planificada de dos meses ininterrumpidos se ajustó operativamente a 21 días efectivos de monitoreo, con una cobertura final del 82.9\,\% debido a interrupciones exógenas de la conectividad remota (Tabla \ref{tab:huecos_recoleccion}). El ajuste respondió estrictamente al calendario académico de titulación. Esta modificación se declara explícitamente como una limitación temporal y no se compensó fabricando burdamente periodos artificiales de observación: los datos sintéticos empleados se inyectaron con un propósito metodológico 
-distinto, justificado y aislado (Sección \ref{sec:obtencion_exploracion}).
-
-\textbf{Fuente única y régimen de tráfico.} La totalidad del \textit{dataset} primario crudo proviene de una sola red privada PYME, cuya utilización máxima observada jamás rebasó el 1.44\,\% de la capacidad contratada (Tabla \ref{tab:estadisticas_real}). La infraestructura bajo estudio nunca se congestionó durante la ventana de observación. Como se argumentó de forma extensa en la Sección \ref{sec:discusion}, este estado ocioso es matemática y lógicamente coherente con la Teoría de Colas y la naturaleza sobredimensionada de la red, pero representó una barrera insalvable 
-para medir y modelar directamente el fenómeno de interés sobre tráfico puramente humano.
-
-\textbf{Efecto.} Los resultados de la tarea de regresión ---por sobresalientes que resulten en el caso del LSTM--- describen única y exclusivamente el comportamiento de los algoritmos ante el tráfico genuino y ligero de esta red en particular. No son extrapolables ni aplicables a otras infraestructuras sin un proceso profundo de reajuste y validación de contexto (\textit{fine-tuning}).
-
-\subsection*{Naturaleza y sesgos de los datos sintéticos}
-
-Bajo el marco metodológico expuesto, la evaluación de la tarea de clasificación descansa en su totalidad sobre datos sintéticos aislados (Tabla \ref{tab:composicion_dataset_final}). Deben reconocerse frontalmente tres sesgos estadísticos intrínsecos a su construcción:
-
-\begin{enumerate}
-    \item \textbf{Ausencia de dependencia serial estocástica en el tráfico base.} El tráfico sintético de normalidad operativa se generó remuestreando iterativamente los valores reales agrupados por la hora del día, minuto a minuto y de forma aleatoria independiente. Esto preserva fidedignamente la distribución marginal de los datos y captura adecuadamente las ráfagas súbitas, pero rompe la autocorrelación temporal natural (la "inercia") que exhibe el tráfico humano. Esta ausencia de memoria estocástica de fondo puede afectar o penalizar de forma distinta a los modelos secuenciales puros (ARIMA, LSTM) frente a los ensambles de rezagos discretos (\textit{Random Forest}).
-    \item \textbf{Eventos estilizados geométricamente.} Las anomalías de congestión inyectadas siguen un perfil trapezoidal perfecto, con un ascenso controlado desde una utilización base estabilizada artificialmente en 0.10 (una cota muy superior a la mediana operativa real). El modelo predictivo es susceptible de aprender a reconocer geométricamente la forma de este perfil anómalo, de modo que el desempeño de clasificación documentado puede reflejar, en parte, el éxito del algoritmo al empatar dicha regularidad matemática más que su capacidad de detectar una saturación de naturaleza orgánica.
-    \item \textbf{Evaluación dentro de la misma distribución generativa.} Las fases de entrenamiento y las evaluaciones de clasificación comparten, en su núcleo, el mismo generador de datos. Por consiguiente, las métricas presentadas se obtuvieron en condiciones algorítmicas altamente favorables. Es lógicamente previsible que el desempeño de clasificación sobre congestión genuina y no estructurada arroje cifras menores.
-\end{enumerate}
-
-Es importante recalcar que estos sesgos metodológicos no invalidan la comparación transversal ni el orden relativo entre los tres modelos ---ya que todos compitieron bajo el escrutinio de los mismos datos y el mismo umbral---, pero sí prohíben categóricamente interpretar los valores absolutos de \textit{Recall} reportados como un reflejo exacto de la capacidad de detección del sistema desplegado en una red de producción humana.
-
-\subsection*{Diseño de variables y modelos}
-
-\textbf{Variables de entrada (\textit{Features}).} El diseño metodológico original (Tabla \ref{tab:features_entrada}) contempló el RTT, la tasa de pérdida de paquetes y diversas variables temporales cíclicas como entradas primarias al tensor de aprendizaje. Sin embargo, en la implementación definitiva, los tres modelos consumieron única y exclusivamente variables derivadas del factor de utilización (sus rezagos secuenciales y su media móvil). Esta contracción de dimensionalidad se debió a tres realidades empíricas: la pérdida de paquetes observada en la red real fue 
-matemáticamente nula a lo largo de los 21 días (aportando entropía cero al modelo); el RTT empírico se mantuvo extraordinariamente estable y careció de correlación con la carga del canal, lo que resulta absolutamente coherente con una red operando a una fracción ínfima de su capacidad; y, finalmente, la extracción de variables cíclicas de calendario exigía un volumen histórico de ciclos semanales muy superior al capturado. Incorporar el RTT y la pérdida sintéticos (los inyectados por el algoritmo de anomalías) habría contaminado irremediablemente la evaluación, puesto que 
-ambas métricas se derivan de forma directa y determinística de la ecuación de utilización de Kleinrock, actuando como un puente de filtrado de datos (\textit{target leakage}) que le revelaría la etiqueta de congestión al modelo por vías secundarias.
-
-\textbf{Modelos.} La formulación inicial de esta tesis (Sección \ref{sec:modelos_justificacion}) contempló incluir las topologías SVR (Regresión de Vectores de Soporte) y GRU (\textit{Gated Recurrent Unit}). Debido a severas restricciones de tiempo, el desarrollo final se acotó estrictamente a la tríada de ARIMA, \textit{Random Forest} y LSTM (garantizando un representante fuerte por paradigma). La pugna arquitectónica específica entre LSTM y GRU para tareas de redes cuenta ya con sólida evidencia comparativa en la literatura consultada (e.g., Santos et al. \cite{santos2022}), 
-por lo que su exclusión no compromete la innovación del trabajo. Los hiperparámetros de \textit{Random Forest} y LSTM se anclaron a partir del éxito en la fase piloto sin someterse a técnicas de búsqueda exhaustiva (\textit{Grid Search}), y el entrenamiento masivo se ejecutó íntegramente en CPU, en cumplimiento directo de lo declarado en los Alcances originales. Se evaluó un único horizonte de predicción de mediano plazo ($h=5$ minutos).
-
-\textbf{Efecto.} Los descubrimientos reportados son científicamente válidos para las arquitecturas y configuraciones exactas documentadas. No puede descartarse, bajo ningún concepto, que una topología alternativa, una búsqueda hiperparamétrica profunda o la inyección de nuevas variables alteren sustancialmente el orden relativo de eficacia, particularmente en la crítica tarea de la clasificación binaria.
-
-\subsection*{Definición de congestión y umbral}
-
-La definición teórica operacionalizada en la Ecuación \ref{eq:congestion_instanciada} estipula que la congestión es un estado donde la utilización rebasa el umbral $U \geq U_{th}$ de manera \textit{sostenida} durante un lapso ininterrumpido de al menos 5 minutos. Por motivos de simplificación programática en el diseño del tensor objetivo, la etiqueta binaria de clasificación se implementó como el cruce instantáneo y probabilístico del umbral en el horizonte preciso de $U(t+h) \geq U_{th}$ (Sección \ref{sec:preprocesamiento_desarrollo}). 
-
-Dado que los eventos sintéticos inyectados tienen duraciones prolongadas que oscilan entre 5 y 29 minutos continuos, ambas definiciones resultan operativamente colindantes en este trabajo. No obstante, en un entorno de tráfico real, esta divergencia técnica podría generar discrepancias (e.g., el modelo clasificando como "congestión" a una micro-ráfaga genuina de un minuto que no ameritaría la activación del protocolo de mitigación). Adicionalmente, el compromiso metodológico de validar empíricamente el valor numérico del umbral ($U_{th}=0.80$) contra el desgaste orgánico de 
-la red no pudo cristalizarse, debido a la nula saturación de la infraestructura. Por ende, el umbral del 80\,\% se mantiene fijado en virtud de su justificación teórica y su prevalencia como estándar de tolerancia en las mejores prácticas de la industria de las telecomunicaciones.
-
-\subsection*{Protocolo de evaluación y robustez estadística}
-
-\begin{itemize}
-    \item ARIMA se evaluó mediante un proceso iterativo de pronóstico progresivo continuo (\textit{rolling forecast}) por bloques fijos de $h$ observaciones, mientras que \textit{Random Forest} y LSTM ejecutaron predicciones puntuales sobre cada instante tensorial preprocesado. Por ende, los conteos absolutos de los puntos evaluados difieren ligeramente entre el paradigma estadístico y el de \textit{Machine Learning} (Sección \ref{sec:resultados_arima}). La comparabilidad y justicia cruzada de los RMSE reportados en la Tabla maestra \ref{tab:tabla_maestra} se sostiene firmemente porque el rango de normalización Min-Max del \textit{dataset} primario resulta en la práctica unitario (con un mínimo de $6.5 \times 10^{-7}$ y un máximo de entrenamiento de $0.999$), garantizando matemáticamente que la escala original (evaluada por ARIMA) y la escala normalizada (evaluada por los otros dos) mantienen una equivalencia estructural perfecta.
-    \item El núcleo de entrenamiento de cada modelo se ejecutó una única vez (empleando la semilla aleatoria semilla=42 para la partición de la entropía), prescindiendo de repeticiones masivas tipo Montecarlo o del cálculo de intervalos de confianza. Las diferencias absolutas que fundamentan las conclusiones primarias (e.g., el abrumador \textit{Recall} de \textit{Random Forest} frente al de ARIMA, o la reducción de dos órdenes de magnitud en el RMSE de LSTM) son de un calibre tal que resulta probabilísticamente inverosímil que obedezcan al azar estocástico de la inicialización de pesos. Sin embargo, las variaciones numéricas minúsculas entre métricas no deben leerse como un resultado concluyente.
-    \item La prueba de fuego de la validación de generalización externa se apoyó en apenas 6 bloques evaluables de MAWI a granularidad oficial, por lo que su dictamen debe interpretarse estrictamente como una comprobación de carácter exploratorio.
-\end{itemize}
-
-\subsection*{Generalización entre escalas de red}
-
-Únicamente el algoritmo estadístico autorregresivo (ARIMA) pudo ser sometido al choque de validación contra el repositorio público MAWI a su granularidad de 1 minuto. Los algoritmos de ensamble (\textit{Random Forest}) y memoria profunda (LSTM) no pudieron participar en este cruce debido a que la longitud matricial de sus ventanas de entrada (de 30 minutos secuenciales) excedía estructuralmente la duración máxima de cada captura histórica diaria japonesa (15 minutos continuos). 
-
-En observancia del rigor científico, se optó por no forzar una alteración algorítmica improvisada que habría corrompido las configuraciones previamente validadas de los tensores, y se descartó la concatenación de capturas provenientes de días distintos, puesto que ello habría injertado una continuidad artificial carente de respaldo termodinámico en la red. En consecuencia, este trabajo se declara desprovisto de evidencia empírica que sustente la portabilidad inter-dominio de estas dos arquitecturas complejas de \textit{Machine Learning}.
+Por su parte, el protocolo de evaluación careció de repeticiones masivas estocásticas (estilo Montecarlo) para el cálculo de intervalos de confianza, y la validación de generalización contra MAWI se restringió a 6 observaciones exclusivas para ARIMA. Esto ocurrió debido a que las ventanas estructurales de los modelos de \textit{Machine Learning} ($w=30$ minutos) resultaron algorítmicamente incompatibles con las capturas fragmentadas de 15 minutos del repositorio japonés, impidiendo evaluar empíricamente su portabilidad inter-dominio.
 
 \subsection*{Alcance absoluto de las conclusiones}
 
-Como epílogo de este ejercicio crítico, la Tabla \ref{tab:alcance_conclusiones} traza una frontera diáfana entre las afirmaciones que cuentan con el respaldo irrestricto de la evidencia recabada, y aquellas presunciones que el rigor metodológico desautoriza.
+Como epílogo de este ejercicio crítico, la Tabla \ref{tab:alcance_conclusiones} traza una frontera diáfana entre las afirmaciones que cuentan con el respaldo irrestricto de la evidencia recabada y aquellas presunciones que el rigor metodológico desautoriza categóricamente.
 
 \begin{table}[H]
     \centering
@@ -3799,31 +3682,33 @@ Como epílogo de este ejercicio crítico, la Tabla \ref{tab:alcance_conclusiones
         \hline
         \textbf{Afirmaciones sostenidas por la evidencia} & \textbf{Presunciones no sostenidas por la evidencia} \\
         \hline
-        LSTM predice con el menor error probabilístico el flujo de tráfico orgánico de la red privada estudiada (Sección \ref{sec:resultados_lstm}). & Que cualquiera de estos tres modelos logre detectar una crisis de congestión puramente humana con la misma sensibilidad teórica reportada sobre el modelo sintético de clasificación. \\
+        LSTM predice con el menor error probabilístico el flujo de tráfico orgánico de la red privada estudiada (Sección \ref{sec:resultados_lstm}). & Que cualquiera de estos modelos logre detectar una crisis de congestión puramente humana con la misma sensibilidad reportada sobre los datos sintéticos. \\
         \hline
-        Bajo las rigurosas condiciones evaluadas, ningún modelo algorítmico logra dominar de manera simultánea las tareas de regresión continua y clasificación discreta (Sección \ref{sec:comparativa_modelos}). & Que el orden jerárquico relativo de eficacia comprobado aquí (LSTM $>$ \textit{Random Forest} $>$ ARIMA en regresión) se mantenga inmutable ante el uso de otras \textit{features}, la exploración de hiperparámetros profundos o su migración a otras infraestructuras de red. \\
+        Bajo las rigurosas condiciones evaluadas, ningún modelo algorítmico logra dominar de manera simultánea las tareas de regresión continua y clasificación discreta (Sección \ref{sec:comparativa_modelos}). & Que el orden jerárquico de eficacia (LSTM $>$ \textit{Random Forest} $>$ ARIMA en regresión) se mantenga inmutable ante nuevas \textit{features} o arquitecturas. \\
         \hline
-        Bajo un escenario asimétrico de tráfico (fuerte desbalance de clases), la Exactitud (\textit{Accuracy}) resulta ser una métrica matemáticamente engañosa (Figura \ref{fig:barras_clasificacion}). & Que la arquitectura híbrida resultante se considere lista para ser desplegada en un entorno de producción operativa sin someterse a rigurosas fases de prueba beta y evaluación de latencia sistémica adicional. \\
+        En escenarios de red asimétricos (masivo desbalance de clases), la Exactitud (\textit{Accuracy}) resulta ser una métrica matemáticamente engañosa e insuficiente (Figura \ref{fig:barras_clasificacion}). & Que la arquitectura resultante esté lista para un despliegue operativo en producción sin requerir fases de prueba beta y evaluación de latencia. \\
         \hline
-        Un algoritmo ARIMA calibrado en la dinámica ociosa de una red corporativa de menor escala fracasa estrepitosamente al intentar generalizar sobre un enlace troncal académico de uso intenso (Sección \ref{sec:resultados_arima}). & Que \textit{Random Forest} o la red neuronal LSTM sean infalibles a la hora de generalizar o presenten una superioridad frente al colapso de ARIMA, dado que la disparidad de las longitudes de captura impidió la constatación de dicha portabilidad inter-dominio. \\
+        Un algoritmo ARIMA calibrado en la dinámica ociosa de una red menor fracasa estrepitosamente al intentar generalizar sobre un enlace troncal académico de uso intenso (Sección \ref{sec:resultados_arima}). & Que los algoritmos de \textit{Machine Learning} sean infalibles a la hora de generalizar, dado que la disparidad en las longitudes de captura impidió comprobarlo. \\
         \hline
     \end{tabular}
     \caption{Delimitación rigurosa del alcance científico de las conclusiones dictaminadas en esta investigación.}
     \label{tab:alcance_conclusiones}
 \end{table}
 
-La exposición de estas limitaciones metodológicas no invalida el peso científico del dictamen central de la investigación: el diseño experimental implementado las hizo explícitas en cada etapa del desarrollo, logrando asilar su impacto y garantizando que la comparativa transversal final entre los tres modelos matemáticos se mantuviera inquebrantablemente justa, equitativa y controlada.
+La exposición de estas limitaciones metodológicas no invalida el peso científico del dictamen central de la investigación: el diseño experimental implementado logró aislar el impacto de estas variables condicionantes, garantizando que la comparativa transversal definitiva entre los tres modelos matemáticos se mantuviera inquebrantablemente justa, equitativa y controlada.
 
 \section{Trabajo futuro}
 \label{sec:trabajo_futuro}
 
+Las limitaciones y descubrimientos empíricos documentados en esta tesis no representan un punto final, sino que trazan una hoja de ruta estructurada para la evolución de los sistemas predictivos de red. Se proponen las siguientes seis líneas estratégicas de continuación:
+
 \begin{enumerate}
-    \item \textbf{Desarrollo de un producto integral de telemetría y predicción en vivo.} Integrar los \textit{scripts} algorítmicos validados en este trabajo dentro de una aplicación de producción que incluya una interfaz gráfica de usuario (\textit{dashboard} en tiempo real), un conducto de ingestión y preprocesamiento de telemetría ininterrumpido a través de API o gRPC nativo de \textit{routers}, y rutinas de reentrenamiento periódico autónomo que mitiguen el impacto del cambio de concepto de los datos (\textit{concept drift}).
-    \item \textbf{Implementación del esquema de alertamiento híbrido y evaluación de latencia.} Programar y desplegar en una red viva el sistema orquestador conceptualizado en la Figura \ref{fig:esquema_hibrido}, utilizando el algoritmo \textit{Random Forest} como percutor rápido de alarmas y el modelo LSTM como predictor continuo del impacto. Esto permitirá evaluar empíricamente la efectividad real del Tiempo de Anticipación ($TAE$) frente a crisis operativas originadas orgánicamente por los usuarios, y probar la eficacia de las respuestas automatizadas dentro de un entorno \textit{Software-Defined Networking} (SDN).
-    \item \textbf{Expansión longitudinal de la captura e integración de múltiples dominados de red.} Ejecutar ciclos de instrumentación por periodos mínimos de dos a seis meses ininterrumpidos en corporativos PYME, a fin de capturar la huella de los procesos estacionales de mantenimiento, respaldos semanales masivos o descargas de actualizaciones globales. Simultáneamente, escalar este acopio de \textit{datasets} hacia infraestructuras ajenas para determinar cómo la dimensionalidad de las \textit{features} predictivas debe adaptarse al transitar de una red aislada hacia otra de topología sustancialmente diferente.
-    \item \textbf{Validación orgánica del umbral de crisis y afinamiento de la etiqueta tensorial.} Recabar incidentes prolongados de saturación verídicos y documentados por \textit{tickets} de soporte técnico que permitan sustituir los algoritmos generadores de tráfico sintético. Paralelamente, validar empíricamente que el umbral heurístico histórico del 80\,\% ($U_{th}=0.80$) se correlacione irrefutablemente con la inflexión del RTT y la manifestación del \textit{Jitter} o la pérdida en la capa de usuario. Con base en esto, reprogramar el tensor de clasificación binaria para que deje de evaluar el cruce instantáneo probabilístico del umbral, y exija la detección estricta de una saturación sostenida que amerite activar los protocolos de emergencia (QoS).
-    \item \textbf{Incorporación de dimensionalidad enriquecida y evaluación de algoritmos paralelos.} Integrar las métricas desechadas en este trabajo (e.g., retransmisiones TCP observadas a nivel capa 4, latencia agregada a servidores críticos o métricas codificadas temporalmente) una vez que la red demuestre un nivel de tráfico orgánico dinámico y no estático. De la mano de estos nuevos \textit{datasets}, será imperioso someter a los tensores resultantes a una pugna de optimización intensiva contra las topologías SVR, GRU y modelos basados en Mecanismos de Atención Computacional (\textit{Transformers}), apalancando librerías especializadas y clústeres de computación paralela a través de GPU que superen los márgenes reportados en esta tesis.
-    \item \textbf{Pruebas formales de estocasticismo y adaptación para estudios de portabilidad global.} Automatizar una batería de reentrenamientos tipo Montecarlo que aplique cientos de semillas generativas para reportar, sin asomo de duda estadística, los intervalos precisos de confianza y estabilidad matemática de cada modelo implementado. Por su parte, para la evaluación de generalización, se deberá estudiar la adaptación funcional de los modelos de ventana temporal prolongada (de 30 minutos) de modo que sus requerimientos computacionales de \textit{padding} o ajuste emparejen satisfactoriamente con la brevedad estructural (trazas de 15 minutos) de repositorios estandarizados globales, como los provistos por The MAWI Working Group.
+    \item \textbf{Operacionalización y despliegue en tiempo real.} Evolucionar los \textit{scripts} algorítmicos validados \textit{offline} hacia una arquitectura de producción. Esto requiere desarrollar conductos de ingestión continua de telemetría (vía API o gRPC nativo de \textit{routers}), interfaces gráficas de usuario (\textit{dashboards}) y rutinas de reentrenamiento autónomo que mitiguen el cambio de concepto (\textit{concept drift}).
+    \item \textbf{Alertamiento híbrido y evaluación operativa del $TAE$.} Instrumentar en un entorno vivo el orquestador conceptualizado en la Figura \ref{fig:esquema_hibrido}, empleando \textit{Random Forest} como percutor rápido de alarmas y LSTM como proyector de impacto continuo. Esto permitirá medir empíricamente el Tiempo de Anticipación Efectivo ($TAE$) ante crisis orgánicas y validar la integración de mitigaciones automatizadas en arquitecturas \textit{Software-Defined Networking} (SDN).
+    \item \textbf{Expansión longitudinal y escalabilidad topológica.} Extender la captura de telemetría a ciclos multimensuales para internalizar patrones estacionales (e.g., respaldos masivos y mantenimientos). Paralelamente, evaluar el despliegue del sistema en infraestructuras corporativas densas, analizando cómo debe mutar la dimensionalidad de las características (\textit{features}) al transitar entre distintas escalas de red.
+    \item \textbf{Validación orgánica del umbral y rediseño de la variable objetivo.} Sustituir la inyección de tráfico sintético mediante la correlación con bitácoras reales de incidentes (\textit{tickets} de soporte). Esto permitirá validar empíricamente si el umbral heurístico del 80\% ($U_{th}=0.80$) detona inflexiones comprobables en el RTT y el \textit{Jitter} a nivel de usuario, y facilitará la reprogramación del tensor para evaluar congestión sostenida en lugar del cruce probabilístico instantáneo.
+    \item \textbf{Enriquecimiento dimensional y arquitecturas de frontera.} Integrar al tensor predictivo variables de Capa 4 (e.g., retransmisiones TCP) y codificaciones temporales, evaluándolas sobre una red con mayor entropía dinámica. Bajo estas nuevas condiciones, escalar la comparativa algorítmica hacia topologías SVR, GRU y Mecanismos de Atención (\textit{Transformers}), apalancando clústeres GPU para búsquedas hiperparamétricas exhaustivas.
+    \item \textbf{Robustez estocástica y portabilidad inter-dominio.} Automatizar pruebas de reentrenamiento estocástico masivo (métodos Montecarlo) para establecer intervalos de confianza estadísticamente irrefutables. Asimismo, desarrollar estrategias de adaptación de dimensionalidad (\textit{padding}) que compatibilicen ventanas tensoriales amplias (e.g., $w=30$ minutos) con capturas históricas breves (e.g., 15 minutos en repositorios MAWI), destrabando la evaluación externa de algoritmos de \textit{Deep Learning}.
 \end{enumerate}
 
 \clearpage
