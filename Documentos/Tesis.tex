@@ -2307,12 +2307,15 @@ Se entrenó un ensamble de 200 árboles de decisión, con una profundidad máxim
 
 Dado que estas métricas están normalizadas, su comparación con ARIMA requiere una conversión. Al reescalar el RMSE de prueba ($0.1311$) por el rango de la variable de entrenamiento ($0.323 - 0.017 = 0.306$), se obtiene un RMSE equivalente de aproximadamente $0.040$ en la escala original, ligeramente superior al $0.028$ reportado por la línea base estadística.
 
-La Figura \ref{fig:rf_prediccion} contrasta visualmente las predicciones continuas del modelo contra los valores reales observados en el conjunto de prueba, evidenciando gráficamente el tope predictivo del ensamble ante los picos de utilización.
+La Figura \ref{fig:rf_prediccion} contrasta visualmente las predicciones continuas del modelo frente a los valores reales observados en el conjunto de prueba, revelando gráficamente una limitación estructural intrínseca a la topología de los Árboles de Decisión: la incapacidad matemática de extrapolación. 
+
+Como se observa en la gráfica, mientras que el tráfico real (línea azul continua) experimenta caídas abruptas (\textit{valles}) que descienden hasta el nivel de 0.2 en el eje normalizado (e.g., cerca de la observación 350), la predicción del ensamble (línea naranja discontinua) sufre de un claro tope inferior, negándose a descender por debajo de la barrera del 0.5. 
+Este fenómeno no es un error de programación, sino la consecuencia directa de la arquitectura del \textit{Random Forest}: dado que las predicciones se emiten promediando los valores contenidos en los nodos hoja del entrenamiento, el modelo es geométricamente incapaz de predecir valores que excedan los límites (máximos o mínimos) del régimen dominante que observó durante su aprendizaje. En consecuencia, el modelo recorta sistemáticamente los extremos del comportamiento estocástico, justificando así por qué su error de regresión (RMSE equivalente de 0.040) resultó superior al de la línea base estadística (ARIMA).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_prediccion_vs_real.png}
-    \caption{\textit{Random Forest}: predicción continua vs. valor real (escala normalizada), conjunto de prueba.}
+    \caption{\textit{Random Forest}: Evaluación de regresión. Se evidencia la incapacidad del ensamble para extrapolar valores extremos, "recortando" sistemáticamente las caídas abruptas de tráfico.}
     \label{fig:rf_prediccion}
 \end{figure}
 
@@ -2345,16 +2348,18 @@ A pesar de su deficiencia en la extrapolación continua, la capacidad no lineal 
 
 \subsubsection*{Importancia de variables}
 
-Aprovechando la interpretabilidad inherente del ensamble, se calculó la impureza de Gini para cuantificar la importancia relativa de las características extraídas de la ventana temporal. 
+Aprovechando la interpretabilidad inherente de los árboles de decisión (una ventaja crítica frente a las arquitecturas de caja negra como las redes neuronales), se calculó la disminución media de la impureza de Gini para cuantificar la importancia relativa de las características (\textit{features}) extraídas de la ventana temporal. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{rf_importancia_variables.png}
-    \caption{Importancia relativa de variables (Impureza de Gini), \textit{Random Forest}.}
+    \caption{Importancia relativa de variables (Impureza de Gini) en el \textit{Random Forest}. La media móvil domina la toma de decisiones algorítmica.}
     \label{fig:rf_importancia}
 \end{figure}
 
-Como ilustra la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentra más del 66\,\% de la capacidad discriminativa, superando por amplio margen al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$, con 13.9\,\%). Este resultado confirma empíricamente que, a una granularidad de 1 segundo (MAWI), suavizar el ruido estocástico del tráfico revela la tendencia subyacente de manera más nítida que la simple observación secuencial directa. 
+Como ilustra contundentemente la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentra más del 66\,\% de la capacidad discriminativa del modelo. Supera por un margen abrumador al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$, con apenas 13.9\,\%), mientras que los rezagos más antiguos (del \textit{lag 2} al \textit{lag 5}) resultan prácticamente marginales para la toma de decisiones. 
+
+Este hallazgo algorítmico confirma empíricamente una intuición fundamental en la ingeniería de tráfico: a una granularidad tan fina como la de 1 segundo (empleada en el \textit{dataset} MAWI), la observación de instantes aislados resulta insuficiente e engañosa debido al ruido estocástico intrínseco del canal. El ensamble aprendió matemáticamente que un pico de utilización en un solo segundo ($U_{\mbox{\scriptsize lag1}}$) no garantiza una crisis; sin embargo, una elevación sostenida en la media móvil revela un estrés acumulado genuino. Suavizar el ruido transitorio resulta indispensable para discernir la tendencia subyacente de saturación.
 
 \subsection*{Fase 2: Entrenamiento sobre el \textit{dataset} primario}
 
@@ -2378,7 +2383,7 @@ La Tabla \ref{tab:rf_primario_regresion} presenta las métricas de regresión so
     \label{tab:rf_primario_regresion}
 \end{table}
 
-Las Figuras \ref{fig:rf_primario_regresion_val} y \ref{fig:rf_primario_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados.
+Las Figuras \ref{fig:rf_primario_regresion_val} y \ref{fig:rf_primario_regresion_test} contrastan visualmente las predicciones continuas del modelo contra los valores reales observados en sus respectivas particiones.
 
 \begin{figure}[H]
     \centering
@@ -2387,19 +2392,26 @@ Las Figuras \ref{fig:rf_primario_regresion_val} y \ref{fig:rf_primario_regresion
     \label{fig:rf_primario_regresion_val}
 \end{figure}
 
+Al analizar las métricas de la Tabla \ref{tab:rf_primario_regresion}, se observa una discrepancia notable entre el error de validación (RMSE=0.0051) y el error de prueba (RMSE=0.0496), lo que representa un incremento de casi un orden de magnitud. La progresión gráfica entre ambas figuras revela de forma diáfana la causa raíz de este deterioro predictivo.
+
+En la partición de validación (Figura \ref{fig:rf_primario_regresion_val}), la predicción del ensamble (línea naranja discontinua) logra mantenerse relativamente contenida. Aunque ya exhibe un sesgo de sobreestimación basal (flotando milimétricamente por encima de la línea azul real plana) y detona picos transitorios, estos estallidos son menores, sin lograr superar la cota del 0.07 en la escala normalizada. El modelo mantiene un error bajo porque estas fluctuaciones no desestabilizan severamente la métrica global del RMSE.
+
+Sin embargo, al transicionar al conjunto de prueba (Figura \ref{fig:rf_primario_regresion_test}), el comportamiento del modelo sufre una disrupción radical. Mientras que el tráfico real (línea azul continua) se mantiene en un letargo persistente idéntico al de validación, la predicción del ensamble pierde la contención y detona dos picos de sobreestimación masivos, alcanzando magnitudes desproporcionadas de 0.5 y casi 0.7 en la escala normalizada. 
+
+Estos estallidos predictivos anómalos no corresponden a una incapacidad de extrapolación (como se vio en la fase piloto), sino a un fenómeno crítico de \textbf{hipersensibilidad contextual inducida por el entrenamiento asimétrico}. Dado que el \textit{Random Forest} fue entrenado sobre una matriz unificada que contenía tanto el letargo real continuo como las ráfagas sintéticas masivas de congestión, el algoritmo aprendió a asociar ciertas micro-fluctuaciones en las variables de rezago con el preludio de una crisis inminente. Al enfrentarse a variaciones ínfimas e inofensivas en el tráfico de fondo del conjunto de prueba, el modelo alucina una ráfaga y sobre-reacciona violentamente, proyectando un pico de utilización que jamás ocurre en la realidad. 
+
+Esta dinámica demuestra empíricamente una vulnerabilidad profunda del \textit{Machine Learning} clásico: si bien los árboles de decisión son excepcionales para segmentar patrones no lineales severos, resultan sumamente susceptibles a generar falsas alarmas de regresión continua cuando su hipervigilancia, calibrada con anomalías masivas, se despliega sobre un entorno operativo puramente ocioso.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \caption{\textit{Random Forest}: Evaluación de regresión en prueba. Se evidencia la hipersensibilidad del ensamble, detonando predicciones masivas de hasta 0.7 ante fluctuaciones inofensivas en un entorno dominado por tráfico real ocioso.}
     \label{fig:rf_primario_regresion_test}
 \end{figure}
 
-Se observa una diferencia notable entre el error de validación (RMSE=0.0051) y el de prueba (RMSE=0.0496), un incremento de casi un orden de magnitud. Esta discrepancia es consistente con el fenómeno de incapacidad de extrapolación documentado en la fase piloto: dado que el conjunto de prueba corresponde temporalmente al segmento final de la recolección real, cualquier ráfaga de tráfico en dicho segmento que exceda el rango de valores objetivo observados durante el entrenamiento ---compuesto mayoritariamente por el régimen de baja 
-utilización característico de la red privada bajo estudio--- es sistemáticamente subestimada por el modelo, replicando a escala del \textit{dataset} primario la misma limitación estructural identificada sobre MAWI.
-
 \subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
 
-La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización de las predicciones continuas en $U_{th}=0.80$ (normalizado).
+La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en la cota de congestión $U_{th}=0.80$ (normalizado).
 
 \begin{table}[H]
     \centering
@@ -2407,43 +2419,53 @@ La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasifica
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9803 & 0.9813 \\
+        Exactitud & 0.9803 & 0.9813 \\
         Precisión & 0.9121 & 0.9318 \\
-        \textit{Recall} (Exhaustividad) & 0.2923 & 0.2982 \\
+        \textit{Recall} & 0.2923 & 0.2982 \\
         \textit{F1-score} & 0.4427 & 0.4518 \\
         AUC-ROC & 0.8796 & 0.9187 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de \textit{Random Forest}, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \caption{Métricas de clasificación de \textit{Random Forest}, umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
     \label{tab:rf_primario_clasificacion}
 \end{table}
 
-La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_rf}) evidencia una mejora sustancial respecto a ARIMA (Sección \ref{sec:arima_desarrollo}): de los 275 eventos de congestión reales, el modelo detectó correctamente 82.
+Para dimensionar el salto cualitativo de este paradigma algorítmico, es indispensable analizar la matriz de confusión sobre el conjunto de prueba, presentada en la Ecuación \ref{eq:confusion_rf}. Esta matriz evidencia una mejora operativa monumental respecto a la línea base estadística (ARIMA):
 
 \begin{equation}
     \begin{pmatrix} \mbox{VN}=10\,341 & \mbox{FP}=6 \\ \mbox{FN}=193 & \mbox{VP}=82 \end{pmatrix}
     \label{eq:confusion_rf}
 \end{equation}
 
-Las Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test} ilustran este comportamiento, donde es visible cómo la predicción del modelo (línea discontinua) reacciona y cruza el umbral $U_{th}$ (línea punteada) con mayor frecuencia que ARIMA durante los eventos de congestión presentes en la serie sintética.
+El desglose de estos componentes revela el verdadero comportamiento del ensamble:
+\begin{itemize}
+    \item \textbf{Verdaderos Negativos (VN=10\,341):} El ensamble mantiene una capacidad excepcional para reconocer los extensos periodos de tráfico ocioso, sin confundirlos con anomalías.
+    \item \textbf{Falsos Positivos (FP=6):} El modelo detonó únicamente 6 falsas alarmas en todo el conjunto de prueba. Esto se traduce en una Precisión sobresaliente del 93.18\,\%, garantizando operativamente que cuando el sistema lanza una alerta preventiva, la probabilidad de que la red efectivamente esté colapsando es casi absoluta.
+    \item \textbf{Verdaderos Positivos (VP=82):} De los 275 instantes de congestión crítica inyectados, el modelo detectó correctamente 82. Esto representa un salto cuántico en comparación con la única detección (VP=1) lograda por ARIMA.
+    \item \textbf{Falsos Negativos (FN=193):} Aunque la omisión de 193 instantes de crisis indica que el modelo aún no es infalible (reflejado en un \textit{Recall} del 29.8\,\%), la mejora comparativa es innegable.
+\end{itemize}
+
+Las Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test} proporcionan la radiografía visual exacta de por qué ocurren estos falsos negativos. A diferencia de ARIMA (cuya inercia aplanaba la predicción), el \textit{Random Forest} logra sincronizarse temporalmente a la perfección con los eventos de congestión: por cada pico azul (tráfico real), emerge simultáneamente un pico naranja (predicción). El modelo sabe exactamente \textit{cuándo} está ocurriendo la crisis.
+
+Sin embargo, el volumen de falsos negativos (193) se origina en el eje vertical (la magnitud). Debido al fenómeno de promediado geométrico en las hojas de los árboles de decisión analizado en la regresión, el \textit{Random Forest} tiende a recortar la cúspide de sus predicciones. Como resultado, decenas de sus picos naranjas escalan verticalmente y diagnostican la anomalía de manera correcta, pero se quedan a escasos milímetros por debajo del umbral matemático rígido de $U_{th}=0.80$ (línea punteada roja). El modelo detecta el evento estocástico, pero el umbral binario estricto penaliza su incapacidad de extrapolar la magnitud máxima.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_val.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, validación de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \caption{\textit{Random Forest}: Evaluación de clasificación (Validación). El modelo detecta la temporalidad de las anomalías (eje X), pero recorta la magnitud de varios picos (eje Y) impidiendo que crucen el umbral.}
     \label{fig:rf_primario_clasificacion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \caption{\textit{Random Forest}: Evaluación de clasificación (Prueba). Se ratifica el comportamiento: picos predictivos altamente precisos en tiempo, pero ligeramente amortiguados en magnitud.}
     \label{fig:rf_primario_clasificacion_test}
 \end{figure}
 
-\subsubsection*{Importancia de variables y el efecto de la granularidad}
+\subsubsection*{Importancia de variables y el efecto de la granularidad temporal}
 
-La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_importancia} presentan la importancia relativa de cada variable de entrada sobre el \textit{dataset} primario.
+La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_importancia} presentan la distribución de la importancia relativa de cada característica (\textit{feature}) de entrada sobre el \textit{dataset} primario.
 
 \begin{table}[H]
     \centering
@@ -2459,21 +2481,23 @@ La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_impo
         $U_{\mbox{\scriptsize lag4}}$ & 0.0301 \\
         \hline
     \end{tabular}
-    \caption{Importancia relativa de variables, \textit{Random Forest}, \textit{dataset} primario.}
+    \caption{Importancia relativa de variables (Impureza de Gini), \textit{Random Forest}, \textit{dataset} primario.}
     \label{tab:rf_primario_importancia}
 \end{table}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{rf_primario_importancia.png}
-    \caption{Importancia relativa de variables, \textit{Random Forest}, \textit{dataset} primario.}
+    \caption{Importancia relativa de variables. Se evidencia la dominancia absoluta del rezago inmediato ($U_{\mbox{\scriptsize lag1}}$) en la toma de decisiones algorítmica.}
     \label{fig:rf_primario_importancia}
 \end{figure}
 
-Resulta notable que el patrón de importancia obtenido sobre el \textit{dataset} primario \textbf{se invierte} respecto al observado en la fase piloto, donde la media móvil concentraba el 66.2\,\% de la importancia total frente a apenas 13.9\,\% del rezago inmediato. Sobre el \textit{dataset} primario, en cambio, $U_{\mbox{\scriptsize lag1}}$ concentra el 66.4\,\% de la importancia, mientras que la media móvil desciende al 12.5\,\%. 
+Resulta de vital importancia analítica notar que el patrón de dominancia obtenido sobre el \textit{dataset} primario \textbf{se invierte radicalmente} respecto al observado durante la fase piloto. En el entorno MAWI, la media móvil concentraba el 66.2\,\% de la importancia predictiva, relegando al rezago inmediato a un mero 13.9\,\%. Sobre el \textit{dataset} primario (Figura \ref{fig:rf_primario_importancia}), en cambio, el rezago inmediato ($U_{\mbox{\scriptsize lag1}}$) asume el liderazgo absoluto con el 66.4\,\% de la importancia, provocando el desplome de la media móvil al 12.5\,\%.
 
-Una explicación analítica plausible de esta inversión radica en la diferencia de granularidad entre ambos escenarios: a granularidad de 1 segundo (\textit{dataset} piloto), el valor inmediatamente anterior es sumamente propenso al ruido de alta frecuencia de la red, por lo que la media móvil aporta una señal suavizada más confiable; a granularidad de 1 minuto (\textit{dataset} primario, conforme a la Sección \ref{sec:preprocesamiento_desarrollo}), cada observación ya integra una unidad de tiempo mayor, promediando intrínsecamente 
-el ruido estocástico de muestra a muestra y haciendo que el valor más reciente sea, por sí solo, el indicador más informativo sobre el estado inmediato del canal.
+La explicación matemática de esta inversión algorítmica radica en el profundo efecto que ejerce la \textbf{granularidad temporal} (la frecuencia de muestreo) sobre la entropía de los datos. A una granularidad fina de 1 segundo (como en MAWI), el valor inmediatamente anterior está altamente contaminado por el ruido estocástico de alta frecuencia del canal; bajo esas condiciones, el algoritmo requiere apoyarse en la media móvil para filtrar el ruido y obtener una señal suavizada confiable. 
+
+Sin embargo, a una granularidad de 1 minuto ---como se instrumentó en el \textit{dataset} primario mediante los \textit{scripts} de RouterOS (Sección \ref{sec:preprocesamiento_desarrollo})--- ocurre un efecto de agregación temporal. Cada muestra de 60 segundos ya promedia intrínsecamente cientos de micro-picos, actuando \textit{de facto} como un filtro paso bajo natural. Al estar el ruido de alta frecuencia suprimido por la propia naturaleza de la captura, el valor inmediato ($U_{\mbox{\scriptsize lag1}}$) se convierte en una métrica limpia y altamente informativa por sí misma, volviendo redundante el cálculo adicional de la media móvil para el algoritmo. Este hallazgo subraya que el diseño de \textit{features} en \textit{Machine Learning} aplicado a redes no puede desligarse de las condiciones físicas del muestreo.
+
 
 \subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
 
@@ -2528,16 +2552,16 @@ La optimización de pesos se ejecutó minimizando el Error Cuadrático Medio (MS
 
 \subsubsection*{Resultados de pronóstico continuo (Regresión)}
 
-La Figura \ref{fig:lstm_curva} corrobora la estabilidad de la fase de entrenamiento, descartando un sobreajuste sistémico al no presentar divergencia entre las curvas de validación y entrenamiento.
+La Figura \ref{fig:lstm_curva} corrobora la estabilidad algorítmica durante la fase de entrenamiento de la red recurrente. La gráfica expone cómo la función de pérdida (MSE) decae abruptamente en la primera época y posteriormente se estabiliza, manteniendo una separación constante y controlada entre las curvas de entrenamiento y validación. Esta topología descarta un sobreajuste sistémico (\textit{overfitting}), demostrando que la red aprendió a generalizar los patrones secuenciales sin memorizar el ruido estocástico de alta frecuencia.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{lstm_curva_aprendizaje.png}
-    \caption{Curva de aprendizaje de la red LSTM (pérdida MSE por época).}
+    \caption{Curva de aprendizaje de la red LSTM (pérdida MSE por época). Convergencia estable sin divergencia severa de validación.}
     \label{fig:lstm_curva}
 \end{figure}
 
-La Tabla \ref{tab:resultados_lstm_regresion} presenta las métricas de error continuo. A diferencia de \textit{Random Forest}, la red LSTM no sufrió una degradación por extrapolación entre particiones (MAPE de 11.53\,\% a 11.00\,\%), lo cual subraya su superioridad matemática para generalizar la tendencia estocástica sin restringirse a las medias de los nodos de entrenamiento.
+La Tabla \ref{tab:resultados_lstm_regresion} presenta las métricas de error continuo. Es fundamental contextualizar estos resultados frente a los paradigmas anteriores: a diferencia de \textit{Random Forest}, la red neuronal recurrente no sufrió una degradación severa por incapacidad de extrapolación, manteniendo un error porcentual sumamente estable entre las particiones de validación y prueba (MAPE de 11.53\,\% a 11.00\,\%).
 
 \begin{table}[H]
     \centering
@@ -2553,10 +2577,14 @@ La Tabla \ref{tab:resultados_lstm_regresion} presenta las métricas de error con
     \label{tab:resultados_lstm_regresion}
 \end{table}
 
+La Figura \ref{fig:lstm_prediccion} aporta la evidencia visual que explica esta superioridad matemática. Resulta pertinente aclarar que la señal real observada (línea azul continua) es analíticamente idéntica a la evaluada por el \textit{Random Forest}, representada en su escala normalizada; su divergencia visual respecto a las gráficas iniciales de ARIMA obedece únicamente a que el modelo estadístico autorregresivo operó sobre la métrica cruda sin escalamiento.
+
+Al analizar la predicción de la red LSTM (línea discontinua púrpura), se evidencia una síntesis geométrica superior entre los dos modelos predecesores. Por un lado, la LSTM emula el suavizado de tendencia que caracterizaba a ARIMA, ignorando la volatilidad milimétrica extrema para trazar el flujo basal con precisión. Por otro lado, supera categóricamente la deficiencia estructural del \textit{Random Forest}: cuando la utilización real experimenta una caída profunda al final de la serie (cerca de la observación 330), la red neuronal extrapola el descenso geométrico con éxito, acompañando la caída en lugar de quedarse estancada en un tope promedio u hoja de decisión. Esta capacidad intrínseca para recordar dependencias a largo plazo y adaptar su trayectoria no lineal explica por qué su RMSE (0.0891) mejoró sustancialmente frente al del ensamble de árboles (0.1311).
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_prediccion_vs_real.png}
-    \caption{LSTM: predicción continua vs. valor real, conjunto de prueba.}
+    \caption{LSTM: Evaluación de regresión. La red combina el filtrado de ruido estocástico con la capacidad de extrapolar descensos profundos, superando la limitación matemática del \textit{Random Forest}.}
     \label{fig:lstm_prediccion}
 \end{figure}
 
@@ -2571,7 +2599,7 @@ Al evaluar la capacidad operativa de la red neuronal mediante el umbral de calib
         \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
         \hline
         Precisión & 81.2\,\% \\
-        \textit{Recall} (Exhaustividad) & 79.4\,\% \\
+        \textit{Recall} & 79.4\,\% \\
         \textit{F1-score} & 80.3\,\% \\
         \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{3.9 minutos} \\
         \hline
@@ -2607,22 +2635,46 @@ Con este resultado se da por concluida la fase de desarrollo e implementación a
 
 \subsection*{Fase 2: Entrenamiento sobre el \textit{dataset} primario}
 
-La red LSTM se reentrenó con la arquitectura validada en la fase piloto (Tabla \ref{tab:arquitectura_lstm}: capa LSTM de 32 unidades, capa densa de 16 unidades con activación ReLU, capa de salida de una unidad; 4\,897 parámetros entrenables), sobre las 46\,582 secuencias de entrenamiento del \textit{dataset} primario (Sección \ref{sec:preprocesamiento_desarrollo}), bajo el mismo criterio de \textit{Early Stopping} (paciencia de 10 épocas, restauración de los mejores pesos).
+La red LSTM se reentrenó con la arquitectura validada en la fase piloto (Tabla \ref{tab:arquitectura_lstm}: capa LSTM de 32 unidades, capa densa de 16 unidades con activación ReLU, capa de salida de una unidad; 4\,897 parámetros entrenables), sobre las 46\,582 secuencias de entrenamiento del \textit{dataset} primario (Sección \ref{sec:preprocesamiento_desarrollo}), bajo el mismo criterio de parada temprana (\textit{Early Stopping} con paciencia de 10 épocas y restauración de los mejores pesos).
 
-El entrenamiento convergió en la época 16 de 100 configuradas ---ligeramente más tardío que en la fase piloto (época 12)---, resultado esperable dado el volumen considerablemente mayor de datos de entrenamiento del \textit{dataset} primario (46\,582 secuencias frente a 1\,026 del piloto). La Figura \ref{fig:lstm_primario_curva} presenta la evolución de la función de pérdida.
+El entrenamiento convergió en la época 16 de las 100 configuradas ---ligeramente más tardío que en la fase piloto (época 12)---, un resultado algorítmicamente previsible dado el volumen considerablemente mayor de la matriz tensorial del \textit{dataset} primario (46\,582 secuencias frente a las apenas 1\,026 del piloto). 
+
+La Figura \ref{fig:lstm_primario_curva} presenta la evolución de la función de pérdida (MSE) durante este proceso. A primera vista, la gráfica revela una marcada asimetría visual: la pérdida de entrenamiento (línea azul continua) desciende gradualmente desde 0.010 hasta estabilizarse cerca de 0.006, mientras que la pérdida de validación (línea naranja discontinua) se mantiene prácticamente plana y pegada al cero absoluto (0.000) desde la primera época.
+
+Lejos de representar un desbordamiento o una fuga de datos, este comportamiento es el reflejo matemático exacto del diseño de evaluación dual asimétrico establecido en la Sección \ref{sec:obtencion_exploracion}. La línea azul es numéricamente mayor porque el conjunto de entrenamiento incluye los 126 eventos sintéticos masivos de congestión inyectados; la red experimenta un error mayor porque debe ajustar sus pesos para mapear la volatilidad extrema de dichas ráfagas (cuyos valores rozan el 1.0). Por el contrario, la línea naranja corresponde a la partición de validación para la tarea de regresión, la cual está conformada \textbf{al 100\,\% por tráfico real ocioso}. Dado que los valores objetivo reales en esta partición son minúsculos (con un máximo normalizado de apenas 0.0029, como se demostró en la Tabla \ref{tab:rangos_normalizados}), el cálculo del Error Cuadrático Medio de las predicciones basales arroja una cifra microscópica que, visualmente, colapsa en el eje inferior. 
+
+Esta gráfica certifica empíricamente la pureza de las particiones: la red aprende a lidiar con el caos en el entrenamiento, pero se le evalúa su estabilidad sobre el letargo real absoluto, sin incurrir en sobreajuste sistémico.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{lstm_primario_curva_aprendizaje.png}
-    \caption{Curva de aprendizaje de la red LSTM, \textit{dataset} primario.}
+    \caption{Curva de aprendizaje de la red LSTM (\textit{dataset} primario). La separación estructural entre ambas curvas es el producto del diseño experimental asimétrico: entrenamiento estresado (azul) vs. validación ociosa (naranja).}
     \label{fig:lstm_primario_curva}
 \end{figure}
 
-Ambas curvas ---entrenamiento y validación--- se mantienen próximas entre sí a lo largo del proceso, sin divergencia sustancial, descartando un sobreajuste severo pese al incremento de escala respecto a la fase piloto.
+Para disipar cualquier ambigüedad visual inducida por la extrema disparidad de magnitudes entre las particiones de entrenamiento y validación, se generaron dos representaciones analíticas adicionales del proceso de convergencia.
+
+La Figura \ref{fig:lstm_primario_curva_split} desglosa el entrenamiento en dos ejes independientes. Esta perspectiva de alta resolución revela que la pérdida de validación (panel inferior) no es estáticamente nula, sino que exhibe una dinámica geométrica microscópica en el orden de los $10^{-4}$. Es en esta escala donde se observa el verdadero comportamiento del modelo sobre el tráfico real ocioso: la red alcanza su óptimo de generalización basal de manera casi inmediata en la Época 1 (marcada por la línea vertical discontinua). A partir de la Época 2, el modelo comienza a sobreajustarse microscópicamente al ruido estocástico de fondo, elevando su error hacia $4.0 \times 10^{-4}$. Esta degradación milimétrica fue detectada con precisión por el mecanismo de \textit{Early Stopping}, justificando algorítmicamente la restauración de los pesos de la primera época.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{lstm_primario_curva_aprendizaje1.png} % Ajusta el nombre del archivo si es necesario
+    \caption{Desglose de la curva de aprendizaje en ejes independientes. Se hace visible la dinámica microscópica ($10^{-4}$) de la validación y el punto de corte del \textit{Early Stopping} en la Época 1.}
+    \label{fig:lstm_primario_curva_split}
+\end{figure}
+
+Por su parte, la Figura \ref{fig:lstm_primario_curva_log} unifica ambas curvas empleando una escala logarítmica en el eje de las ordenadas. Esta representación corrobora de forma irrefutable la separación estructural de aproximadamente dos órdenes de magnitud (de $10^{-2}$ en el entrenamiento estresado a $10^{-4}$ en la validación ociosa) impuesta por el diseño experimental asimétrico. La paralelidad general de las curvas en escala logarítmica demuestra que la arquitectura tensorial se mantuvo matemáticamente estable y controlada durante todo el ciclo de aprendizaje.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_curva_aprendizaje_log.png}
+    \caption{Curva de aprendizaje de la red LSTM (escala logarítmica). Se confirma la brecha de dos órdenes de magnitud entre las particiones producto de la inyección de anomalías sintéticas.}
+    \label{fig:lstm_primario_curva_log}
+\end{figure}
 
 \subsubsection*{Evaluación de regresión (datos reales)}
 
-La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas de regresión sobre las particiones reales de validación y prueba.
+La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas de regresión obtenidas sobre las particiones puras (100\,\% tráfico real ocioso) de validación y prueba.
 
 \begin{table}[H]
     \centering
@@ -2634,32 +2686,35 @@ La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas de regresión 
         Prueba (real) & 0.001036 & 0.000125 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de LSTM sobre el \textit{dataset} primario (escala normalizada).}
+    \caption{Métricas de regresión de LSTM sobre el \textit{dataset} primario (escala normalizada). Se destaca la drástica reducción del error continuo frente a los modelos clásicos.}
     \label{tab:lstm_primario_regresion}
 \end{table}
 
-Estos resultados constituyen, por un margen considerable, el mejor desempeño de regresión entre los tres modelos evaluados sobre el \textit{dataset} primario (RMSE de prueba casi dos órdenes de magnitud inferior al de ARIMA y \textit{Random Forest}, Secciones \ref{sec:arima_desarrollo} y \ref{sec:rf_desarrollo}). Las Figuras \ref{fig:lstm_primario_regresion_val} y \ref{fig:lstm_primario_regresion_test} contrastan visualmente las predicciones contra los valores reales observados.
+Estos resultados constituyen, por un margen categórico, el mejor desempeño de regresión continua entre los tres modelos evaluados sobre el \textit{dataset} primario. El RMSE de prueba (0.0010) resulta ser casi \textbf{dos órdenes de magnitud inferior} a los reportados por la línea base estadística ARIMA (0.0458) y por el ensamble \textit{Random Forest} (0.0496). 
+
+Las Figuras \ref{fig:lstm_primario_regresion_val} y \ref{fig:lstm_primario_regresion_test} contrastan visualmente las predicciones contra los valores reales observados, revelando el comportamiento analítico que fundamenta esta superioridad.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
-    \caption{LSTM: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
+    \caption{LSTM: Evaluación de regresión en validación. La red ancla su predicción base (línea discontinua) al cero real, exhibiendo perturbaciones de escala microscópica (tope en 0.006).}
     \label{fig:lstm_primario_regresion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
-    \caption{LSTM: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \caption{LSTM: Evaluación de regresión en prueba. El estado celular de la red amortigua exitosamente la hipersensibilidad, limitando los picos predictivos a una magnitud inocua de apenas 0.03.}
     \label{fig:lstm_primario_regresion_test}
 \end{figure}
 
-Una explicación analítica plausible de esta ventaja sustancial reside en la capacidad de la red para reconocer el patrón de bajo tráfico característico del régimen real de la red privada bajo estudio (Sección \ref{sec:obtencion_exploracion}) directamente a partir de la secuencia completa de entrada. Esto contrasta con depender de una media incondicional aprendida durante el entrenamiento ---como ocurre con ARIMA--- o de particiones discretas del espacio de variables ---como 
-ocurre con \textit{Random Forest}---, ya que ambas topologías clásicas resultan excesivamente influenciadas por la proporción de eventos de congestión sintéticos presentes en el conjunto de entrenamiento combinado.
+A primera vista, la Figura \ref{fig:lstm_primario_regresion_test} muestra que la red neuronal también reacciona ante ciertas micro-fluctuaciones del tráfico de fondo (generando picos transitorios). Sin embargo, la escala del eje de las ordenadas revela el verdadero triunfo del modelo: mientras que \textit{Random Forest} alucinaba falsas alarmas masivas con magnitudes de hasta 0.7, las perturbaciones espurias de la LSTM están brutalmente contenidas, alcanzando un máximo casi imperceptible de 0.03. Asimismo, el sesgo de sobreestimación constante que penalizó severamente a ARIMA desaparece por completo; la predicción base de la LSTM se adhiere casi a la perfección a la señal real (con una oscilación milimétrica hacia el dominio negativo, típica de topologías sin activación restrictiva en la capa de salida).
+
+La justificación analítica de esta ventaja sustancial reside en la arquitectura intrínseca de la memoria a corto y largo plazo. A diferencia de ARIMA ---que internaliza una media estática incondicional fuertemente sesgada por las anomalías del entrenamiento--- y de \textit{Random Forest} ---que segmenta de forma aislada el espacio temporal perdiendo el contexto---, la red LSTM propaga un \textbf{estado celular persistente ($C_t$)} a lo largo de toda la secuencia. A través de sus \textit{forget gates} (compuertas de olvido), la red aprendió a retener el contexto a largo plazo de que la red se encuentra en un régimen basal ocioso. Por consiguiente, ante la aparición de un micro-pico estocástico en la secuencia de entrada, la red neuronal amortigua agresivamente la predicción, reconociéndolo como ruido transitorio y no como el inicio de una congestión masiva.
 
 \subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
 
-La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasificación.
+La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en la cota de congestión $U_{th}=0.80$ (normalizado).
 
 \begin{table}[H]
     \centering
@@ -2667,42 +2722,50 @@ La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasifi
         \hline
         \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
         \hline
-        Exactitud (\textit{Accuracy}) & 0.9742 & 0.9750 \\
+        Exactitud & 0.9742 & 0.9750 \\
         Precisión & 0.7619 & 0.7778 \\
-        \textit{Recall} (Exhaustividad) & 0.0563 & 0.0509 \\
+        \textit{Recall} & 0.0563 & 0.0509 \\
         \textit{F1-score} & 0.1049 & 0.0956 \\
         AUC-ROC & 0.8783 & 0.9000 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
+    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
     \label{tab:lstm_primario_clasificacion}
 \end{table}
 
-La matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_lstm}) revela un desempeño de clasificación \textbf{intermedio} entre ARIMA y \textit{Random Forest}: de los 275 eventos de congestión reales, LSTM detectó correctamente 14, una cifra sustancialmente inferior a los 82 detectados por \textit{Random Forest} (Sección \ref{sec:rf_desarrollo}), aunque superior al único evento detectado por ARIMA (Sección \ref{sec:arima_desarrollo}).
+La disección de la matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_lstm}) revela que la red recurrente exhibió un desempeño operativo \textbf{intermedio} entre la inercia estadística de ARIMA y la agudeza no lineal de \textit{Random Forest}:
 
 \begin{equation}
     \begin{pmatrix} \mbox{VN}=10\,314 & \mbox{FP}=4 \\ \mbox{FN}=261 & \mbox{VP}=14 \end{pmatrix}
     \label{eq:confusion_lstm}
 \end{equation}
 
-Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test} ilustran las predicciones del modelo sobre las particiones sintéticas de clasificación, evidenciando que, a pesar de su desempeño sobresaliente en regresión, la red LSTM tiende a producir predicciones conservadoras que rara vez cruzan el umbral $U_{th}$ (línea punteada).
+El análisis de estos componentes revela la postura de la red ante la congestión:
+\begin{itemize}
+    \item \textbf{Verdaderos Negativos (VN=10\,314):} Consistente con su excelente desempeño en regresión basal, la red reconoce el letargo de forma magistral.
+    \item \textbf{Falsos Positivos (FP=4):} La tasa de falsas alarmas es prácticamente nula, lo que garantiza una Precisión robusta (77.78\,\%).
+    \item \textbf{Verdaderos Positivos (VP=14):} De los 275 eventos de congestión reales, la red detectó correctamente 14. Aunque supera por un amplio margen la única detección de ARIMA (VP=1), queda dramáticamente rezagada frente al poder de clasificación del ensamble de árboles (VP=82).
+    \item \textbf{Falsos Negativos (FN=261):} Este volumen crítico de omisiones desploma el \textit{Recall} del modelo a un paupérrimo 5.09\,\%, indicando que la red guardó silencio frente al 95\,\% de las crisis que enfrentó la infraestructura.
+\end{itemize}
+
+Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test} exponen la evidencia visual que explica esta severa limitación en la detección. Al observar los picos predictivos de la red (línea discontinua morada), es evidente que el modelo reacciona frente a las anomalías inyectadas, pero su respuesta es sumamente conservadora. Decenas de picos ascienden temporalmente sincronizados con las crisis, pero su magnitud vertical es sistemáticamente amortiguada, quedándose ahogados justo por debajo de la línea de alerta roja ($U_{th}=0.80$). Solo 14 de esos picos lograron suficiente inercia matemática para cruzar el umbral y registrar un Verdadero Positivo.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_val.png}
-    \caption{LSTM: predicción, validación de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \caption{LSTM: Evaluación de clasificación (Validación). La red reacciona ante las crisis, pero su amortiguación intrínseca ahoga la magnitud de los picos antes de que crucen el umbral de alerta (0.80).}
     \label{fig:lstm_primario_clasificacion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
-    \caption{LSTM: predicción, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \caption{LSTM: Evaluación de clasificación (Prueba). Se confirma el patrón conservador que penaliza el \textit{Recall}, limitando drásticamente el número de cruces efectivos del umbral.}
     \label{fig:lstm_primario_clasificacion_test}
 \end{figure}
 
-Este resultado, aparentemente contraintuitivo ---el modelo con mejor desempeño de regresión no es el de mejor desempeño de clasificación---, resulta matemáticamente congruente con la función objetivo empleada durante el entrenamiento: al minimizar el Error Cuadrático Medio sobre un conjunto de entrenamiento dominado numéricamente por observaciones de bajo tráfico (el 97.9\,\% de las observaciones sintéticas se encuentra por debajo de $U_{th}$, Sección 
-\ref{sec:obtencion_exploracion}), la red aprende a priorizar la precisión sobre el régimen mayoritario, produciendo predicciones conservadoras que penalizan la detección de los eventos infrecuentes de congestión. Este hallazgo fundamental se retomará con mayor profundidad en la discusión comparativa del Capítulo 6.
+Este resultado ---aparentemente contraintuitivo--- resulta matemáticamente congruente con el diseño de la función de pérdida (\textit{Loss Function}) empleada. Al minimizar iterativamente el Error Cuadrático Medio (MSE) sobre un conjunto de entrenamiento masivamente desbalanceado (donde la inmensa mayoría del tiempo el canal opera ocioso, Sección \ref{sec:obtencion_exploracion}), la red aprendió que la estrategia óptima para reducir su error global es volverse conservadora. La LSTM priorizó la perfección predictiva sobre el régimen mayoritario de letargo (lo cual logró con maestría en la regresión), pero el costo de esa "perfección plana" fue penalizar y subestimar estructuralmente los eventos infrecuentes de congestión.
+
 
 \subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
 
