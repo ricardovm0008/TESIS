@@ -1592,28 +1592,20 @@ Finalmente, el código fuente desarrollado para esta tesis se gestionará median
 \chapter{Desarrollo e Implementación}
 \label{cap:desarrollo}
 
-El presente capítulo constituye el núcleo empírico de esta investigación, materializando las decisiones metodológicas y arquitectónicas justificadas en el Capítulo 4. Aquí se abandona el plano de las definiciones teóricas para documentar la ejecución sistemática del \textit{pipeline} de datos y la codificación algorítmica del prototipo.
-
-El desarrollo se expone siguiendo la secuencia lógica del flujo de información en un sistema predictivo aplicado a redes. Inicialmente, se detalla la extracción híbrida de telemetría desde la infraestructura de enrutamiento y la posterior exploración estadística del conjunto de datos real para definir el umbral de congestión (Sección \ref{sec:obtencion_exploracion}). A continuación, se implementan los tratamientos matemáticos de limpieza, ventaneo y escalado exigidos para mitigar las discrepancias estructurales 
-entre las fuentes de información (Sección \ref{sec:preprocesamiento}). Finalmente, las secciones subsiguientes documentan la arquitectura computacional, la sintonización de hiperparámetros y el proceso de entrenamiento de los paradigmas predictivos seleccionados ---transitando desde la línea base estadística, pasando por el ensamble de \textit{Machine Learning} clásico, hasta culminar con las topologías de redes neuronales recurrentes---.
-
-El objetivo rector de este capítulo no es constituir un manual de programación, sino evidenciar que la transformación del tráfico bruto en un sistema predictivo funcional obedece a un diseño de \textit{software} determinista, reproducible y científicamente fundamentado.
+Este capítulo documenta cómo se implementó el sistema predictivo a partir de las decisiones metodológicas del Capítulo 4: la extracción y exploración de los datos, incluida la definición del umbral de congestión (Sección \ref{sec:obtencion_exploracion}); el preprocesamiento, con limpieza, ventaneo y escalado para homologar las dos fuentes de datos (Sección \ref{sec:preprocesamiento}); y la configuración y el entrenamiento de los modelos, desde la línea base estadística y el ensamble de \textit{Machine Learning} clásico hasta las redes recurrentes. Los resultados obtenidos con esta implementación se reportan en el Capítulo 6.
 
 \section{Obtención y exploración de los conjuntos de datos}
 \label{sec:obtencion_exploracion}
 
-La fase de desarrollo inició con la consolidación y auditoría de los datos crudos. Dado que la recolección del \textit{dataset} primario en la red privada PYME descrita en la Sección \ref{sec:fuente_datos} exigió un periodo de observación longitudinal que transcurrió en paralelo a esta implementación, el prototipo predictivo se construyó y validó inicialmente a partir del \textit{dataset} externo MAWI, para posteriormente aplicarse sobre el \textit{dataset} primario una vez concluida su recolección.
+Como la recolección del \textit{dataset} primario (Sección \ref{sec:fuente_datos}) transcurrió en paralelo a la implementación, el prototipo se construyó y validó primero con el \textit{dataset} externo MAWI y después se aplicó al primario. Esta sección describe la obtención y caracterización de ambos.
 
 \subsection*{Extracción de telemetría del \textit{dataset} primario}
 
-Es pertinente señalar una precisión metodológica respecto a lo establecido en la Sección \ref{sec:fuente_datos}: si bien el diseño original contemplaba el protocolo SNMP como mecanismo de consulta, las restricciones de acceso remoto a la infraestructura de la red privada bajo estudio ---en particular, la ausencia de una dirección IP pública y la imposibilidad de presencia física recurrente--- condujeron a adoptar como mecanismo funcionalmente equivalente la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente mediante 
-el Programador de Tareas (\textit{Scheduler}) del propio equipo, complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución preserva la naturaleza pasiva de la recolección y la métrica obtenida, sin alterar el diseño experimental planteado en el Capítulo 4.
-
-La recolección, capturó de manera automatizada la utilización del enlace, la latencia (RTT) y la tasa de pérdida de paquetes a intervalos de un minuto, con respaldo local en el propio equipo para garantizar la continuidad ante posibles interrupciones de la conectividad remota (Sección \ref{sec:herramientas_entorno}).
+El diseño original contemplaba SNMP (Sección \ref{sec:fuente_datos}), pero la ausencia de IP pública y de presencia física recurrente llevó a usar la herramienta nativa \texttt{/interface monitor-traffic} de RouterOS, ejecutada localmente con el Programador de Tareas (\textit{Scheduler}) y complementada con sondeos ICMP activos para latencia y pérdida de paquetes. Esta sustitución mantiene la recolección pasiva y no altera el diseño del Capítulo 4. Se registraron utilización, RTT y tasa de pérdida cada minuto, con respaldo local ante cortes de conectividad (Sección \ref{sec:herramientas_entorno}).
 
 \subsection*{Consolidación y auditoría de continuidad}
 
-Al cierre del periodo de recolección, el \textit{dataset} primario quedó constituido por \textbf{21 días} de monitoreo, consolidados en 25\,422 observaciones a una granularidad de 1 minuto. La auditoría de continuidad de la serie ---necesaria dado que la extracción remota de los registros dependía de la disponibilidad sostenida del túnel VPN hacia la infraestructura de la red privada--- reveló 22 interrupciones, resumidas en la Tabla \ref{tab:huecos_recoleccion}.
+El \textit{dataset} primario quedó con \textbf{21 días} de monitoreo y 25\,422 observaciones a 1 minuto. La auditoría de continuidad, necesaria porque la extracción dependía del túnel VPN, detectó 22 interrupciones (Tabla \ref{tab:huecos_recoleccion}).
 
 \begin{table}[H]
     \centering
@@ -1631,15 +1623,11 @@ Al cierre del periodo de recolección, el \textit{dataset} primario quedó const
     \label{tab:huecos_recoleccion}
 \end{table}
 
-El corte prolongado, ocurrido entre el 7 y el 9 de septiembre de 2026, resultó en la pérdida completa del día 8 de septiembre, y es atribuible a una interrupción sostenida de la conectividad VPN y de suministro eléctrico en la sede de la red bajo estudio. Las 21 interrupciones menores, de 6 minutos cada una, son consistentes con reinicios periódicos del enlace. Dado que su duración excede ligeramente el umbral de 3 muestras planteado inicialmente en la Sección \ref{sec:preprocesamiento}, se decidió flexibilizar empíricamente dicho límite a 6 muestras, 
-permitiendo así su imputación mediante interpolación lineal sin comprometer la integridad de las tendencias. El corte prolongado, en cambio, excede abrumadoramente cualquier límite razonable de interpolación y se trata estrictamente como una frontera de sesión durante el preprocesamiento, dividiendo la serie en dos segmentos continuos independientes. Esta cobertura del 82.9\,\% es coherente con las limitaciones de un monitoreo remoto sin presencia física reconocidas en los Alcances y Limitaciones de este trabajo (Sección \ref{sec:alcances}).
-\newpage
+El corte prolongado (7 al 9 de septiembre de 2026, con pérdida completa del día 8) se debió a una interrupción de la VPN y del suministro eléctrico en la sede. Se trata como frontera de sesión, de modo que la serie se divide en dos segmentos continuos independientes. Las 21 interrupciones menores, de 6 minutos, son consistentes con reinicios periódicos del enlace; como superan el umbral de 3 muestras fijado en la Sección \ref{sec:preprocesamiento}, este se amplió a 6 para poder interpolarlas linealmente. La cobertura del 82.9\,\% es coherente con las limitaciones del monitoreo remoto (Sección \ref{sec:alcances}).
 
 \subsection*{Exploración estadística del \textit{dataset} primario}
 
-La Tabla \ref{tab:estadisticas_real} presenta las estadísticas descriptivas de las tres métricas capturadas. Más allá de los valores absolutos, estas cifras revelan una característica estructural crítica de la infraestructura estudiada: una extrema asimetría positiva en la distribución del tráfico. Mientras que el factor de utilización experimenta ráfagas esporádicas que alcanzan un máximo de 1.44\,\%, su mediana se sitúa en un ínfimo 0.00021\,\% y su media en 0.00221\,\%. Esta abrumadora prevalencia de estados ociosos confirma empíricamente que la red opera con un sobredimensionamiento masivo respecto a su tráfico cotidiano. 
-
-Asimismo, la métrica de latencia corrobora este diagnóstico: un RTT medio de apenas 9.44 ms con una desviación estándar minúscula de 3.53 ms demuestra que los enrutadores despachan los paquetes inmediatamente, sin que exista acumulación en los \textit{buffers} (\textit{bufferbloat}). Esta estabilidad de la latencia constituye la evidencia empírica que justifica, de manera irrefutable, la necesidad metodológica de inyectar congestión sintética (Sección \ref{sec:obtencion_exploracion}): al no presentarse el fenómeno no lineal descrito por la Teoría de Colas en los datos reales, ningún algoritmo de \textit{Machine Learning} habría tenido anomalías orgánicas de las cuales aprender.
+La Tabla \ref{tab:estadisticas_real} muestra una fuerte asimetría positiva: la utilización alcanza un máximo de 1.44\,\%, pero su mediana es 0.00021\,\% y su media 0.00221\,\%. El RTT (media de 9.44 ms, desviación de 3.53 ms) indica además que no hay acumulación en los \textit{buffers}. La red opera, por tanto, muy por debajo de su capacidad.
 
 \begin{table}[H]
     \centering
@@ -1658,9 +1646,7 @@ Asimismo, la métrica de latencia corrobora este diagnóstico: un RTT medio de a
     \label{tab:estadisticas_real}
 \end{table}
 
-La Figura \ref{fig:patron_horario_real} ilustra este comportamiento dinámico al contrastar el tráfico promedio frente a los picos máximos observados por hora del día. La inmensa brecha visual entre ambas series evidencia la naturaleza altamente volátil y en ráfagas (\textit{bursty nature}) del tráfico analizado. Aunque el volumen promedio se mantiene prácticamente plano a lo largo de las 24 horas, los picos de máxima demanda irrumpen de manera abrupta y transitoria, concentrándose específicamente en las ventanas de las 15:00 y las 17:00 horas. Este patrón es plenamente consistente con la naturaleza heterogénea de la red descrita en la Sección \ref{sec:fuente_datos}, empatando con los horarios de finalización de jornada laboral, picos de actividad residencial y probables sincronizaciones en ráfaga de la plataforma Nextcloud.
-
-Desde el punto de vista predictivo, la Figura \ref{fig:patron_horario_real} anticipa estructuralmente el gran desafío que enfrentarán los algoritmos en el Capítulo 6: predecir el promedio estable inferior es una tarea matemáticamente trivial que un modelo conservador dominará rápidamente, pero predecir el momento exacto en que detonarán los picos requerirá una sensibilidad algorítmica excepcional.
+La Figura \ref{fig:patron_horario_real} contrasta el tráfico promedio con los picos máximos por hora. El promedio es prácticamente plano, mientras que los picos se concentran a las 15:00 y las 17:00, en línea con la heterogeneidad de la red (Sección \ref{sec:fuente_datos}). La Figura \ref{fig:histograma_real}, con eje de frecuencias logarítmico, muestra que la gran mayoría de las observaciones se acumula cerca de cero (más de $10^4$ muestras), mientras que la cola larga, hasta 14 Mbps, tiene frecuencias de apenas uno o dos dígitos. Con esta distribución, una función de pérdida como el MSE favorece predecir siempre el estado basal, por lo que el error de regresión por sí solo puede ocultar la incapacidad de detectar ráfagas.
 
 \begin{figure}[H]
     \centering
@@ -1669,81 +1655,48 @@ Desde el punto de vista predictivo, la Figura \ref{fig:patron_horario_real} anti
     \label{fig:patron_horario_real}
 \end{figure}
 
-Finalmente, la Figura \ref{fig:serie_temporal_real} presenta la serie temporal completa de utilización a lo largo de los 21 días efectivos de monitoreo. En esta representación longitudinal se confirma visualmente el diagnóstico estadístico previo: una línea base (\textit{baseline}) de estabilidad general y tráfico ocioso, interrumpida únicamente por ráfagas esporádicas de mayor magnitud que, incluso en su máxima expresión, no logran estresar la capacidad total del enlace.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{serie_temporal_real.png}
-    \caption{Serie temporal de utilización real, \textit{dataset} primario (21 días).}
-    \label{fig:serie_temporal_real}
-\end{figure}
-
-La Figura \ref{fig:histograma_real} presenta la distribución empírica de la tasa de recepción (\texttt{rx\_bps}). Fue estrictamente necesario emplear una escala logarítmica en el eje de frecuencias (\textit{eje Y}) debido a la naturaleza extremadamente asimétrica y de cola pesada (\textit{heavy-tailed}) de los datos. 
-
-Como se ilustra en el gráfico, la inmensa mayoría de las observaciones ---representadas por la colosal primera columna a la izquierda--- se concentran en valores cercanos a cero, superando la barrera de las $10^4$ muestras (decenas de miles de minutos en estado de reposo). Por el contrario, los picos de alto rendimiento que conforman la cola extendida hacia la derecha (alcanzando los $1.4 \times 10^7$ bps, o 14 Mbps) son estadísticamente anómalos, registrando frecuencias de aparición minúsculas, de apenas uno o dos dígitos ($10^0$ a $10^1$).
-
-Desde una perspectiva analítica, este histograma trasciende la simple estadística descriptiva y revela la causa raíz del desafío algorítmico central de esta investigación. Esta distribución severamente sesgada explica de forma visual por qué una función de pérdida estándar, como el Error Cuadrático Medio (MSE), incentiva a los modelos predictivos a adoptar una postura conservadora: un algoritmo puede alcanzar una precisión global casi perfecta si se limita a predecir siempre el estado basal mayoritario (la gran columna izquierda), penalizando e ignorando por completo la detección de la cola derecha. Esta evidencia estructural anticipa y justifica matemáticamente el desempeño de la red LSTM documentado en el Capítulo 6, la cual minimizó el error de regresión de forma magistral, pero careció de la sensibilidad (\textit{Recall}) necesaria para clasificar las ráfagas anómalas.
-
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.75\textwidth]{histograma_real_log.png}
-    \caption{Distribución de \texttt{rx\_bps} (escala logarítmica en frecuencia), evidenciando el severo sesgo hacia el estado ocioso en el \textit{dataset} primario.}
+    \caption{Distribución de \texttt{rx\_bps} (escala logarítmica en frecuencia), \textit{dataset} primario.}
     \label{fig:histograma_real}
 \end{figure}
 
-\subsubsection*{Hallazgo: ausencia de congestión natural en el régimen de tráfico observado}
+\subsubsection*{Hallazgo: ausencia de congestión natural}
 
-El hallazgo más relevante de este análisis exploratorio es que la utilización máxima observada durante los 21 días de recolección fue de apenas \textbf{1.44\,\%} del ancho de banda nominal contratado (1000 Mbps), con una mediana de utilización cercana a cero (0.0002\,\%). Este resultado es notablemente más extremo que el observado en la exploración del \textit{dataset} piloto MAWI (utilización máxima de 32.3\,\%), y confirma que la red privada PYME opera de manera consistente muy por debajo de su capacidad contratada. En consecuencia, 
-\textbf{ningún evento de congestión real} ($U \geq U_{th}=0.80$) fue observado durante la ventana de recolección.
-
-Esta ausencia de eventos positivos naturales, ya anticipada parcialmente en la fase piloto con MAWI, resulta aún más pronunciada a la escala del \textit{dataset} primario, e imposibilita ---sin intervención adicional--- entrenar o evaluar honestamente la formulación de clasificación establecida en la Sección \ref{subsec:supervisado}. Consultado este hallazgo con el comité asesor de esta investigación, se autorizó la incorporación de datos sintéticos como estrategia de aumento de datos (\textit{data augmentation}), bajo la condición 
-explícita de declarar en todo momento qué proporción de los datos empleados es real y cuál es sintética, preservando la integridad de la evaluación final mediante un diseño experimental riguroso.
+La utilización máxima fue de 1.44\,\% del ancho de banda contratado (1000 Mbps), frente a 32.3\,\% en el piloto MAWI, por lo que \textbf{no se observó ningún evento de congestión real} ($U \geq U_{th}=0.80$). Sin casos positivos no es posible entrenar ni evaluar la formulación de clasificación (Sección \ref{subsec:supervisado}), y la estabilidad del RTT indica que el comportamiento no lineal descrito por la Teoría de Colas no aparece en los datos reales. Consultado el comité asesor, se autorizó incorporar datos sintéticos como aumento de datos, con la condición de declarar siempre qué proporción de los datos es real y cuál sintética.
 
 \subsection*{Generación de datos sintéticos calibrados}
 
-Se generaron 37 días adicionales de datos sintéticos ---alcanzando en conjunto un volumen temporal equivalente al periodo de dos meses originalmente planificado (Sección \ref{sec:fuente_datos})---. Esta masa de datos se calibró estadísticamente a partir de los 21 días de tráfico real mediante un remuestreo iterativo (\textit{bootstrap}) de la distribución empírica observada por hora del día. Esta rigurosa estrategia preserva la topología genuina de la distribución, incluyendo las ráfagas esporádicas características de la red privada bajo estudio (Figura \ref{fig:patron_horario_real}), sin forzar una forma paramétrica arbitraria que habría distorsionado la dinámica estocástica original del canal.
+Se generaron 37 días sintéticos, que junto con los 21 reales equivalen a los dos meses planificados originalmente (Sección \ref{sec:fuente_datos}). Su tráfico de fondo se calibró con un remuestreo \textit{bootstrap} de la distribución empírica por hora del día de los datos reales, lo que conserva sus ráfagas sin imponer una forma paramétrica.
 
-Sobre este tráfico de fondo sintético, pero estadísticamente anclado a la realidad, se inyectaron de forma deliberada 126 eventos de congestión pura. Para evitar un aprendizaje por memorización plana, los eventos se modelaron con un perfil geométrico trapezoidal (ascenso gradual, meseta de crisis, descenso de mitigación) dotado de varianza paramétrica. Su duración oscila entre 5 y 29 minutos (media de 17.4 minutos) ---cumpliendo estrictamente con la condición de sostenimiento temporal fijada en la Ecuación \ref{eq:congestion_instanciada}---, y su intensidad pico ($U_{pico}$) fluctúa entre 0.811 y 0.979 (media de 0.890). La Figura \ref{fig:distribucion_eventos} presenta el histograma bivariado de esta inyección, demostrando la heterogeneidad de las anomalías generadas.
+Sobre ese fondo se inyectaron 126 eventos de congestión con perfil trapezoidal (ascenso, meseta y descenso) y varianza paramétrica. Duran entre 5 y 29 minutos (media de 17.4), cumpliendo la condición de sostenimiento de la Ecuación \ref{eq:congestion_instanciada}, y alcanzan una utilización pico entre 0.811 y 0.979 (media de 0.890) (Figura \ref{fig:distribucion_eventos}).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{distribucion_eventos_sinteticos.png}
-    \caption{Distribución de duración e intensidad paramétrica de los 126 eventos de congestión sintéticos inyectados.}
+    \caption{Distribución de duración e intensidad de los 126 eventos de congestión sintéticos.}
     \label{fig:distribucion_eventos}
 \end{figure}
 
-Es de vital importancia metodológica destacar que la latencia (RTT) y la tasa de pérdida de paquetes durante estos eventos \textbf{no} se generaron mediante la adición de ruido blanco o valores aleatorios. En estricta adherencia al marco analítico de esta tesis, estas métricas secundarias se derivaron determinísticamente de la propia utilización sintética empleando el modelo matemático de la Teoría de Colas (Sección \ref{sec:congestion}): el retraso en cola se modeló para crecer de forma asintótica (proporcional a $\frac{1}{1-\rho}$) conforme el canal roza la saturación, mientras que la función de descarte de paquetes (\textit{packet drop}) permanece inactiva hasta que la utilización perfora el crítico umbral de vecindad ($U \approx 0.85$). 
-
-La Figura \ref{fig:ejemplo_evento} aporta la evidencia visual concluyente de esta relación causal: la gráfica central y la inferior permanecen estables hasta el minuto 10, instante preciso en que la utilización cruzando la cota del 80\,\% (línea roja punteada) detona un colapso en el RTT y violentos picos de pérdida de paquetes, emulando con fidelidad matemática el colapso termodinámico de un enrutador del mundo real.
+El RTT y la pérdida de paquetes de estos eventos no se generaron con ruido aleatorio, sino que se derivaron de la utilización con el modelo de la Teoría de Colas (Sección \ref{sec:congestion}): el retraso en cola crece de forma asintótica (proporcional a $\frac{1}{1-\rho}$) y el descarte de paquetes se activa solo cuando $U \approx 0.85$. La Figura \ref{fig:ejemplo_evento} muestra un ejemplo: al cruzar $U=0.80$ en el minuto 10, el RTT y la pérdida se disparan.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{ejemplo_evento_sintetico.png}
-    \caption{Disección causal de un evento sintético inyectado: la utilización estresa la red y detona determinísticamente el colapso del RTT y la pérdida de paquetes, validando la Teoría de Colas.}
+    \caption{Evento sintético inyectado: la utilización determina el RTT y la pérdida de paquetes según la Teoría de Colas.}
     \label{fig:ejemplo_evento}
 \end{figure}
 
-Finalmente, la Figura \ref{fig:histograma_sintetico} presenta la radiografía estadística del \textit{dataset} sintético final, contrastando la masa poblacional contra el umbral crítico $U_{th}=0.80$. Esta representación logarítmica ilustra el éxito del diseño experimental: se conservó la abrumadora prevalencia de estados ociosos a la izquierda (respetando la física de la red), pero se construyó un montículo secundario de masa probabilística a la derecha del umbral, dotando a los algoritmos de clasificación ---por primera vez en todo el ciclo de vida del canal--- de eventos matemáticamente robustos a partir de los cuales aprender a discriminar la congestión.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{histograma_sintetico.png}
-    \caption{Distribución probabilística de utilización en el \textit{dataset} sintético (37 días). Se observa la provisión deliberada de eventos a la derecha del umbral de congestión ($U_{th}=0.80$).}
-    \label{fig:histograma_sintetico}
-\end{figure}
-
-
 \subsection*{Diseño de evaluación: preservando la integridad de los datos reales}
 
-Para garantizar que ningún resultado reportado en el Capítulo 6 se derive de una evaluación contaminada con datos sintéticos, se adoptó el siguiente diseño, verificado mediante comprobaciones automáticas de seguridad en el propio código de procesamiento:
+Para que ningún resultado del Capítulo 6 provenga de una evaluación contaminada con datos sintéticos, se adoptó el siguiente diseño, verificado con comprobaciones automáticas en el código de procesamiento:
 
 \begin{itemize}
-    \item El conjunto de \textbf{entrenamiento} combina una partición cronológica del 60\,\% de los datos reales con una partición equivalente del 60\,\% de los datos sintéticos.
-    \item La evaluación de la tarea de \textbf{regresión} (validación y prueba) se realiza exclusivamente sobre el 20\,\%/20\,\% restante de los datos \textbf{reales}, nunca vistos durante el entrenamiento.
-    \item La evaluación de la tarea de \textbf{clasificación} se realiza exclusivamente sobre el 20\,\%/20\,\% restante de los datos \textbf{sintéticos}, igualmente aislados del entrenamiento, dado que la partición real de evaluación no contiene, por construcción, ningún caso positivo de congestión.
+    \item \textbf{Entrenamiento:} 60\,\% cronológico de los datos reales más 60\,\% de los sintéticos.
+    \item \textbf{Regresión} (validación y prueba): solo el 20\,\%/20\,\% restante de los datos \textbf{reales}.
+    \item \textbf{Clasificación} (validación y prueba): solo el 20\,\%/20\,\% restante de los datos \textbf{sintéticos}, pues la partición real no contiene, por construcción, ningún caso positivo.
 \end{itemize}
-
-La Tabla \ref{tab:composicion_dataset_final} sintetiza la composición resultante de cada conjunto.
 
 \begin{table}[H]
     \centering
@@ -1762,24 +1715,12 @@ La Tabla \ref{tab:composicion_dataset_final} sintetiza la composición resultant
     \label{tab:composicion_dataset_final}
 \end{table}
 
-Esta separación estricta implica que, para la tarea de regresión, los resultados del Capítulo 6 reflejan el desempeño de los modelos exclusivamente sobre el comportamiento real y genuino de la red bajo estudio; mientras que, para la tarea de clasificación, los resultados reflejan el desempeño sobre eventos de congestión estadísticamente 
-calibrados pero sintéticos. Esta limitación se discute con detalle en la Sección 6.5 y se compensa parcialmente con la validación de generalización frente al \textit{dataset} MAWI reagregado a granularidad oficial 
-(Sección \ref{sec:preprocesamiento}).
+Así, los resultados de regresión reflejan el comportamiento real de la red y los de clasificación, eventos sintéticos calibrados. Esta limitación se discute en la Sección 6.5 y se compensa parcialmente con la validación sobre MAWI reagregado a granularidad oficial (Sección \ref{sec:preprocesamiento}).
 
 \subsection*{Extracción y decodificación de trazas de validación (MAWI)}
 
-Para construir la serie temporal de validación externa, se consumieron trazas de tráfico troncal correspondientes a 2026 del repositorio MAWI. Dado que la distribución original consiste en capturas binarias comprimidas (\texttt{.pcap.gz}) que registran decenas de millones de paquetes por archivo, la extracción mediante herramientas de alto nivel 
-(\texttt{tshark}) resultó impráctica: el procesamiento demandaba un volumen de memoria que excedía los recursos de la estación de trabajo, motivado por la sobrecarga de reconstrucción de flujos de dichas herramientas.
+Se usaron trazas de tráfico troncal de 2026 del repositorio MAWI, distribuidas como capturas \texttt{.pcap.gz} con decenas de millones de paquetes por archivo. \texttt{tshark} resultó impráctico por su consumo de memoria al reconstruir flujos, así que se implementó un decodificador propio en Python que interpreta directamente el formato \textit{libpcap} sin decodificar el \textit{payload} y procesa en flujo (\textit{streaming}), agrupando los bytes en ventanas de 1 minuto, la misma del Capítulo 4. Como cada captura diaria dura solo 15 minutos, se procesó un lote secuencial de 120 trazas (30 horas efectivas) para obtener una serie suficientemente larga (Fragmento \ref{lst:parser_pcap}, Tabla \ref{tab:resumen_extraccion_mawi}).
 
-En consecuencia, se optó por implementar un decodificador propio en Python, capaz de interpretar directamente la estructura binaria del formato \textit{libpcap} sin decodificar el \textit{payload}. Esta estrategia de procesamiento en flujo (\textit{streaming}), sin acumulación en memoria, permitió agrupar el volumen de bytes transmitidos 
-en ventanas temporales de manera altamente eficiente.
-
-Para garantizar la validez metodológica del \textit{pipeline} predictivo, la agregación temporal se mantuvo estrictamente en la ventana de 1 minuto establecida en el Capítulo 4. Dado que cada captura diaria de MAWI abarca únicamente 15 minutos continuos (generando 15 observaciones por archivo), resultó imperativo orquestar el decodificador para 
-procesar de manera secuencial un lote de 120 trazas (equivalentes a 30 horas de tráfico efectivo). Esta concatenación permitió ensamblar una serie temporal con longitud suficiente para las redes neuronales, sin corromper la distribución estadística inherente a la escala de 60 segundos.
-
-El Fragmento de código \ref{lst:parser_pcap} ilustra el núcleo de este decodificador.
-
-\newpage
 \begin{lstlisting}[language=Python, caption={Extracto del decodificador de trazas libpcap en flujo.}, label={lst:parser_pcap}]
 import struct
 
@@ -1802,8 +1743,6 @@ while True:
     f.seek(incl_len, 1) 
 \end{lstlisting}
 
-La Tabla \ref{tab:resumen_extraccion_mawi} sintetiza los resultados obtenidos al aplicar este procedimiento sobre el lote procesado.
-
 \begin{table}[H]
     \centering
     \begin{tabular}{|l|r|r|}
@@ -1819,15 +1758,12 @@ La Tabla \ref{tab:resumen_extraccion_mawi} sintetiza los resultados obtenidos al
 
 \subsection*{Exploración estadística preliminar}
 
-Con el propósito de someter a prueba el \textit{pipeline} de modelado antes de la conclusión de la recolección primaria, se realizó un análisis exploratorio sobre las 1\,800 observaciones obtenidas del lote de 120 trazas de MAWI. La conversión del \textit{throughput} observado a factor de utilización se realizó aplicando directamente la definición 
-establecida en la Sección \ref{sec:congestion}, empleando como ancho de banda nominal 11 Gbps ---correspondiente a la suma de los dos enlaces monitoreados por \textit{samplepoint-F} desde julio de 2023: el enlace de tránsito original de 1 Gbps hacia NTTC GIN, y un enlace adicional de 10 Gbps hacia el punto de intercambio BBIX---:
+Para probar el \textit{pipeline} antes de concluir la recolección primaria, se exploraron las 1\,800 observaciones de MAWI. La utilización se calculó con la definición de la Sección \ref{sec:congestion}, usando como ancho de banda nominal 11 Gbps, la suma de los dos enlaces monitoreados por \textit{samplepoint-F} desde julio de 2023 (1 Gbps hacia NTTC GIN y 10 Gbps hacia BBIX):
 
 \begin{equation}
-    U = \frac{\mbox{Throughput observado}}{\mbox{Ancho de banda nominal}} = \frac{\mbox{Throughput observado (bps)}}{11 \times 10^{9} \mbox{ bps}}
+    U = \frac{\mbox{Throughput observado (bps)}}{11 \times 10^{9} \mbox{ bps}}
     \label{eq:utilizacion_instanciada_mawi}
 \end{equation}
-
-Aplicando la Ecuación \ref{eq:utilizacion_instanciada_mawi} a cada observación temporal, se obtuvieron las estadísticas descriptivas resumidas en la Tabla \ref{tab:estadisticas_mawi_piloto}.
 
 \begin{table}[H]
     \centering
@@ -1842,11 +1778,11 @@ Aplicando la Ecuación \ref{eq:utilizacion_instanciada_mawi} a cada observación
         Desviación estándar & 0.56 & 0.051 \\
         \hline
     \end{tabular}
-    \caption{Estadísticas descriptivas del \textit{throughput} y utilización derivada, \textit{dataset} piloto MAWI (1\,800 observaciones, granularidad de 1 minuto).}
+    \caption{Estadísticas descriptivas del \textit{dataset} piloto MAWI (1\,800 observaciones, 1 minuto).}
     \label{tab:estadisticas_mawi_piloto}
 \end{table}
 
-La Figura \ref{fig:histograma_mawi} presenta la distribución completa de la utilización observada, contrastada visualmente contra el umbral de congestión formal $U_{th} \geq 0.80$ establecido en la Ecuación \ref{eq:congestion_instanciada} (Sección \ref{sec:def_operativa_metodologia}).
+La utilización máxima, de 32.3\,\%, nunca alcanza el umbral $U_{th}=0.80$ de la Ecuación \ref{eq:congestion_instanciada} (Figura \ref{fig:histograma_mawi}), lo que es coherente con una troncal académica sobredimensionada. Por ello, este subconjunto sirve para ejercitar el \textit{pipeline} en regresión (Sección \ref{subsec:supervisado}), pero no aporta positivos para clasificación. Solo durante la codificación y calibración se adoptó un umbral relativo de prueba ($U_{test} \geq 0.25$) para verificar la lógica de la matriz de confusión y de la métrica $TAE$, a la espera del umbral formal de 0.80 sobre el \textit{dataset} primario.
 
 \begin{figure}[H]
     \centering
@@ -1854,14 +1790,6 @@ La Figura \ref{fig:histograma_mawi} presenta la distribución completa de la uti
     \caption{Distribución del factor de utilización, \textit{dataset} piloto MAWI.}
     \label{fig:histograma_mawi}
 \end{figure}
-
-Como se evidencia en la distribución, la utilización observada en el subconjunto piloto de MAWI \textbf{no alcanza en ningún momento} el umbral $U_{th}=0.80$, situándose el valor máximo en apenas 32.3\,\%. Este resultado es consistente con la naturaleza del enlace capturado: se trata de una troncal de tránsito perteneciente a un proveedor de 
-infraestructura académica, dimensionada deliberadamente para operar con un amplio margen de holgura. Esto contrasta frontalmente con la red privada PYME que constituye el \textit{dataset} primario de esta tesis, donde la coexistencia de múltiples servicios de alta demanda (videovigilancia, sincronización en la nube, tráfico residencial) hace 
-previsible la ocurrencia de episodios de saturación reales.
-
-En consecuencia, si bien este subconjunto de MAWI resulta ideal para ejercitar el \textit{pipeline} completo bajo la formulación de \textbf{regresión} (Sección \ref{subsec:supervisado}), no genera observaciones positivas naturales para la clase de congestión bajo la formulación de \textbf{clasificación}. Para evitar posponer el desarrollo 
-algorítmico, y exclusivamente durante esta fase de codificación y calibración, se adopta un umbral relativo de prueba ($U_{test} \geq 0.25$). Esto permite verificar empíricamente la lógica computacional de la Matriz de Confusión y la métrica $TAE$, garantizando que el \textit{software} predictivo opere correctamente a la espera de ser alimentado 
-con el umbral formal de 0.80 sobre el \textit{dataset} primario, cuyos resultados definitivos se expondrán en el Capítulo 6.
 
 \section{Preprocesamiento}
 \label{sec:preprocesamiento_desarrollo}
@@ -1884,10 +1812,12 @@ datos de 1\,800 a un total efectivo de $n=1\,774$ observaciones continuas y estr
 La división cronológica se programó como una partición dura de la serie ordenada temporalmente $\{x_1, x_2, \dots, x_n\}$ en tres segmentos contiguos y no traslapados:
 
 \begin{equation}
-    \mbox{Entrenamiento} = \{x_1, \dots, x_{\lfloor 0.6n \rfloor}\}, \quad
-    \mbox{Validación} = \{x_{\lfloor 0.6n \rfloor + 1}, \dots, x_{\lfloor 0.8n \rfloor}\}, \quad
-    \mbox{Prueba} = \{x_{\lfloor 0.8n \rfloor + 1}, \dots, x_n\}
-    \label{eq:split_cronologico}
+\begin{aligned}
+    \text{Entrenamiento} &= \{x_1, \dots, x_{\lfloor 0.6n \rfloor}\}, \\
+    \text{Validación} &= \{x_{\lfloor 0.6n \rfloor + 1}, \dots, x_{\lfloor 0.8n \rfloor}\}, \\
+    \text{Prueba} &= \{x_{\lfloor 0.8n \rfloor + 1}, \dots, x_n\}
+\end{aligned}
+\label{eq:split_cronologico}
 \end{equation}
 
 Para el \textit{dataset} piloto, con $n=1\,774$, la indexación generó $1\,064$ observaciones de entrenamiento, $355$ de validación y $355$ de prueba, proporciones consistentes con el diseño metodológico (Tabla \ref{tab:split_mawi_piloto}).
