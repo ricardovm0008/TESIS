@@ -2610,12 +2610,12 @@ La Tabla \ref{tab:sintesis_completa_rf} reúne las métricas de todos los contex
         \hline
         \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto --- validación & 100\,\% real (MAWI) & 0.0962 & N/A & N/A \\
-        Piloto --- prueba & 100\,\% real (MAWI) & 0.1311 & N/A & N/A \\
-        Primario --- regresión (val.) & 100\,\% real & 0.0051 & --- & --- \\
-        Primario --- regresión (prueba) & 100\,\% real & 0.0496 & --- & --- \\
-        Primario --- clasificación (val.) & 100\,\% sintético & --- & 0.2923 & 0.8796 \\
-        Primario --- clasificación (prueba) & 100\,\% sintético & --- & 0.2982 & 0.9187 \\
+        Piloto - validación & 100\,\% real (MAWI) & 0.0962 & N/A & N/A \\
+        Piloto - prueba & 100\,\% real (MAWI) & 0.1311 & N/A & N/A \\
+        Primario - regresión (val.) & 100\,\% real & 0.0051 & --- & --- \\
+        Primario - regresión (prueba) & 100\,\% real & 0.0496 & --- & --- \\
+        Primario - clasificación (val.) & 100\,\% sintético & --- & 0.2923 & 0.8796 \\
+        Primario - clasificación (prueba) & 100\,\% sintético & --- & 0.2982 & 0.9187 \\
         Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural)} \\
         \hline
     \end{tabular}
@@ -2884,17 +2884,24 @@ La Tabla \ref{tab:sintesis_completa_lstm} reúne las métricas de todos los cont
 \begin{table}[H]
     \centering
     \small
-    \begin{tabular}{|l|l|r|r|r|}
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{|p{5.6cm}|r|r|r|}
         \hline
-        \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
+        \textbf{Contexto (datos)} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto --- validación & 100\,\% real (MAWI) & 0.0860 & N/A & N/A \\
-        Piloto --- prueba & 100\,\% real (MAWI) & 0.0891 & N/A & N/A \\
-        Primario --- regresión (val.) & 100\,\% real & 0.000131 & --- & --- \\
-        Primario --- regresión (prueba) & 100\,\% real & 0.001036 & --- & --- \\
-        Primario --- clasificación (val.) & 100\,\% sintético & --- & 0.0563 & 0.8783 \\
-        Primario --- clasificación (prueba) & 100\,\% sintético & --- & 0.0509 & 0.9000 \\
-        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural)} \\
+        Piloto, validación \newline {\footnotesize 100\,\% real (MAWI)} & 0.0860 & N/A & N/A \\
+        \hline
+        Piloto, prueba \newline {\footnotesize 100\,\% real (MAWI)} & 0.0891 & N/A & N/A \\
+        \hline
+        Primario, regresión (val.) \newline {\footnotesize 100\,\% real} & 0.000131 & --- & --- \\
+        \hline
+        Primario, regresión (prueba) \newline {\footnotesize 100\,\% real} & 0.001036 & --- & --- \\
+        \hline
+        Primario, clasificación (val.) \newline {\footnotesize 100\,\% sintético} & --- & 0.0563 & 0.8783 \\
+        \hline
+        Primario, clasificación (prueba) \newline {\footnotesize 100\,\% sintético} & --- & 0.0509 & 0.9000 \\
+        \hline
+        Generalización, MAWI (oficial) \newline {\footnotesize 100\,\% real (MAWI)} & \multicolumn{3}{c|}{No evaluable (incompatibilidad estructural)} \\
         \hline
     \end{tabular}
     \caption{Síntesis de los resultados de LSTM. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}). Los RMSE están en escala normalizada.}
@@ -2915,153 +2922,192 @@ La Tabla \ref{tab:sintesis_completa_lstm} reúne las métricas de todos los cont
 
 \textbf{Alcance.} En conjunto, la red ajusta mejor que los otros modelos el tráfico real ocioso, con picos espurios muy acotados, pero con el umbral oficial detecta menos congestión que \textit{Random Forest}. Estas conclusiones se integran con las de los otros modelos en las Secciones 6.4 y 6.5.
 
-
-
-
-
-
-
-
-
-
 \section{Comparativa de modelos}
 \label{sec:comparativa_modelos}
 
-Las Secciones \ref{sec:resultados_arima} a \ref{sec:resultados_lstm} presentaron, de manera individual, los resultados de cada modelo a través de los distintos contextos de evaluación de esta investigación. Esta sección integra dichos resultados en una comparativa transversal orientada a responder directamente la pregunta que subyace al diseño experimental completo de este trabajo (Sección \ref{sec:modelos_justificacion}): ¿existe un modelo que domine de manera uniforme sobre los demás, o el desempeño relativo depende de 
-la tarea, del conjunto de datos y de las condiciones de evaluación?
+Las Secciones \ref{sec:resultados_arima} a \ref{sec:resultados_lstm} presentaron los resultados de cada modelo por separado. Esta sección los coloca lado a lado para responder una pregunta: ¿existe un modelo que domine de manera uniforme, o el desempeño relativo depende de la tarea, del conjunto de datos y de las condiciones de evaluación (Sección \ref{sec:modelos_justificacion})? Aquí se describe la comparación y su lectura inmediata; la interpretación causal y sus implicaciones se desarrollan en la Sección 6.5.
 
-\subsection*{Tabla maestra de resultados}
+\subsection*{Alcance de la comparación}
 
-La Tabla \ref{tab:tabla_maestra} consolida, en un solo lugar, la totalidad de las métricas cuantitativas obtenidas por los tres modelos a lo largo de este trabajo.
+Los tres modelos se evaluaron con el mismo umbral operativo, las mismas particiones de datos y las mismas métricas, pero no en condiciones idénticas. La Tabla \ref{tab:condiciones_comparacion} resume las diferencias que conviene tener presentes al leer las cifras.
 
 \begin{table}[H]
     \centering
     \small
-    \begin{tabular}{|l|l|r|r|r|}
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{|p{3.1cm}|p{3.1cm}|p{3.1cm}|p{3.1cm}|}
         \hline
-        \textbf{Contexto} & \textbf{Modelo} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
+        \textbf{Aspecto} & \textbf{ARIMA} & \textbf{\textit{Random Forest}} & \textbf{LSTM} \\
         \hline
-        \multirow{3}{*}{Piloto --- prueba (MAWI, 100\,\% real)}
+        Entrada & Serie continua (sesión sintética de 31\,934 obs.) & 5 rezagos y media móvil de 30 minutos & Ventana de 30 pasos \\
+        \hline
+        Escala de las métricas & Original & Normalizada (Min-Max) & Normalizada (Min-Max) \\
+        \hline
+        Observaciones de prueba en clasificación (positivos) & 2\,124 (54) & 10\,622 (275) & 10\,593 (275) \\
+        \hline
+    \end{tabular}
+    \caption{Condiciones de evaluación de cada modelo en el \textit{dataset} primario.}
+    \label{tab:condiciones_comparacion}
+\end{table}
+
+Como el rango de entrenamiento está cerca de $[0,1]$, la escala normalizada es aproximadamente equivalente a la original en el \textit{dataset} primario, por lo que sus RMSE pueden compararse de forma razonable. En el piloto, los RMSE de \textit{Random Forest} y LSTM se reescalan multiplicándolos por el rango de la variable (0.306). Además, ARIMA se evaluó con pronóstico progresivo por bloques, un esquema que introduce oscilaciones propias en cada reinicio (Sección \ref{sec:resultados_arima}). Cada modelo se entrenó una sola vez, sin repeticiones ni intervalos de confianza, de modo que las diferencias pequeñas deben tomarse como indicativas.
+
+\subsection*{Tabla maestra de resultados}
+
+La Tabla \ref{tab:tabla_maestra} reúne las métricas principales de los tres modelos en todos los contextos de evaluación.
+
+\begin{table}[H]
+    \centering
+    \small
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{|p{3.6cm}|l|r|r|r|}
+        \hline
+        \textbf{Contexto (datos)} & \textbf{Modelo} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
+        \hline
+        \multirow{3}{3.6cm}{\raggedright Piloto, prueba \newline {\footnotesize MAWI, 100\,\% real}}
             & ARIMA & 0.0282 & N/A & N/A \\
-            & \textit{Random Forest} & 0.1311 & N/A & N/A \\
-            & LSTM & 0.0891 & N/A & N/A \\
+            & \textit{Random Forest} & $\approx$ 0.040 & N/A & N/A \\
+            & LSTM & $\approx$ 0.027 & N/A & N/A \\
         \hline
-        \multirow{3}{*}{Primario --- regresión, prueba (100\,\% real)}
+        \multirow{3}{3.6cm}{\raggedright Primario, regresión, prueba \newline {\footnotesize 100\,\% real}}
             & ARIMA & 0.0459 & --- & --- \\
             & \textit{Random Forest} & 0.0496 & --- & --- \\
             & LSTM & \textbf{0.0010} & --- & --- \\
         \hline
-        \multirow{3}{*}{Primario --- clasificación, prueba (100\,\% sintético)}
+        \multirow{3}{3.6cm}{\raggedright Primario, clasificación, prueba \newline {\footnotesize 100\,\% sintético}}
             & ARIMA & --- & 0.0185 & 0.8939 \\
             & \textit{Random Forest} & --- & \textbf{0.2982} & 0.9187 \\
             & LSTM & --- & 0.0509 & 0.9000 \\
         \hline
-        \multirow{3}{*}{Generalización --- MAWI, 1 min (100\,\% real)}
+        \multirow{3}{3.6cm}{\raggedright Generalización, 1 min \newline {\footnotesize MAWI, 100\,\% real}}
             & ARIMA & 0.3233 & N/A & N/A \\
             & \textit{Random Forest} & \multicolumn{3}{c|}{No evaluable} \\
             & LSTM & \multicolumn{3}{c|}{No evaluable} \\
         \hline
     \end{tabular}
-    \caption{Tabla maestra: totalidad de resultados cuantitativos de los tres modelos evaluados en esta tesis.}
+    \caption{Tabla maestra de resultados de los tres modelos. Los RMSE de \textit{Random Forest} y LSTM en el piloto están reescalados a la escala original. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}).}
     \label{tab:tabla_maestra}
 \end{table}
 
-Un primer examen de esta tabla revela un patrón que se sostiene consistentemente a través de todos los conjuntos de prueba: \textbf{ningún modelo domina de manera uniforme ambas tareas}. LSTM es superior por un margen abrumador en regresión; \textit{Random Forest} es superior, también por un margen considerable, en clasificación binarizada; y ARIMA, la línea base estadística, ocupa consistentemente el último lugar en ambas dimensiones ---cumpliendo, en ese sentido, precisamente la función de referencia mínima para la que 
-fue concebido en la metodología (Sección \ref{sec:modelos_justificacion})---.
+La tabla muestra que ningún modelo domina en todos los contextos. En regresión sobre el piloto, ARIMA y LSTM son equivalentes y \textit{Random Forest} queda detrás. En regresión sobre el \textit{dataset} primario, LSTM obtiene el menor error. En clasificación sobre el primario, \textit{Random Forest} es el que más detecta. En generalización, solo ARIMA pudo evaluarse. Las subsecciones siguientes detallan cada contexto.
 
-\subsection*{El \textit{trade-off} central: precisión continua vs. sensibilidad de alertamiento}
+\subsection*{Fase piloto}
 
-La conclusión fundamental de esta investigación no reside en la declaración de un modelo victorioso absoluto, sino en la demostración matemática de una paradoja intrínseca al pronóstico de series de tiempo de red. La Figura \ref{fig:scatter_tradeoff} visualiza este hallazgo ---el \textit{trade-off} algorítmico--- de la manera más directa posible: cada modelo se posiciona en un plano cartesiano cuyo eje horizontal representa su error continuo de regresión (RMSE, donde menor es mejor, en escala logarítmica) y cuyo eje vertical representa su sensibilidad operativa de clasificación (\textit{Recall}, donde mayor es mejor).
+La Tabla \ref{tab:sintesis_modelos_piloto} compara los tres modelos en MAWI. La clasificación usa el umbral relativo de prueba $U_{test}=0.25$, y el Tiempo de Anticipación Efectivo ($TAE$) solo se calculó en esta fase.
 
-\begin{figure}[H]
+\begin{table}[H]
     \centering
-    \includegraphics[width=0.75\textwidth]{scatter_tradeoff_rmse_recall.png}
-    \caption{\textit{Trade-off} algorítmico: Precisión basal (RMSE, eje X) vs. Sensibilidad de detección (\textit{Recall}, eje Y). Ningún modelo logra la dominancia absoluta en el plano cartesiano.}
-    \label{fig:scatter_tradeoff}
-\end{figure}
+    \small
+    \begin{tabular}{|l|r|r|r|r|r|r|}
+        \hline
+        \textbf{Modelo} & \textbf{RMSE} & \textbf{MAPE} & \textbf{Precisión} & \textbf{\textit{Recall}} & \textbf{\textit{F1-score}} & \textbf{TAE} \\
+        \hline
+        ARIMA(1,1,1) & 0.0282 & 10.80\,\% & 64.2\,\% & 41.5\,\% & 50.4\,\% & 1.2 min \\
+        \textit{Random Forest} & $\approx$ 0.040 & 16.26\,\% & 76.5\,\% & 68.3\,\% & 72.1\,\% & 2.8 min \\
+        LSTM & $\approx$ 0.027 & 11.00\,\% & 81.2\,\% & 79.4\,\% & 80.3\,\% & 3.9 min \\
+        \hline
+    \end{tabular}
+    \caption{Desempeño de los tres modelos en la fase piloto (partición de prueba, MAWI). Clasificación con $U_{test}=0.25$.}
+    \label{tab:sintesis_modelos_piloto}
+\end{table}
 
-La distribución espacial de los nodos en la gráfica revela el perfil de especialización de cada arquitectura:
-\begin{itemize}
-    \item \textbf{El dominio del letargo (LSTM, punto azul):} La red neuronal recurrente se sitúa en el extremo izquierdo del plano, presumiendo un RMSE microscópico ($10^{-3}$). Sin embargo, su posición inferior en el eje Y confirma que el costo matemático de lograr una estabilidad perfecta durante el tráfico ocioso fue desarrollar una severa ceguera conservadora (bajo \textit{Recall}) frente a las crisis anómalas repentinas.
-    \item \textbf{La hiper-vigilancia reactiva (\textit{Random Forest}, punto verde):} El ensamble de árboles corona el eje vertical, ostentando la mayor agudeza para detectar instantes genuinos de congestión (\textit{Recall} máximo). No obstante, su desplazamiento hacia la derecha del plano evidencia el daño colateral: su hipersensibilidad a las anomalías fracturó su capacidad para predecir el flujo basal, resultando en un error continuo (RMSE) elevado producto de constantes alucinaciones predictivas.
-    \item \textbf{La inoperancia asimétrica (ARIMA, punto rojo):} El modelo estadístico tradicional queda relegado a la zona de peor rendimiento (esquina inferior derecha). Su rigidez paramétrica le impidió tanto rastrear el flujo basal con precisión (alto RMSE) como detectar las ráfagas agudas (bajo \textit{Recall}), confirmando su obsolescencia para topologías de red volátiles.
-\end{itemize}
+En regresión, ARIMA y LSTM son equivalentes (RMSE de 0.0282 y de aproximadamente 0.027, MAPE de 10.80\,\% y 11.00\,\%), mientras que \textit{Random Forest} presenta un RMSE un 42\,\% mayor que el de ARIMA y el MAPE más alto. En clasificación, el orden es el mismo en todas las métricas: LSTM supera a \textit{Random Forest} y este a ARIMA. El $TAE$ de LSTM (3.9 minutos) equivale al 78\,\% del horizonte objetivo de 5 minutos, frente al 56\,\% de \textit{Random Forest} y el 24\,\% de ARIMA. Este orden no se reproduce con el umbral oficial en el \textit{dataset} primario, como se ve a continuación, y proviene de una sola partición con un umbral bajo.
 
-Si existiera un algoritmo totalmente eficiente en todo sentido para la ingeniería de tráfico, su nodo se ubicaría en la esquina superior izquierda (RMSE cero y \textit{Recall} absoluto). La disposición geométrica evidenciada ---tres arquitecturas ocupando clústeres especializados y diametralmente opuestos--- constituye la prueba definitiva del hallazgo central de la tesis: en entornos de red masivamente asimétricos, la optimización para el pronóstico continuo (\textit{Smoothness}) y la optimización para la detección de anomalías (\textit{Sharpness}) son objetivos matemáticamente contrapuestos. No existe un modelo universal; la elección del algoritmo debe estar dictada estrictamente por el objetivo del administrador de la red.
+\subsection*{\textit{Dataset} primario: regresión}
 
-\subsection*{Comparación multidimensional}
+Sobre las particiones reales de prueba, los RMSE son 0.0459 (ARIMA), 0.0496 (\textit{Random Forest}) y 0.0010 (LSTM), y los MAE, 0.0151, 0.0103 y 0.000125 respectivamente. LSTM presenta un RMSE unas 44 veces menor que el de ARIMA y unas 48 veces menor que el de \textit{Random Forest}, y un MAE unas 120 y 82 veces menor. Entre ARIMA y \textit{Random Forest}, el orden depende de la métrica: ARIMA tiene menor RMSE, mientras que \textit{Random Forest} tiene menor MAE. El RMSE penaliza más los errores grandes, y los de cada modelo tienen un origen distinto: los picos de hasta 0.7 de \textit{Random Forest} y las oscilaciones por bloques de ARIMA (Secciones \ref{sec:resultados_rf} y \ref{sec:resultados_arima}).
 
-La Figura \ref{fig:radar_comparativo} amplía la evaluación comparativa a un espacio de cinco dimensiones simultáneas: capacidad de regresión (invertida y normalizada, donde un valor periférico indica un error RMSE cercano a cero), Precisión, \textit{Recall}, \textit{F1-score} y AUC-ROC. Esta representación geométrica permite auditar el perfil de fortalezas y debilidades estructurales de cada arquitectura de un solo vistazo.
+La magnitud de esta ventaja debe leerse con cautela. El tráfico real es casi nulo, con una desviación estándar de aproximadamente $3.5 \times 10^{-4}$ en fracción (Tabla \ref{tab:estadisticas_real}), y una predicción constante igual a la media tendría un RMSE del orden de esa desviación. Con esa referencia, el RMSE de LSTM es unas tres veces mayor y los de ARIMA y \textit{Random Forest}, más de cien veces mayores. Es una referencia aproximada, porque proviene de la serie completa y no de la partición de prueba. El control que falta para valorar la ventaja en términos absolutos es calcular líneas base ingenuas (media y persistencia) sobre esa partición. Por ahora, el resultado respalda que LSTM es el modelo que mejor evita los errores grandes sobre tráfico ocioso, no que capte una dinámica que los otros ignoran.
 
-\begin{figure}[H]
+\subsection*{\textit{Dataset} primario: clasificación}
+
+La Tabla \ref{tab:comparativa_clasificacion} detalla la clasificación sobre las particiones sintéticas de prueba con el umbral oficial $U_{th}=0.80$.
+
+\begin{table}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{radar_comparativo_modelos.png}
-    \caption{Comparación multidimensional (\textit{dataset} primario, conjunto de prueba). Se constata la hiper-especialización de LSTM (regresión) frente a la robustez equilibrada de \textit{Random Forest} (\textit{F1-score}).}
-    \label{fig:radar_comparativo}
-\end{figure}
+    \small
+    \begin{tabular}{|l|r|r|r|r|r|r|r|r|}
+        \hline
+        \textbf{Modelo} & \textbf{VP} & \textbf{FP} & \textbf{FN} & \textbf{Exactitud} & \textbf{Precisión} & \textbf{\textit{Recall}} & \textbf{\textit{F1-score}} & \textbf{AUC-ROC} \\
+        \hline
+        ARIMA & 1 & 0 & 53 & 0.9750 & 1.0000 & 0.0185 & 0.0364 & 0.8939 \\
+        \textit{Random Forest} & 82 & 6 & 193 & 0.9813 & 0.9318 & \textbf{0.2982} & \textbf{0.4518} & 0.9187 \\
+        LSTM & 14 & 4 & 261 & 0.9750 & 0.7778 & 0.0509 & 0.0956 & 0.9000 \\
+        \hline
+    \end{tabular}
+    \caption{Clasificación con $U_{th}=0.80$ en la partición sintética de prueba. VP, FP y FN provienen de las matrices de confusión de las Secciones \ref{sec:resultados_arima}, \ref{sec:resultados_rf} y \ref{sec:resultados_lstm}.}
+    \label{tab:comparativa_clasificacion}
+\end{table}
 
-El análisis topológico del gráfico de radar revela tres estrategias algorítmicas divergentes:
-\begin{itemize}
-    \item \textbf{LSTM, polígono azul:} Su área se proyecta agresivamente hacia el eje de Regresión (dominancia absoluta en predicción basal) y exhibe un AUC-ROC sobresaliente. Sin embargo, sufre una severa contracción centrípeta en los ejes de \textit{Recall} y \textit{F1-score}, delatando su inoperancia práctica como sistema de alertamiento preventivo autónomo.
-    \item \textbf{\textit{Random Forest}, polígono verde:} Presenta la geometría más equilibrada. Aunque cede el monopolio de la regresión continua frente a la red neuronal, compensa esta carencia con expansiones sólidas hacia los ejes de \textit{Recall} y Precisión, logrando la métrica armónica (\textit{F1-score} = 0.4518) más alta del experimento. Es el único modelo con viabilidad operativa dual.
-    \item \textbf{ARIMA, polígono rojo:} Su perfil carece de área útil, colapsando hacia el centro en casi todas las dimensiones operativas, con la notable excepción de un pico engañoso en el eje de Precisión. Como se demostró previamente, esta aparente perfección es un artefacto matemático derivado de su extrema pasividad (predecir crisis en tan raras ocasiones que, por azar, no detonó falsas alarmas).
-\end{itemize}
+\textit{Random Forest} emitió 88 alertas, con 82 aciertos. LSTM emitió 18, con 14 aciertos, y ARIMA, una. Los tres casi no generan falsas alarmas (entre 0 y 6), pero difieren en cuántos eventos detectan. El \textit{recall} de \textit{Random Forest} es unas 16 veces el de ARIMA y unas 6 veces el de LSTM, y aun así deja sin alerta el 70\,\% de los instantes de congestión. ARIMA y LSTM prácticamente no detectan. La diferencia entre ambos (1 acierto de 54 frente a 14 de 275) es pequeña frente a la que ambos tienen con \textit{Random Forest}, y la precisión perfecta de ARIMA se apoya en una única alerta.
 
-Para decodificar este espejismo estadístico con mayor granularidad, la Figura \ref{fig:barras_clasificacion} desagrega la comparativa en sus cinco métricas de clasificación individuales.
+El AUC-ROC es parecido en los tres modelos (de 0.89 a 0.92), aunque sus \textit{recall} difieren en más de un orden de magnitud. Esto indica que las tres predicciones continuas ordenan de forma semejante los instantes de congestión por encima de los normales, y que la diferencia se produce en cuántas predicciones cruzan el umbral fijo de 0.80. Con un desbalance tan marcado, conviene complementar el AUC-ROC con una curva de precisión-\textit{recall}, que no se evaluó en este trabajo.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{barras_clasificacion_tres_modelos.png}
-    \caption{Comparativa integral de métricas de clasificación. Se evidencia el efecto engañoso de la Exactitud frente al \textit{Recall} y el \textit{F1-score} en escenarios de desbalance extremo.}
+    \caption{Métricas de clasificación de los tres modelos en el \textit{dataset} primario (partición de prueba).}
     \label{fig:barras_clasificacion}
 \end{figure}
 
-Esta descomposición de barras resulta metodológicamente reveladora y constituye una aportación crítica de esta investigación. Se observa que la Exactitud (\textit{Accuracy}) ---la métrica más intuitiva y frecuentemente sobrestimada en la literatura de redes--- resulta estadísticamente idéntica para los tres modelos (rondando el 0.98). No obstante, sus capacidades reales para detectar anomalías varían en órdenes de magnitud (evidenciado por la drástica caída en las barras de \textit{Recall} y \textit{F1-score} de ARIMA y LSTM frente a \textit{Random Forest}).
+La Figura \ref{fig:barras_clasificacion} muestra que la exactitud es casi la misma en los tres modelos (de 0.975 a 0.981), mientras que el \textit{recall} y el \textit{F1-score} varían en órdenes de magnitud. Con una proporción de casos de congestión cercana al 2.6\,\% (Sección \ref{sec:obtencion_exploracion}), un clasificador que nunca alertara obtendría una exactitud de aproximadamente 0.974. La exactitud de los modelos supera esa referencia por entre 0.05 puntos porcentuales (ARIMA) y 0.72 (\textit{Random Forest}), por lo que no distingue entre un detector útil y uno que no detecta. Esto confirma la advertencia de la Sección \ref{sec:evaluacion}: en este problema la evaluación debe basarse en la precisión, el \textit{recall} y el \textit{F1-score}.
 
-Este contraste extremo valida empíricamente la advertencia metodológica formulada en el Capítulo 4 (Sección \ref{sec:evaluacion}): en ecosistemas de red caracterizados por un desbalance de clases masivo (donde la congestión crítica representa apenas el 2.6\,\% del tiempo de operación, Sección \ref{sec:obtencion_exploracion}), la Exactitud es una métrica analíticamente inútil. Un algoritmo "tonto" que prediga letargo perpetuo obtendrá un 97.4\,\% de Exactitud sin haber detectado una sola crisis. Por consiguiente, la validación de sistemas predictivos para infraestructura crítica debe fundamentarse estrictamente en la triada de Precisión, \textit{Recall} y \textit{F1-score}.
+\subsection*{Disociación entre error continuo y sensibilidad de alertamiento}
 
+La Figura \ref{fig:scatter_tradeoff} ubica a cada modelo según su RMSE de regresión (eje horizontal, escala logarítmica, menor es mejor) y su \textit{recall} de clasificación (eje vertical, mayor es mejor), ambos sobre el \textit{dataset} primario. Los dos ejes provienen de particiones distintas: la regresión, de tráfico real y la clasificación, de tráfico sintético.
 
-\subsection*{Generalización entre escalas de red: una limitación transversal}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{scatter_tradeoff_rmse_recall.png}
+    \caption{RMSE de regresión (eje X) frente a \textit{recall} de clasificación (eje Y), \textit{dataset} primario, partición de prueba.}
+    \label{fig:scatter_tradeoff}
+\end{figure}
 
-La última fila de la Tabla \ref{tab:tabla_maestra} documenta un segundo hallazgo analítico de gran relevancia: de los tres modelos, únicamente ARIMA pudo someterse a la validación exploratoria de generalización frente a MAWI bajo la granularidad oficial de 1 minuto. Su desempeño en dicho contexto (RMSE=0.3233) representa, por un margen amplio, el peor resultado de regresión obtenido en toda esta investigación ---incluso peor que su propio desempeño sobre el \textit{dataset} primario (RMSE=0.0459) o sobre el 
-\textit{dataset} piloto (RMSE=0.0282)---. \textit{Random Forest} y LSTM, por su parte, no pudieron evaluarse en absoluto en este contexto debido a una incompatibilidad estructural entre sus parámetros de ventana oficiales ($w=30$ minutos) y la duración total de cada traza individual de MAWI (15 minutos continuos, documentado en las Secciones \ref{sec:resultados_rf} y \ref{sec:resultados_lstm}).
+LSTM tiene el menor RMSE y \textit{Random Forest}, el mayor \textit{recall}, y ninguno supera al otro en ambos ejes, por lo que forman la frontera de mejores compromisos. ARIMA queda dominado por LSTM, que tiene a la vez menor error y mayor \textit{recall}. Frente a \textit{Random Forest}, ARIMA tiene un RMSE ligeramente menor (0.0459 frente a 0.0496), pero un \textit{recall} unas 16 veces inferior. En el \textit{dataset} primario, entonces, el modelo que mejor ajusta el tráfico ocioso no es el que más detecta congestión. Esta disociación no es general: en el piloto (Tabla \ref{tab:sintesis_modelos_piloto}) LSTM fue el mejor detector con el umbral de prueba. Por qué ocurre en el primario se discute en la Sección 6.5.
 
-Este doble hallazgo ---el fracaso categórico de ARIMA al intentar generalizar fuera de su rango y la imposibilidad matemática de siquiera intentarlo con las topologías de \textit{Machine Learning}--- apunta a una conclusión robusta que trasciende a cualquier algoritmo individual: los tres modelos de esta tesis fueron optimizados, por diseño, para operar dentro de las características específicas de la red privada PYME bajo estudio (su escala de tráfico de bajo perfil, su granularidad de muestreo, sus rezagos temporales). 
-Por consiguiente, ninguna evidencia recabada en este trabajo respalda la extrapolación directa de dichos modelos, sin reentrenamiento profundo o reajuste de ingeniería de características, hacia infraestructuras troncales de naturaleza o escala sustancialmente distinta.
+\subsection*{Comparación multidimensional}
 
-\subsection*{Reconciliación con la brecha metodológica identificada en el Estado del Arte}
+La Figura \ref{fig:radar_comparativo} reúne cinco dimensiones del \textit{dataset} primario: capacidad de regresión (invertida y normalizada, de modo que un valor periférico indica un RMSE cercano a cero), precisión, \textit{recall}, \textit{F1-score} y AUC-ROC.
 
-Resulta pertinente cerrar esta comparativa empírica retomando la brecha metodológica formulada en la síntesis del Estado del Arte (Sección \ref{sec:estado_brecha}): la ausencia, en la literatura mundial revisada, de una comparación simultánea entre los tres paradigmas de modelado bajo condiciones experimentales idénticas y controladas. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{radar_comparativo_modelos.png}
+    \caption{Comparación multidimensional de los tres modelos (\textit{dataset} primario, partición de prueba).}
+    \label{fig:radar_comparativo}
+\end{figure}
 
-Esta tesis cubre dicha brecha de manera directa, y el resultado de haberlo hecho es, en sí mismo, un aporte sustantivo a la disciplina. La literatura revisada tendía a presentar comparaciones aisladas o paradigmáticamente cerradas ---como el estudio de Sneha et al. \cite{sneha2020} entre variantes limitadas de \textit{Machine Learning} clásico, o el de Santos et al. \cite{santos2022} acotado exclusivamente a la batalla recurrente entre LSTM y GRU---, ninguna de las cuales podría, por diseño, haber revelado el patrón de 
-especialización funcional por tarea que ha sido documentado en esta sección. 
+Los perfiles son distintos. LSTM se extiende hacia el eje de regresión y mantiene un AUC-ROC alto, pero se contrae en \textit{recall} y \textit{F1-score}. \textit{Random Forest} presenta la geometría más equilibrada: no domina la regresión, pero obtiene el mayor \textit{recall} y el mayor \textit{F1-score} (0.4518), y es el único con desempeño aceptable en ambas tareas. ARIMA casi no tiene área útil, salvo un máximo en precisión que se debe a su única alerta (Tabla \ref{tab:comparativa_clasificacion}).
 
-Al someter a la estadística clásica (ARIMA), al ensamble no lineal (\textit{Random Forest}) y al \textit{Deep Learning} (LSTM) a un diseño experimental estricto y unificado ---alimentándolos con el mismo tensor de datos, el mismo umbral de decisión operativa y las mismas métricas de castigo cruzado---, este trabajo aporta evidencia concluyente de que la búsqueda del "mejor" modelo para un sistema predictivo de redes no puede resolverse en el vacío. La elección de la arquitectura adecuada depende críticamente de un factor 
-operativo: si la prioridad del administrador del sistema es la precisión sostenida de la estimación continua (terreno dominado por el LSTM), o la sensibilidad preventiva e inmediata ante el evento discreto y anómalo (terreno dominado por el \textit{Random Forest}). Este es un matiz analítico que resulta frecuentemente omitido o subestimado en la bibliografía actual.
+\subsection*{Generalización entre escalas de red}
 
-Los hallazgos aquí sintetizados ---el \textit{trade-off} central entre regresión y clasificación, la falacia matemática de la Exactitud en ambientes desbalanceados, y la dura frontera de la generalización entre escalas de red--- se retoman e interpretan en su conjunto, a la luz del problema de investigación original planteado en el Capítulo 1, en la discusión final de la Sección 6.5.
-\newpage
+Solo ARIMA pudo evaluarse sobre MAWI reagregado a granularidad de 1 minuto. Su RMSE (0.3233) fue el peor de toda la investigación, y superó al de su propio desempeño en el \textit{dataset} primario (0.0459) y en el piloto (0.0282); además, se calculó sobre seis observaciones, por lo que es indicativo y no concluyente. \textit{Random Forest} y LSTM no pudieron evaluarse porque exigen entradas que una traza de MAWI no puede proporcionar: la media móvil de 30 minutos en el primero y la ventana de 30 pasos en el segundo, frente a trazas de 15 minutos continuos (Secciones \ref{sec:resultados_rf} y \ref{sec:resultados_lstm}). Por tanto, no hay evidencia en este trabajo que respalde trasladar los modelos a infraestructuras de escala distinta sin reentrenarlos y rediseñar sus características. Como solo un modelo pudo evaluarse, esta dimensión no permite comparar a los tres.
+
+\subsection*{Síntesis de la comparativa}
+
+De la comparación se desprenden cuatro puntos. Primero, ningún modelo domina todos los contextos: LSTM es el mejor en regresión sobre el primario y en clasificación con umbral bajo sobre el piloto, \textit{Random Forest} es el mejor detector con el umbral oficial, y ARIMA es competitivo solo en regresión sobre el piloto. Segundo, la exactitud no distingue entre modelos en este problema. Tercero, el AUC-ROC similar de los tres sugiere que la diferencia en \textit{recall} proviene sobre todo de cómo cada predicción se sitúa respecto al umbral. Cuarto, la generalización solo pudo evaluarse en ARIMA, con resultado desfavorable.
+
+Esta comparación atiende la brecha metodológica de la Sección \ref{sec:estado_brecha}, que señalaba la ausencia de estudios que contrasten los tres paradigmas sobre los mismos datos. Con matices: las condiciones son comparables, pero no idénticas (Tabla \ref{tab:condiciones_comparacion}), la clasificación se evaluó sobre eventos sintéticos y cada modelo se entrenó una sola vez. Estos hallazgos se interpretan, a la luz del problema de investigación, en la Sección 6.5.
 
 \section{Discusión}
 \label{sec:discusion}
 
-Los hallazgos presentados a lo largo de este capítulo ---individualmente en las Secciones \ref{sec:resultados_arima} a \ref{sec:resultados_lstm}, y de manera integrada en la Sección \ref{sec:comparativa_modelos}--- permiten ahora regresar a las preguntas que dieron origen a esta investigación. Esta sección interpreta dichos hallazgos a la luz del problema de investigación planteado en el Capítulo 1, los contrasta contra el marco teórico desarrollado en el Capítulo 2 y la evidencia de la literatura revisada en el Capítulo 3, 
-y discute las limitaciones que se desprenden del diseño experimental adoptado, sentando las bases para las conclusiones formales del Capítulo 7.
+Esta sección interpreta los resultados de las Secciones \ref{sec:resultados_arima} a \ref{sec:comparativa_modelos} a la luz del problema de investigación (Capítulo 1), el marco teórico (Capítulo 2) y la literatura revisada (Capítulo 3), y discute las limitaciones del diseño experimental como base para las conclusiones del Capítulo 7. Las cifras ya presentadas no se repiten.
 
 \subsection*{Retorno al problema de investigación}
 
-El Capítulo 1 formuló el problema de esta tesis como una pregunta concreta: \textit{¿Es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un estado de congestión, de tal forma que dicha predicción resulte útil para la toma de decisiones antes de que la degradación del servicio se materialice?} 
+El Capítulo 1 formuló el problema como una pregunta: \textit{¿Es posible, a partir del análisis de datos históricos de operación de una red, construir un modelo capaz de predecir con suficiente antelación que un enlace alcanzará un estado de congestión, de tal forma que dicha predicción resulte útil para la toma de decisiones antes de que la degradación del servicio se materialice?} La evidencia permite una respuesta matizada, en tres partes:
 
-La evidencia recabada en este capítulo permite responder a esta pregunta de manera matizada, no binaria. Sí es posible construir modelos que predicen con notable precisión el comportamiento continuo del tráfico de la infraestructura estudiada ---\textit{Deep Learning} (LSTM) lo demostró con un RMSE de 0.0010 sobre datos reales nunca vistos durante el entrenamiento (Sección \ref{sec:resultados_lstm})---. Sin embargo, la utilidad práctica de dicha predicción para la toma de decisiones depende de la capacidad del sistema 
-para señalar el cruce de un umbral crítico de acción (la formulación de clasificación establecida en la metodología). En esa dimensión específica, ningún modelo evaluado alcanzó un desempeño que pueda calificarse de infalible: el \textit{Recall} máximo observado, 29.82\,\% con \textit{Random Forest} (Tabla \ref{tab:tabla_maestra}), implica que una porción significativa de los eventos anómalos habrían pasado inadvertidos.
+\begin{itemize}
+    \item \textbf{Predicción continua.} LSTM obtuvo un RMSE de 0.0010 sobre tráfico real no visto en el entrenamiento (Sección \ref{sec:resultados_lstm}). Sin embargo, como el tráfico real es casi nulo, esa cifra no demuestra por sí sola una capacidad predictiva superior a la de una predicción trivial (Sección \ref{sec:comparativa_modelos}).
+    \item \textbf{Detección del umbral.} Con $U_{th}=0.80$, el mejor \textit{recall} fue 29.82\,\% (\textit{Random Forest}, Tabla \ref{tab:comparativa_clasificacion}): siete de cada diez instantes de congestión quedaron sin alerta, y esto sobre eventos sintéticos.
+    \item \textbf{Antelación.} El Tiempo de Anticipación Efectivo ($TAE$) solo se calculó en la fase piloto, con el umbral de prueba $U_{test}=0.25$: 1.2, 2.8 y 3.9 minutos para ARIMA, \textit{Random Forest} y LSTM (Tabla \ref{tab:sintesis_modelos_piloto}). No se midió con el umbral oficial ni en el \textit{dataset} primario, por lo que la parte de la pregunta sobre la antelación queda respaldada solo en el piloto.
+\end{itemize}
 
-Esta disociación entre "predecir bien el valor general" y "detectar bien el evento crítico" no es un fracaso del diseño experimental, sino la aportación empírica central de esta tesis. Como se argumentó en la Sección \ref{sec:evaluacion}, la razón por la cual esta investigación priorizó el \textit{Recall} ---por encima de la Exactitud aislada--- es precisamente la asimetría de costos entre un falso negativo (una congestión no anticipada, que reproduce exactamente la limitación reactiva descrita en el Planteamiento del Problema) 
-y un falso positivo (una alerta preventiva injustificada). Bajo ese criterio, el hallazgo de esta tesis no es que los modelos "fallen", sino que revela con precisión cuantitativa \textit{cuánto} camino queda por recorrer antes de que un sistema de este tipo pueda desplegarse con confianza operativa autónoma ---una distinción que posee mayor rigor científico que reportar una única métrica optimista y agregada.
+Como se argumentó en la Sección \ref{sec:evaluacion}, la investigación priorizó el \textit{recall} por la asimetría de costos: un falso negativo (una congestión no anticipada) reproduce la limitación reactiva descrita en el Planteamiento del Problema, mientras que un falso positivo es una alerta injustificada. Los tres modelos produjeron muy pocas falsas alarmas (entre 0 y 6) con precisiones de 0.78 a 1.00 y un \textit{recall} máximo de 0.30. Esto sugiere que el punto de operación es muy conservador y que existe margen para ganar \textit{recall} a costa de precisión, aunque cuánto no se evaluó. El resultado no es un fracaso del diseño, pero señala con precisión cuánto falta para un despliegue autónomo con confianza operativa.
 
-\subsection*{Un hallazgo no anticipado: la disociación entre regresión y clasificación}
+\subsection*{Interpretación de la disociación entre regresión y clasificación}
 
-Ninguno de los trabajos de \textit{Machine Learning} clásico o \textit{Deep Learning} revisados en el Estado del Arte documentó explícitamente esta disociación. Como se señaló en la síntesis de dicho capítulo (Sección \ref{sec:estado_brecha}), la mayoría de la literatura mundial evalúa sus modelos mediante métricas de error continuo (RMSE, MAE, MAPE) sin traducir dicho desempeño a un criterio de clasificación accionable. La Tabla \ref{tab:reconciliacion_hallazgo} sintetiza cómo este hallazgo se conecta con la evidencia teórica 
-y empírica de los capítulos anteriores.
+En el \textit{dataset} primario, el modelo con menor error continuo (LSTM) no es el que más detecta (\textit{Random Forest}), como mostró la Figura \ref{fig:scatter_tradeoff}. En la literatura revisada no se encontró un estudio que contrastara explícitamente ambos desempeños, ya que la mayoría reporta solo error continuo (Sección \ref{sec:estado_brecha}). La Tabla \ref{tab:reconciliacion_hallazgo} relaciona este resultado con lo anticipado en capítulos anteriores.
 
 \begin{table}[H]
     \centering
@@ -3070,41 +3116,64 @@ y empírica de los capítulos anteriores.
         \hline
         \textbf{Fuente} & \textbf{Lo que anticipaba} & \textbf{Lo que esta tesis encontró} \\
         \hline
-        Sección \ref{sec:modelos_justificacion} (justificación de modelos) & LSTM, al capturar dependencias de largo plazo, tendría ventaja general sobre ARIMA y \textit{Random Forest}. & LSTM domina en regresión, pero queda relegado al segundo lugar en clasificación. \\
+        Sección \ref{sec:modelos_justificacion} (justificación de modelos) & LSTM, al capturar dependencias de largo plazo, tendría ventaja sobre ARIMA y \textit{Random Forest}. & LSTM es el mejor en regresión sobre el primario y en clasificación con umbral bajo en el piloto, pero con el umbral oficial detecta menos que \textit{Random Forest}. \\
         \hline
-        Oliveira et al. \cite{oliveira2016} & Mayor complejidad arquitectónica no garantiza mejor desempeño. & Confirmado y extendido: la complejidad ni siquiera garantiza mejor desempeño \textit{dentro del mismo modelo} al cambiar de tarea (regresión a clasificación). \\
+        Oliveira et al. \cite{oliveira2016} & Mayor complejidad arquitectónica no garantiza mejor desempeño. & Consistente: LSTM, el modelo más complejo, no es el mejor detector con el umbral oficial. \\
         \hline
-        Sección \ref{sec:evaluacion} (advertencia sobre Exactitud) & Bajo desbalance de clases, la Exactitud (\textit{Accuracy}) oculta el desempeño real. & Confirmado empíricamente: Exactitud casi idéntica (0.975--0.981) entre modelos cuyo \textit{Recall} difiere en un factor de 16 (Figura \ref{fig:barras_clasificacion}). \\
+        Santos et al. \cite{santos2022} & La superioridad de un modelo depende del tráfico analizado. & Consistente: el orden entre modelos cambia entre el piloto y el primario. \\
+        \hline
+        Sección \ref{sec:evaluacion} (advertencia sobre la exactitud) & Con desbalance de clases, la exactitud oculta el desempeño real. & La exactitud (0.975 a 0.981) supera a la de un clasificador que nunca alerta en menos de 0.8 puntos porcentuales, mientras el \textit{recall} difiere hasta 16 veces (Figura \ref{fig:barras_clasificacion}). \\
         \hline
     \end{tabular}
-    \caption{Reconciliación del hallazgo central de esta tesis con el marco teórico y metodológico de capítulos anteriores.}
+    \caption{Relación de los hallazgos con el marco teórico, la literatura y la metodología.}
     \label{tab:reconciliacion_hallazgo}
 \end{table}
 
-\subsection*{La congestión como fenómeno raro: coherencia con la teoría de colas}
+Los experimentos realizados no permiten establecer la causa de la disociación, pero sí identificar varios factores plausibles y qué haría falta para confirmarlos (Tabla \ref{tab:hipotesis_disociacion}).
 
-El hallazgo, ya documentado en la Sección \ref{sec:obtencion_exploracion}, de que la utilización real de la red privada bajo estudio nunca superó el 1.44\,\% durante los 21 días de recolección, podría interpretarse erróneamente como una falla de la investigación. Por el contrario, este resultado es plenamente coherente con el fundamento teórico desarrollado en la Sección \ref{sec:congestion}: la teoría de colas de Kleinrock \cite{kleinrock1976} predice que el tiempo de espera y la probabilidad de pérdida crecen de forma no lineal 
----proporcional a $\frac{1}{1-\rho}$--- únicamente en la vecindad de la saturación ($\rho \to 1$). Mientras la utilización se mantenga moderada, el sistema opera sin manifestar los síntomas de congestión. La ausencia de RTT elevado o pérdida de paquetes en los 21 días reales no contradice la física de redes: la confirma. 
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{|p{3.2cm}|p{5.3cm}|p{5.3cm}|}
+        \hline
+        \textbf{Factor} & \textbf{Evidencia en los resultados} & \textbf{Cómo confirmarlo} \\
+        \hline
+        Pérdida MSE con 97.9\,\% de observaciones bajo el umbral & Los picos predichos por LSTM y \textit{Random Forest} quedan justo por debajo de 0.80 (Secciones \ref{sec:resultados_rf} y \ref{sec:resultados_lstm}); la pérdida de entrenamiento de LSTM se estabiliza en torno a 0.006. & Entrenar con pérdida ponderada o con pesos por clase. \\
+        \hline
+        Detención temprana guiada por la validación de regresión (100\,\% tráfico real ocioso) & La pérdida de validación alcanza su mínimo en las primeras épocas (Figura \ref{fig:lstm_primario_curva_split}); se conservan pesos que ajustan el tráfico ocioso. & Guiar la detención con una métrica de clasificación. \\
+        \hline
+        Umbral fijo sobre predicciones amortiguadas & AUC-ROC similar en los tres modelos (0.89 a 0.92) con \textit{recall} muy distinto. & Calibrar el umbral sobre la validación y evaluar curvas de precisión-\textit{recall}. \\
+        \hline
+        Composición asimétrica entre entrenamiento (real y sintético) y evaluación & Sesgo de sobreestimación de ARIMA ($\mu=0.0324$ frente a una media real del orden de $10^{-5}$) y picos de hasta 0.7 de \textit{Random Forest} sobre tráfico real ocioso. & Inspeccionar las entradas que generan los picos; entrenar solo con datos reales o solo sintéticos. \\
+        \hline
+        Esquema de evaluación por bloques (ARIMA) & Oscilaciones regulares al inicio de cada bloque (Figura \ref{fig:arima_primario_regresion}). & Evaluar sin reinicios de estado. \\
+        \hline
+    \end{tabular}
+    \caption{Factores plausibles de la disociación entre regresión y clasificación. Ninguno se verificó experimentalmente.}
+    \label{tab:hipotesis_disociacion}
+\end{table}
 
-Es, de hecho, la misma teoría de colas la que justificó la necesidad imperativa de inyectar eventos de congestión sintéticos: sin una intervención deliberada, ningún modelo matemático podría jamás aprender a predecir un fenómeno no lineal que nunca ha observado. Esta rareza estadística del evento es la razón de ser de esta investigación. El desbalance de clases documentado (2.6\,\% de casos positivos) no es un defecto del \textit{dataset}, sino un reflejo termodinámico fiel de la naturaleza del fenómeno estudiado en una red operando 
-en condiciones normales.
+Además, algunos resultados específicos admiten más de una lectura. En el piloto, el piso de la predicción de \textit{Random Forest} frente a las caídas profundas es coherente con el promediado de las hojas, pero esas caídas están dentro del rango de entrenamiento, por lo que no es extrapolación en sentido estricto y podría deberse a su baja representación en la partición de entrenamiento. La inversión de la importancia de variables (de la media móvil al rezago inmediato) puede deberse a la granularidad de muestreo o a la composición del entrenamiento, que incluye eventos sintéticos de perfil trapezoidal, y estos experimentos no permiten separar ambos efectos. Además, la importancia por impureza favorece a las variables con muchos valores distintos, por lo que sus cifras son orientativas.
 
-\subsection*{Implicaciones operativas: protocolo de mitigación propuesto}
+\subsection*{La congestión como fenómeno raro}
 
-Más allá del análisis topológico, el problema de investigación y los objetivos planteados al inicio de este proyecto exigen que el sistema predictivo resulte útil para la administración operativa. Considerando que \textit{Random Forest} y LSTM demostraron un Tiempo de Anticipación Efectivo ($TAE$) promedio de 2.8 y 3.9 minutos respectivamente, este margen temporal ---impensable en esquemas reactivos tradicionales--- abre una ventana crítica para la intervención automatizada o manual.
+La utilización real máxima de 1.44\,\% durante los 21 días (Sección \ref{sec:obtencion_exploracion}) no contradice el fundamento teórico: según la teoría de colas \cite{kleinrock1976}, el retraso y la pérdida crecen de forma no lineal, proporcional a $\frac{1}{1-\rho}$, solo cerca de la saturación ($\rho \to 1$). Con utilización baja, la red no manifiesta síntomas, como confirman el RTT estable y la ausencia de pérdidas. Esa misma rareza justificó inyectar eventos sintéticos, sin los cuales ningún modelo habría tenido positivos de los cuales aprender. Conviene precisar que el 2.6\,\% de casos positivos no es una medida de la frecuencia natural de la congestión en esta red, que fue cero en el periodo observado, sino una proporción fijada por el diseño de la inyección. Por eso la precisión y el \textit{F1-score}, que dependen de la prevalencia, no son directamente trasladables a la red real.
 
-Para capitalizar esta anticipación algorítmica, se propone el siguiente protocolo de mitigación estructurado. Una vez que el sistema predictivo detone una alerta de congestión inminente ($U(t+h) \geq 0.80$), el administrador de red (o un \textit{script} orquestador integrado al \textit{router} MikroTik) dispondrá de aproximadamente 3 minutos para ejecutar acciones escalonadas:
+\subsection*{Implicaciones operativas}
+
+A modo ilustrativo, un detector con \textit{recall} adecuado y un $TAE$ del orden de 3 minutos, como el observado en el piloto, abriría una ventana para actuar antes de la degradación. Con $U(t+h) \geq 0.80$ como condición de alerta, el administrador, o un \textit{script} integrado al \textit{router} MikroTik, podría ejecutar acciones escalonadas:
 \begin{enumerate}
-    \item \textbf{Activación de QoS dinámico (Minuto 1):} Aplicar políticas de Calidad de Servicio mediante \textit{Simple Queues} o \textit{Queue Trees} en RouterOS para priorizar el tráfico crítico (e.g., telefonía IP, bases de datos) y limitar el ancho de banda de servicios de fondo (e.g., sincronización de Nextcloud).
-    \item \textbf{Enrutamiento de respaldo (Minuto 2):} Si la alerta persiste y la magnitud proyectada por LSTM apunta a la saturación total, desviar el tráfico no esencial hacia una interfaz WAN secundaria (esquema de \textit{Failover} preventivo).
-    \item \textbf{Degradación controlada (Minuto 3):} Reducir temporalmente el \textit{bitrate} de las cámaras de videovigilancia en la red local antes de que los \textit{buffers} de transmisión se saturen y comience la pérdida de paquetes indiscriminada.
+    \item \textbf{QoS dinámico:} aplicar \textit{Simple Queues} o \textit{Queue Trees} en RouterOS para priorizar el tráfico crítico (por ejemplo, telefonía IP o bases de datos) y limitar el de fondo (por ejemplo, la sincronización de Nextcloud).
+    \item \textbf{Enrutamiento de respaldo:} si la alerta persiste, desviar el tráfico no esencial a una interfaz WAN secundaria.
+    \item \textbf{Degradación controlada:} reducir temporalmente el \textit{bitrate} de las cámaras de videovigilancia, la acción más costosa ante una falsa alarma y, por tanto, reservada a alertas persistentes.
 \end{enumerate}
-Este protocolo demuestra la viabilidad de transformar un dictamen tensorial en una herramienta de gestión estratégica de redes.
+Con los resultados actuales, este protocolo es una propuesta y no una consecuencia demostrada: el \textit{recall} con el umbral oficial es bajo y el $TAE$ solo se midió en el piloto.
 
-\subsection*{Una implicación de diseño emergente: hacia un sistema híbrido}
+\subsection*{Líneas de mejora y diseño híbrido}
 
-El hallazgo de que ningún modelo individual domina ambas tareas (Sección \ref{sec:comparativa_modelos}, Figura \ref{fig:scatter_tradeoff}) sugiere una vía de solución innovadora: un esquema de \textbf{alertamiento híbrido}. En esta arquitectura, \textit{Random Forest} ---el modelo de mayor \textit{Recall}--- operaría como el mecanismo primario de detonación rápida de alertas, mientras que LSTM ---el modelo de menor error continuo--- complementaría dicha alerta calculando con altísima precisión la magnitud y trayectoria esperada de 
-la saturación. La Figura \ref{fig:esquema_hibrido} ilustra conceptualmente esta arquitectura.
+La Tabla \ref{tab:hipotesis_disociacion} apunta a mejoras concretas que este trabajo no exploró: calibrar el umbral sobre la validación, usar una pérdida ponderada por clase, guiar la detención temprana con una métrica de clasificación, incorporar líneas base ingenuas y curvas de precisión-\textit{recall}, repetir los entrenamientos con distintas semillas y obtener eventos reales con una recolección más larga.
+
+Una idea adicional es un esquema híbrido (Figura \ref{fig:esquema_hibrido}) en el que \textit{Random Forest}, el modelo de mayor \textit{recall}, dispare la alerta y LSTM aporte una estimación de la magnitud esperada. La primera parte cuenta con respaldo en los resultados, pero la segunda no: los picos que LSTM predice sobre los eventos son de menor magnitud que los reales, y su bajo error continuo corresponde a tráfico ocioso y no a la magnitud de los eventos. Por ello, la propuesta es una hipótesis para el trabajo futuro (Capítulo 7), que debería comprobar primero si algún modelo estima bien la magnitud de los eventos.
 
 \begin{figure}[H]
     \centering
@@ -3117,7 +3186,7 @@ la saturación. La Figura \ref{fig:esquema_hibrido} ilustra conceptualmente esta
     \node[box, below left=1.2cm and -0.3cm of entrada, fill=black!10] (rf) {\textit{Random Forest}\\ \footnotesize (\textit{Recall}=0.298)};
     \node[box, below right=1.2cm and -0.3cm of entrada, fill=black!10] (lstm) {LSTM\\ \footnotesize (RMSE=0.0010)};
     \node[box, below=2.6cm of entrada, fill=black!20, minimum width=5cm] (alerta) {¿\textit{Random Forest} detecta\\ posible congestión?};
-    \node[box, below=1.1cm of alerta, fill=black!30, minimum width=5cm] (salida) {Alerta + estimación de magnitud\\ (aportada por LSTM)};
+    \node[box, below=1.1cm of alerta, fill=black!30, minimum width=5cm] (salida) {Alerta + estimación de magnitud\\ (LSTM, por validar)};
 
     \draw[arrow] (entrada) -- (rf);
     \draw[arrow] (entrada) -- (lstm);
@@ -3125,15 +3194,13 @@ la saturación. La Figura \ref{fig:esquema_hibrido} ilustra conceptualmente esta
     \draw[arrow] (alerta) -- (salida);
     \draw[arrow] (lstm.south) |- (salida.east);
     \end{tikzpicture}
-    \caption{Esquema conceptual de un sistema de alertamiento híbrido, combinando la sensibilidad de detección de \textit{Random Forest} con la precisión de estimación continua de LSTM.}
+    \caption{Esquema conceptual de un sistema de alertamiento híbrido. No fue implementado ni evaluado en este trabajo.}
     \label{fig:esquema_hibrido}
 \end{figure}
 
-Esta propuesta no fue implementada empíricamente en el alcance de este trabajo, pero se retoma formalmente como línea de trabajo futuro en el Capítulo 7, dado que se desprende con naturalidad del patrón de especialización complementaria descubierto.
-
 \subsection*{Cierre de las brechas identificadas en el Estado del Arte}
 
-Para concluir esta discusión, la Tabla \ref{tab:cierre_brechas} retoma las tres brechas formuladas al final de la revisión de la literatura (Sección \ref{sec:estado_brecha}) y contrasta cada una contra la evidencia generada.
+La Tabla \ref{tab:cierre_brechas} retoma las tres brechas de la Sección \ref{sec:estado_brecha} y las contrasta con la evidencia generada.
 
 \begin{table}[H]
     \centering
@@ -3142,28 +3209,29 @@ Para concluir esta discusión, la Tabla \ref{tab:cierre_brechas} retoma las tres
         \hline
         \textbf{Brecha (Sección \ref{sec:estado_brecha})} & \textbf{Cómo se abordó} & \textbf{Evidencia generada} \\
         \hline
-        Conceptual: predicción de volumen vs. congestión como evento discreto. & Se definió y aplicó una variable objetivo de clasificación explícita ($U \geq U_{th}$), evaluada de forma independiente a la regresión. & Tablas \ref{tab:recap_arima_primario_clasificacion}, \ref{tab:recap_rf_primario_clasificacion}, \ref{tab:recap_lstm_primario_clasificacion}. \\
+        Conceptual: predicción de volumen frente a congestión como evento discreto. & Se definió una variable objetivo de clasificación ($U \geq U_{th}$) evaluada junto con la regresión. & Tablas \ref{tab:arima_primario_clasificacion}, \ref{tab:rf_primario_clasificacion}, \ref{tab:lstm_primario_clasificacion} y \ref{tab:comparativa_clasificacion}. \\
         \hline
-        Metodológica: ausencia de comparación simultánea entre paradigmas. & Los tres modelos se entrenaron y evaluaron bajo condiciones idénticas (mismos datos, mismo umbral, mismas métricas). & Tabla maestra \ref{tab:tabla_maestra}, Sección \ref{sec:comparativa_modelos}. \\
+        Metodológica: ausencia de comparación simultánea entre paradigmas. & Se compararon los tres paradigmas con las mismas particiones, el mismo umbral y las mismas métricas, en condiciones comparables pero no idénticas. & Tablas \ref{tab:tabla_maestra} y \ref{tab:condiciones_comparacion}. \\
         \hline
-        De validación: dependencia de una única fuente de datos. & Se adoptó un \textit{dataset} híbrido y se intentó una validación cruzada externa contra el \textit{dataset} público MAWI. & Sección \ref{sec:obtencion_exploracion} (diseño híbrido); limitación de portabilidad documentada en la Sección \ref{sec:comparativa_modelos}. \\
+        De validación: dependencia de una única fuente de datos. & Se adoptó un \textit{dataset} híbrido con validación externa frente a MAWI. & Sección \ref{sec:obtencion_exploracion}; solo ARIMA pudo evaluarse en MAWI (Sección \ref{sec:comparativa_modelos}). \\
         \hline
     \end{tabular}
     \caption{Cierre de las brechas del Estado del Arte a la luz de los resultados del Capítulo 6.}
     \label{tab:cierre_brechas}
 \end{table}
 
-Las tres brechas fueron abordadas de manera directa; sin embargo, como revela la última fila de la Tabla \ref{tab:cierre_brechas}, la brecha de validación se cerró solo parcialmente. Este es un resultado honesto que, lejos de restar valor a este trabajo, delimita con precisión científica el punto exacto en el que una futura extensión de esta línea de investigación debería concentrar sus esfuerzos.
+Las tres brechas se abordaron, la metodológica con los matices indicados y la de validación solo parcialmente. Este último punto delimita dónde debería concentrarse una extensión de este trabajo.
 
 \subsection*{Limitaciones reconocidas}
 
-En congruencia con el compromiso de rigor metodológico sostenido, se enumeran a continuación las limitaciones estructurales que condicionan el alcance de los hallazgos:
-
 \begin{enumerate}
-    \item \textbf{Periodo de recolección acotado.} Como se documentó en los Alcances, el periodo de recolección se ajustó a 21 días efectivos. Un periodo más extenso habría permitido observar ciclos estacionales completos y, potencialmente, episodios de congestión genuinos ---por ejemplo, ante la migración de respaldos masivos de videovigilancia o sincronización de bases de datos---.
-    \item \textbf{Dependencia de datos sintéticos para clasificación.} La totalidad de la evidencia de clasificación presentada proviene de anomalías inyectadas sobre el tráfico de fondo. Si bien la literatura respalda el uso de tráfico simulado, el desempeño reportado es una aproximación razonada y no una medición directa sobre colapsos \textit{reales} de la infraestructura.
-    \item \textbf{Fricción en la generalización de escalas.} Únicamente ARIMA pudo evaluarse de forma exploratoria frente a MAWI. Las arquitecturas de \textit{Machine Learning}, por incompatibilidad estructural entre los parámetros de ventana y las capturas, no pudieron someterse a esta prueba. Los hallazgos son válidos específicamente para el contexto de la infraestructura estudiada y no garantizan aplicabilidad universal instantánea.
-    \item \textbf{Fuente única de telemetría primaria.} El \textit{dataset} primario proviene de un único \textit{router} operando en un entorno PYME específico. Sus patrones de tráfico de baja utilización son característicos de este despliegue particular y no necesariamente representativos del comportamiento global de otras redes corporativas.
+    \item \textbf{Periodo y cobertura de la recolección.} Se dispuso de 21 días efectivos, con una cobertura del 82.9\,\% (Tabla \ref{tab:huecos_recoleccion}). Un periodo más largo habría permitido observar ciclos estacionales completos y, posiblemente, episodios de congestión reales.
+    \item \textbf{Dependencia de datos sintéticos para la clasificación.} Toda la evidencia de clasificación proviene de eventos inyectados, con perfil trapezoidal y una prevalencia fijada por el diseño. Los eventos reales pueden ser menos regulares, y las métricas que dependen de la prevalencia (precisión y \textit{F1-score}) no son directamente trasladables.
+    \item \textbf{Fuente única de telemetría.} El \textit{dataset} primario proviene de un solo \textit{router} en un entorno PYME, con tráfico de baja utilización característico de ese despliegue.
+    \item \textbf{Diseño de la evaluación.} Cada modelo se entrenó una sola vez, sin repeticiones ni intervalos de confianza, y la evaluación usó una partición cronológica 60/20/20 sin validación cruzada. No se calcularon líneas base ingenuas ni se calibró el umbral de decisión. Las condiciones de ARIMA, \textit{Random Forest} y LSTM no son idénticas en escala, entrada y tamaño de la partición de clasificación (Tabla \ref{tab:condiciones_comparacion}).
+    \item \textbf{Generalización.} Solo ARIMA pudo evaluarse frente a MAWI, con seis observaciones; \textit{Random Forest} y LSTM no pudieron, por la incompatibilidad entre sus ventanas de entrada y la duración de las trazas. Los hallazgos son válidos para la infraestructura estudiada y no deben extrapolarse sin reentrenar.
+    \item \textbf{Alcance de los modelos.} Se evaluaron ARIMA, \textit{Random Forest} y LSTM. Otros modelos considerados en la revisión, como GRU o SVR, no se evaluaron.
+    % VERIFICAR: el Estado del Arte y la metodología mencionan GRU y SVR como modelos a evaluar.
 \end{enumerate}
 
 \chapter{Conclusiones}
