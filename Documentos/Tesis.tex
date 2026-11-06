@@ -1939,701 +1939,106 @@ El proceso, respetando las fronteras de sesión, generó 46\,582 secuencias de e
 \section{Construcción del modelo ARIMA}
 \label{sec:arima_desarrollo}
 
-Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, ARIMA se implementó como línea base estadística de referencia. Esta sección documenta la ejecución programática para la identificación del orden del modelo mediante la biblioteca \texttt{statsmodels} de Python, su ajuste sobre el conjunto de entrenamiento del 
-\textit{dataset} piloto MAWI, y su evaluación dual (regresión y clasificación) bajo un esquema de pronóstico progresivo.
+Conforme a la Sección \ref{sec:modelos_justificacion}, ARIMA se implementó con \texttt{statsmodels} como línea base estadística. El procedimiento fue el mismo en ambos conjuntos de datos: primero se calibró sobre el piloto MAWI y después se aplicó al \textit{dataset} primario.
 
-\subsection*{Fase 1: Calibración sobre el \textit{dataset} piloto MAWI}
+\subsection*{Identificación del orden}
 
-\subsubsection*{Prueba de estacionariedad}
+Para fijar el orden de diferenciación $d$ se aplicó la prueba de Dickey-Fuller Aumentada (\texttt{stattools.adfuller}) sobre la serie de utilización del conjunto de entrenamiento: si no se rechazaba la no estacionariedad ($p>0.05$), la serie se diferenciaba (Sección \ref{subsec:arima}). Luego se evaluaron las dieciséis combinaciones $(p,d,q)$ con $p,q \in \{0,1,2,3\}$ y se seleccionó la de menor Criterio de Información de Akaike (AIC). En MAWI la serie requirió $d=1$ y el orden seleccionado fue ARIMA(1,1,1). En el \textit{dataset} primario, el modelo se ajustó sobre la sesión sintética continua más larga del conjunto de entrenamiento (31\,934 observaciones, Tabla \ref{tab:sesiones_train}), que contiene tanto el régimen normal como los 126 eventos de congestión inyectados. La serie resultó estacionaria ($d=0$) y se seleccionó ARIMA(3,0,3). Los estadísticos de la prueba, la búsqueda por AIC, los coeficientes y el diagnóstico de residuos se reportan en el Capítulo \ref{cap:resultados}.
 
-Como paso previo a la identificación del orden, se aplicó la prueba de Dickey-Fuller Aumentada (ADF) mediante el módulo \texttt{stattools.adfuller} sobre la serie de utilización del conjunto de entrenamiento. El propósito fue determinar el orden de diferenciación $d$ requerido para estabilizar la media (Sección \ref{subsec:arima}). 
-El estadístico obtenido fue $\mbox{ADF}=-1.6992$, con un valor $p=0.4315$. Dado que $p > 0.05$, no fue posible rechazar la hipótesis nula de no estacionariedad. En consecuencia, se aplicó una diferenciación de primer orden ($d=1$) de forma programática antes de iterar sobre los órdenes autorregresivo ($p$) y de media móvil ($q$).
+\subsection*{Esquema de evaluación}
 
-\subsubsection*{Identificación del orden mediante minimización del AIC}
+Para regresión se empleó pronóstico progresivo (\textit{walk-forward validation}) con horizonte $h=5$: en cada instante $t$ se predice el valor en $t+h$ y, a continuación, el valor real observado se incorpora al modelo antes de la siguiente predicción, emulando un despliegue en tiempo real. En el \textit{dataset} primario la evaluación se hizo por bloques (Sección \ref{sec:evaluacion}) y solo sobre las particiones reales de validación y prueba (Sección \ref{sec:obtencion_exploracion}). Se omitió el MAPE porque la utilización real cercana a cero hace inestable su denominador (Sección \ref{sec:evaluacion}).
 
-Se orquestó una búsqueda de hiperparámetros evaluando dieciséis combinaciones de órdenes $(p,1,q)$ con $p,q \in \{0,1,2,3\}$, seleccionando la topología que minimizó el Criterio de Información de Akaike (AIC). La Tabla \ref{tab:busqueda_arima} resume los cinco modelos con mejor convergencia.
+Para clasificación, las predicciones continuas se binarizaron con el umbral de prueba $U_{test} \geq 0.25$ en MAWI y con $U_{th}=0.80$ en el \textit{dataset} primario, este último sobre las particiones sintéticas aisladas. Una alerta cuenta como verdadero positivo solo si la predicción supera el umbral antes del evento real. Las métricas de clasificación y el $TAE$ se calcularon según la Sección \ref{sec:evaluacion}, y los resultados de ambas tareas se presentan en el Capítulo \ref{cap:resultados}.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|r|}
+    \begin{tabular}{|l|p{5.5cm}|}
         \hline
-        \textbf{Orden $(p,d,q)$} & \textbf{AIC} \\
+        \textbf{Parámetro} & \textbf{Configuración} \\
         \hline
-        ARIMA(1,1,1) & \textbf{-5656.68} \\
-        ARIMA(2,1,1) & -5654.95 \\
-        ARIMA(3,1,1) & -5653.03 \\
-        ARIMA(0,1,3) & -5653.74 \\
-        ARIMA(2,1,2) & -5653.04 \\
-        \hline
-    \end{tabular}
-    \caption{Órdenes ARIMA con menor AIC, \textit{dataset} piloto MAWI.}
-    \label{tab:busqueda_arima}
-\end{table}
-
-El orden seleccionado por el algoritmo fue $\mbox{ARIMA}(1,1,1)$. Los coeficientes óptimos estimados se presentan en la Ecuación \ref{eq:arima_ajustado}, instanciando la formulación general de la Ecuación \ref{eq:arima}:
-
-\begin{equation}
-    (1 - 0.4305\,L)(1-L)\,U_t = (1 - 0.8280\,L)\,\varepsilon_t
-    \label{eq:arima_ajustado}
-\end{equation}
-
-Ambos coeficientes resultaron estadísticamente significativos ($p<0.001$), y la prueba de Ljung-Box sobre los residuos ($p=0.92$) confirmó la ausencia de autocorrelación residual, validando la idoneidad matemática del modelo de referencia.
-
-\subsubsection*{Evaluación mediante pronóstico progresivo (Regresión)}
-
-La validación del modelo se implementó mediante un riguroso esquema iterativo de pronóstico progresivo (\textit{rolling forecast} o \textit{walk-forward validation}). Para cada instante $t$, el algoritmo generó una predicción continua del volumen de tráfico proyectada a un horizonte de $h=5$ pasos (segundos, en el caso del piloto MAWI). Inmediatamente después, el valor real observado en $t+h$ se ingirió en el modelo para recalibrar los pesos y proyectar el siguiente intervalo, emulando así el flujo de información de un despliegue en tiempo real. La Tabla \ref{tab:resultados_arima_regresion} presenta las métricas de error continuo resultantes.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
-        \hline
-        Validación & 0.0265 & 0.0204 & 10.61\,\% \\
-        Prueba & 0.0282 & 0.0221 & 10.80\,\% \\
+        Biblioteca & \texttt{statsmodels} \\
+        Orden de diferenciación $d$ & Prueba ADF ($\alpha=0.05$) \\
+        Búsqueda de $(p,q)$ & $p,q \in \{0,1,2,3\}$ (16 combinaciones) \\
+        Criterio de selección & Mínimo AIC \\
+        Horizonte $h$ & 5 pasos \\
+        Evaluación de regresión & Pronóstico progresivo por bloques \\
+        Umbral de clasificación & $U_{test}=0.25$ (MAWI); $U_{th}=0.80$ (primario) \\
         \hline
     \end{tabular}
-    \caption{Métricas de desempeño en regresión continua del modelo ARIMA(1,1,1), evaluado sobre la partición de prueba del \textit{dataset} piloto MAWI.}
-    \label{tab:resultados_arima_regresion}
+    \caption{Configuración del modelo ARIMA.}
+    \label{tab:config_arima}
 \end{table}
-
-La Figura \ref{fig:arima_prediccion} contrasta visualmente la trayectoria de las predicciones continuas del modelo frente a los valores reales observados en el conjunto de prueba. Un análisis detallado de esta gráfica revela el comportamiento intrínseco de la topología estadística: la predicción de ARIMA (línea roja discontinua) actúa como un atractor suavizado del tráfico real (línea azul). Mientras que la utilización real exhibe la alta variabilidad y el estocasticismo transitorio característicos del ruido blanco (\textit{white noise}), el modelo filtra eficientemente dichas oscilaciones para trazar la tendencia central de fondo. 
-
-Este comportamiento de suavizado (\textit{smoothing}) confirma la solidez general del modelo, evidenciando una estabilidad del error porcentual (MAPE $\approx$ 10.80\,\%) que descarta categóricamente un sobreajuste (\textit{overfitting}) memorístico. No obstante, desde una perspectiva analítica orientada a la detección de anomalías, esta misma gráfica exhibe visualmente la debilidad estructural que se documentará más adelante: la inercia estadística de ARIMA lo hace lento para reaccionar ante picos súbitos, una característica que, si bien favorece la regresión continua del estado base, comprometerá severamente su \textit{Recall} a la hora de clasificar ráfagas de congestión abruptas.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{arima_prediccion_vs_real.png}
-    \caption{ARIMA(1,1,1): Evaluación de pronóstico progresivo ($h=5$). El modelo filtra el ruido estocástico de la señal real, capturando exitosamente la tendencia de fondo sin incurrir en sobreajuste.}
-    \label{fig:arima_prediccion}
-\end{figure}
-
-\subsubsection*{Evaluación de umbral de alerta temprana (Clasificación)}
-
-Para completar la auditoría del código de evaluación propuesto en el Capítulo 4, las predicciones continuas del modelo se sometieron a una binarización computacional utilizando el umbral piloto $U_{test} \geq 0.25$ (justificado en la Sección \ref{sec:obtencion_exploracion}). Una alerta se contabilizó como Verdadero Positivo únicamente si la predicción de 
-ARIMA rebasaba el umbral antes del evento real. La Tabla \ref{tab:resultados_arima_clasificacion} expone el desempeño del modelo operando como un clasificador de alertas tempranas sobre el conjunto de prueba.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|}
-        \hline
-        \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
-        \hline
-        Precisión & 64.2\,\% \\
-        \textit{Recall} & 41.5\,\% \\
-        \textit{F1-score} & 50.4\,\% \\
-        \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{1.2 minutos} \\
-        \hline
-    \end{tabular}
-    \caption{Desempeño base de clasificación y alertamiento (TAE) de ARIMA, fase piloto.}
-    \label{tab:resultados_arima_clasificacion}
-\end{table}
-
-Estos resultados preliminares evidencian la limitación teórica descrita en el Capítulo 2: al actuar como un suavizador lineal, ARIMA reacciona con retraso ante las ráfagas abruptas de tráfico, lo que explica su bajo nivel de \textit{Recall} (41.5\,\%) y un $TAE$ marcadamente inferior al horizonte proyectado de 5 minutos. Con la correcta ejecución 
-computacional confirmada y sus métricas establecidas como línea base de superación, el \textit{pipeline} avanzó hacia la implementación sobre los datos de la red PYME.
-
-\subsection*{Fase 2: Entrenamiento sobre el \textit{dataset} primario}
-
-Dado que ARIMA requiere una serie temporal continua para su ajuste, el modelo se entrenó sobre la sesión de mayor longitud identificada en el conjunto de entrenamiento (Tabla \ref{tab:sesiones_train}): la sesión sintética continua de 31\,934 observaciones, que incorpora tanto el régimen de tráfico normal como los 126 eventos de congestión inyectados.
-
-\subsubsection*{Estacionariedad e identificación del orden}
-
-La prueba de Dickey-Fuller Aumentada sobre esta serie arrojó $\mbox{ADF}=-23.6571$ ($p<0.0001$), confirmando estacionariedad sin necesidad de diferenciación ($d=0$) ---a diferencia del \textit{dataset} piloto de MAWI que sí lo requirió---. La búsqueda de orden por minimización del AIC, sobre las mismas dieciséis combinaciones $(p,0,q)$ evaluadas en 
-la fase piloto, seleccionó $\mbox{ARIMA}(3,0,3)$ ($\mbox{AIC}=-111\,594.72$), cuyos coeficientes estimados se presentan en la Ecuación \ref{eq:arima_primario_ajustado}:
-
-\begin{equation}
-    U_t = 0.0324 + 2.3103\,U_{t-1} - 1.7123\,U_{t-2} + 0.3971\,U_{t-3} + \varepsilon_t - 1.0847\,\varepsilon_{t-1} + 0.1825\,\varepsilon_{t-2} - 0.0209\,\varepsilon_{t-3}
-    \label{eq:arima_primario_ajustado}
-\end{equation}
-
-Todos los coeficientes resultaron estadísticamente significativos ($p<0.01$), y la prueba de Ljung-Box sobre los residuos ($p=0.98$) no permite rechazar la hipótesis de ausencia de autocorrelación residual. No obstante, es pertinente señalar con honestidad metodológica que la prueba de Jarque-Bera reveló una desviación marcada de la normalidad en los 
-residuos (curtosis de 249.4), atribuible a los eventos de congestión sintéticos inyectados, cuyos cambios abruptos de régimen generan residuos ocasionales de magnitud considerablemente mayor a la del comportamiento típico de la serie.
-
-\subsubsection*{Evaluación de regresión (datos reales)}
-
-Conforme al diseño de evaluación dual asimétrico establecido en la Sección \ref{sec:obtencion_exploracion}, la capacidad de regresión continua del modelo se evaluó exclusivamente sobre las particiones puras (100\,\% tráfico real) de validación y prueba, utilizando el estricto esquema de pronóstico progresivo (\textit{rolling forecast}) por bloques, descrito metodológicamente en la Sección \ref{sec:evaluacion}. La Tabla \ref{tab:arima_primario_regresion} presenta los resultados de esta evaluación.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
-        \hline
-        Validación (real) & 0.046045 & 0.015110 \\
-        Prueba (real) & 0.045872 & 0.015059 \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de regresión del modelo ARIMA(3,0,3) sobre el \textit{dataset} primario (escala original de utilización).}
-    \label{tab:arima_primario_regresion}
-\end{table}
-
-Es imperativo notar que se omite deliberadamente el Error Porcentual Absoluto Medio (MAPE) de esta tabla, en estricta congruencia con la advertencia matemática formulada en la Sección \ref{sec:evaluacion}: dado que la utilización real observada en esta partición gravita de manera asintótica hacia el cero (Sección \ref{sec:obtencion_exploracion}), el denominador de la ecuación del MAPE se vuelve numéricamente inestable, generando errores porcentuales astronómicos que carecen de cualquier valor interpretativo en el contexto de redes de baja utilización.
-
-La Figura \ref{fig:arima_primario_regresion} contrasta visualmente las predicciones del algoritmo contra los valores reales observados en el conjunto de prueba, revelando dos fenómenos estadísticos críticos del modelo ARIMA(3,0,3) al enfrentarse a la asimetría del diseño experimental.
-
-En primer lugar, se observa un sesgo sistemático de sobreestimación: la predicción de fondo (línea discontinua roja) flota constantemente por encima de la señal real plana (línea azul continua). Esto ocurre porque el modelo fue ajustado sobre la partición de entrenamiento unificada ---la cual incluye los eventos sintéticos masivos que rozan la saturación (0.98)--- obligando al algoritmo a internalizar una media incondicional ($\mbox{const}=0.0324$) que resulta artificialmente alta en comparación con el comportamiento letárgico típico del canal real. 
-
-En segundo lugar, la gráfica exhibe severas oscilaciones transitorias (picos agudos que alcanzan magnitudes cercanas a 0.7 y valles que perforan el eje negativo) espaciadas a intervalos regulares. Estas disrupciones no constituyen un error de código o un desbordamiento computacional, sino que son el artefacto matemático directo de la evaluación por bloques del pronóstico progresivo. Cada pico marca el inicio de un nuevo bloque de evaluación, instante en el cual el modelo debe reiniciar su estado autorregresivo (AR) y de media móvil (MA) asimilando de golpe las observaciones inmediatamente anteriores. Esta violenta compensación inercial eleva sustancialmente el RMSE general (0.0458) a cifras muy superiores a la utilización máxima real observada (1.44\,\%), confirmando que el paradigma estadístico sufre una severa penalización estructural cuando se evalúa sobre distribuciones asimétricas (entrenamiento estresado vs. prueba ociosa).
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{arima_primario_regresion_test.png}
-    \caption{ARIMA(3,0,3): Evaluación de regresión. Se evidencia el sesgo de sobreestimación basal y las severas oscilaciones transitorias producto del recálculo por bloques en el pronóstico progresivo.}
-    \label{fig:arima_primario_regresion}
-\end{figure}
-\newpage
-
-\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
-
-La Tabla \ref{tab:arima_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en $U_{th}=0.80$, conforme al criterio operativo definido en la Sección \ref{sec:evaluacion}.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
-        \hline
-        Exactitud & 0.9741 & 0.9750 \\
-        Precisión & 0.6667 & 1.0000 \\
-        \textit{Recall}  & 0.0357 & 0.0185 \\
-        \textit{F1-score} & 0.0678 & 0.0364 \\
-        AUC-ROC & 0.8905 & 0.8939 \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de clasificación de ARIMA(3,0,3), umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
-    \label{tab:arima_primario_clasificacion}
-\end{table}
-
-Para comprender la verdadera implicación operativa de estas métricas ---especialmente la aparente contradicción entre una Exactitud sobresaliente (0.9750) y un \textit{Recall} abismal (0.0185)---, es necesario diseccionar la matriz de confusión sobre el conjunto de prueba, presentada en la Ecuación \ref{eq:confusion_arima}.
-
-\begin{equation}
-    \begin{pmatrix} \mbox{VN}=2070 & \mbox{FP}=0 \\ \mbox{FN}=53 & \mbox{VP}=1 \end{pmatrix}
-    \label{eq:confusion_arima}
-\end{equation}
-
-Esta matriz revela matemáticamente el comportamiento del modelo frente a un escenario de desbalance de clases:
-\begin{itemize}
-    \item \textbf{Verdaderos Negativos (VN=2070):} El modelo es sumamente eficaz para reconocer cuando la red está operando con normalidad.
-    \item \textbf{Falsos Positivos (FP=0):} El algoritmo no detonó ni una sola alerta preventiva injustificada, lo que explica su Precisión perfecta del 100\,\%.
-    \item \textbf{Falsos Negativos (FN=53):} Este es el fallo estructural crítico. De los 54 eventos de congestión inminente que el sistema debió haber alertado, el modelo guardó silencio en 53 ocasiones, dejando la red vulnerable ante el colapso.
-    \item \textbf{Verdaderos Positivos (VP=1):} A pesar de la presencia de múltiples anomalías sintéticas, el algoritmo únicamente logró clasificar con éxito una (1) sola crisis de congestión en toda la evaluación de prueba.
-\end{itemize}
-
-La Figura \ref{fig:arima_primario_clasificacion} aporta la evidencia visual que explica la abrumadora cantidad de falsos negativos y el paupérrimo \textit{Recall} del 1.85\,\%. Al observar los eventos anómalos, es evidente que la predicción del modelo (línea discontinua roja) intenta seguir la trayectoria de los picos de utilización, pero sufre de una severa amortiguación estadística. Dado que el componente de media móvil (MA) de ARIMA inherentemente suaviza el pronóstico empujándolo hacia la tendencia central de la serie, el modelo subestima sistemáticamente la magnitud de las ráfagas abruptas. En consecuencia, las predicciones rojas se quedan cortas y rara vez logran cruzar la barrera crítica de $U_{th}=0.80$ (línea punteada negra), concretando exactamente un solo Verdadero Positivo en todo el conjunto de prueba.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{arima_primario_clasificacion_test.png}
-    \caption{ARIMA(3,0,3): Evaluación de clasificación. La amortiguación estadística del modelo impide que sus predicciones crucen el umbral de alerta (0.80), resultando en una proliferación de falsos negativos.}
-    \label{fig:arima_primario_clasificacion}
-\end{figure}
 
 \section{Construcción del modelo \textit{Random Forest}}
 \label{sec:rf_desarrollo}
 
-Conforme a la justificación establecida en la Sección \ref{sec:modelos_justificacion}, se implementó un modelo \textit{Random Forest} como representante del paradigma de \textit{Machine Learning} clásico utilizando el módulo \texttt{ensemble.RandomForestRegressor} (y su contraparte \texttt{Classifier}) de la biblioteca \texttt{scikit-learn}. 
+Conforme a la Sección \ref{sec:modelos_justificacion}, se implementó \textit{Random Forest} como representante del \textit{Machine Learning} clásico con \texttt{RandomForestRegressor} y su contraparte \texttt{RandomForestClassifier} de \texttt{scikit-learn}. Como en ARIMA, el modelo se calibró primero sobre MAWI y luego se reentrenó sobre el \textit{dataset} primario con los mismos hiperparámetros, usando sus 46\,872 observaciones de entrenamiento (Sección \ref{sec:obtencion_exploracion}).
 
-Para adaptar el tensor tridimensional generado en el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}) a la entrada tabular (2D) que exigen los algoritmos clásicos, las secuencias de rezagos se aplanaron, extrayendo adicionalmente la media de la ventana ($U_{\mbox{\scriptsize media\_movil}}$) como característica estadística explícita. A diferencia de ARIMA, que opera iterativamente sobre sus propios residuales, este ensamble mapea de forma no lineal todo el vector de características contra el objetivo.
+\subsection*{Preparación de las entradas}
 
-\subsection*{Fase 1: Calibración sobre el \textit{dataset} piloto MAWI}
+El tensor tridimensional del preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}) se aplanó a la entrada tabular que requieren los algoritmos clásicos. Cada observación se representa con cinco rezagos ($U_{\mbox{\scriptsize lag1}}$ a $U_{\mbox{\scriptsize lag5}}$) y la media de la ventana ($U_{\mbox{\scriptsize media\_movil}}$) como característica explícita. A diferencia de ARIMA, que opera sobre su propia serie y sus residuos, el ensamble mapea de forma no lineal todo el vector de entrada contra el objetivo. La utilización se escaló con Min-Max, por lo que sus métricas se reportan en escala normalizada, a diferencia de ARIMA, que se mantuvo en escala original.
 
-\subsubsection*{Configuración y entrenamiento (Regresión)}
+\subsection*{Configuración y esquema de evaluación}
 
-Se entrenó un ensamble de 200 árboles de decisión, con una profundidad máxima de 10 niveles por árbol (\texttt{max\_depth=10}), sobre el conjunto de entrenamiento normalizado. A diferencia de ARIMA, cuya variable se mantuvo en escala original, \textit{Random Forest} consumió la utilización escalada mediante Min-Max, consistente con las mejores prácticas documentadas en el Capítulo 4 para optimizar la partición de la entropía. La Tabla \ref{tab:resultados_rf_regresion} presenta las métricas continuas sobre los conjuntos de validación y prueba.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
-        \hline
-        Validación & 0.0962 & 0.0721 & 12.83\,\% \\
-        Prueba & 0.1311 & 0.1004 & 16.26\,\% \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de regresión de \textit{Random Forest} (escala normalizada), \textit{dataset} MAWI.}
-    \label{tab:resultados_rf_regresion}
-\end{table}
-
-Dado que estas métricas están normalizadas, su comparación con ARIMA requiere una conversión. Al reescalar el RMSE de prueba ($0.1311$) por el rango de la variable de entrenamiento ($0.323 - 0.017 = 0.306$), se obtiene un RMSE equivalente de aproximadamente $0.040$ en la escala original, ligeramente superior al $0.028$ reportado por la línea base estadística.
-
-La Figura \ref{fig:rf_prediccion} contrasta visualmente las predicciones continuas del modelo frente a los valores reales observados en el conjunto de prueba, revelando gráficamente una limitación estructural intrínseca a la topología de los Árboles de Decisión: la incapacidad matemática de extrapolación. 
-
-Como se observa en la gráfica, mientras que el tráfico real (línea azul continua) experimenta caídas abruptas (\textit{valles}) que descienden hasta el nivel de 0.2 en el eje normalizado (e.g., cerca de la observación 350), la predicción del ensamble (línea naranja discontinua) sufre de un claro tope inferior, negándose a descender por debajo de la barrera del 0.5. 
-Este fenómeno no es un error de programación, sino la consecuencia directa de la arquitectura del \textit{Random Forest}: dado que las predicciones se emiten promediando los valores contenidos en los nodos hoja del entrenamiento, el modelo es geométricamente incapaz de predecir valores que excedan los límites (máximos o mínimos) del régimen dominante que observó durante su aprendizaje. En consecuencia, el modelo recorta sistemáticamente los extremos del comportamiento estocástico, justificando así por qué su error de regresión (RMSE equivalente de 0.040) resultó superior al de la línea base estadística (ARIMA).
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{rf_prediccion_vs_real.png}
-    \caption{\textit{Random Forest}: Evaluación de regresión. Se evidencia la incapacidad del ensamble para extrapolar valores extremos, "recortando" sistemáticamente las caídas abruptas de tráfico.}
-    \label{fig:rf_prediccion}
-\end{figure}
-
-\subsubsection*{Análisis de degradación por extrapolación}
-
-A diferencia de ARIMA, cuyo desempeño se mantuvo estable entre particiones, \textit{Random Forest} exhibió una degradación pronunciada (MAPE de 12.83\,\% a 16.26\,\%). La explicación de este fenómeno subyace en una limitación matemática de los métodos basados en árboles: su incapacidad para extrapolar. Dado que cada nodo hoja predice estrictamente la media (o la moda) de las observaciones de entrenamiento que caen en su región espacial, el modelo es ciego ante valores que exceden el máximo histórico conocido. Puesto que el conjunto de prueba 
-piloto contiene ráfagas puntuales cercanas o superiores al límite del rango de entrenamiento, \textit{Random Forest} subestima sistemáticamente dichos picos, un defecto que ARIMA mitiga parcialmente mediante la inercia de su componente tendencial.
-
-\subsubsection*{Evaluación de umbral de alerta temprana (Clasificación)}
-
-Al igual que la línea base, el ensamble se sometió a la formulación de clasificación temprana utilizando el umbral piloto de calibración ($U_{test} \geq 0.25$). La Tabla \ref{tab:resultados_rf_clasificacion} expone la capacidad del modelo para detonar alertas preventivas.
+La Tabla \ref{tab:config_rf} resume la configuración, idéntica en ambos conjuntos de datos.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|r|}
+    \begin{tabular}{|l|p{6cm}|}
         \hline
-        \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
+        \textbf{Parámetro} & \textbf{Configuración} \\
         \hline
-        Precisión & 76.5\,\% \\
-        \textit{Recall} & 68.3\,\% \\
-        \textit{F1-score} & 72.1\,\% \\
-        \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{2.8 minutos} \\
-        \hline
-    \end{tabular}
-    \caption{Desempeño de clasificación y alertamiento (TAE) de \textit{Random Forest}, fase piloto.}
-    \label{tab:resultados_rf_clasificacion}
-\end{table}
-
-A pesar de su deficiencia en la extrapolación continua, la capacidad no lineal de \textit{Random Forest} le permite identificar patrones de saturación inminente con mucha mayor eficacia que ARIMA. El \textit{Recall} escaló del 41.5\,\% al 68.3\,\%, logrando un Tiempo de Anticipación Efectivo ($TAE$) promedio de 2.8 minutos antes del evento de congestión real, validando la superioridad del \textit{Machine Learning} sobre la estadística clásica para la tarea específica de alertamiento.
-
-\subsubsection*{Importancia de variables}
-
-Aprovechando la interpretabilidad inherente de los árboles de decisión (una ventaja crítica frente a las arquitecturas de caja negra como las redes neuronales), se calculó la disminución media de la impureza de Gini para cuantificar la importancia relativa de las características (\textit{features}) extraídas de la ventana temporal. 
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{rf_importancia_variables.png}
-    \caption{Importancia relativa de variables (Impureza de Gini) en el \textit{Random Forest}. La media móvil domina la toma de decisiones algorítmica.}
-    \label{fig:rf_importancia}
-\end{figure}
-
-Como ilustra contundentemente la Figura \ref{fig:rf_importancia}, la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentra más del 66\,\% de la capacidad discriminativa del modelo. Supera por un margen abrumador al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$, con apenas 13.9\,\%), mientras que los rezagos más antiguos (del \textit{lag 2} al \textit{lag 5}) resultan prácticamente marginales para la toma de decisiones. 
-
-Este hallazgo algorítmico confirma empíricamente una intuición fundamental en la ingeniería de tráfico: a una granularidad tan fina como la de 1 segundo (empleada en el \textit{dataset} MAWI), la observación de instantes aislados resulta insuficiente e engañosa debido al ruido estocástico intrínseco del canal. El ensamble aprendió matemáticamente que un pico de utilización en un solo segundo ($U_{\mbox{\scriptsize lag1}}$) no garantiza una crisis; sin embargo, una elevación sostenida en la media móvil revela un estrés acumulado genuino. Suavizar el ruido transitorio resulta indispensable para discernir la tendencia subyacente de saturación.
-
-\subsection*{Fase 2: Entrenamiento sobre el \textit{dataset} primario}
-
-El modelo \textit{Random Forest} se reentrenó con idéntica configuración de hiperparámetros a la validada en la fase piloto (200 árboles, profundidad máxima de 10 niveles), esta vez sobre las 46\,872 observaciones del conjunto de entrenamiento del \textit{dataset} primario (datos reales más sintéticos, documentados en la Sección \ref{sec:obtencion_exploracion}).
-
-\subsubsection*{Evaluación de regresión (datos reales)}
-
-La Tabla \ref{tab:rf_primario_regresion} presenta las métricas de regresión sobre las particiones reales de validación y prueba.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
-        \hline
-        Validación (real) & 0.005084 & 0.004766 \\
-        Prueba (real) & 0.049590 & 0.010301 \\
+        Biblioteca & \texttt{scikit-learn} \\
+        Número de árboles & 200 \\
+        Profundidad máxima & 10 (\texttt{max\_depth=10}) \\
+        Entradas & 5 rezagos y media móvil de la ventana \\
+        Escalado & Min-Max \\
+        Evaluación de regresión & Particiones de validación y prueba (reales en el primario) \\
+        Umbral de clasificación & $U_{test}=0.25$ (MAWI); $U_{th}=0.80$ (primario) \\
+        Importancia de variables & Disminución media de impureza \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de \textit{Random Forest} sobre el \textit{dataset} primario (escala normalizada).}
-    \label{tab:rf_primario_regresion}
+    \caption{Configuración del modelo \textit{Random Forest}.}
+    \label{tab:config_rf}
 \end{table}
 
-Las Figuras \ref{fig:rf_primario_regresion_val} y \ref{fig:rf_primario_regresion_test} contrastan visualmente las predicciones continuas del modelo contra los valores reales observados en sus respectivas particiones.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_val.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:rf_primario_regresion_val}
-\end{figure}
-
-Al analizar las métricas de la Tabla \ref{tab:rf_primario_regresion}, se observa una discrepancia notable entre el error de validación (RMSE=0.0051) y el error de prueba (RMSE=0.0496), lo que representa un incremento de casi un orden de magnitud. La progresión gráfica entre ambas figuras revela de forma diáfana la causa raíz de este deterioro predictivo.
-
-En la partición de validación (Figura \ref{fig:rf_primario_regresion_val}), la predicción del ensamble (línea naranja discontinua) logra mantenerse relativamente contenida. Aunque ya exhibe un sesgo de sobreestimación basal (flotando milimétricamente por encima de la línea azul real plana) y detona picos transitorios, estos estallidos son menores, sin lograr superar la cota del 0.07 en la escala normalizada. El modelo mantiene un error bajo porque estas fluctuaciones no desestabilizan severamente la métrica global del RMSE.
-
-Sin embargo, al transicionar al conjunto de prueba (Figura \ref{fig:rf_primario_regresion_test}), el comportamiento del modelo sufre una disrupción radical. Mientras que el tráfico real (línea azul continua) se mantiene en un letargo persistente idéntico al de validación, la predicción del ensamble pierde la contención y detona dos picos de sobreestimación masivos, alcanzando magnitudes desproporcionadas de 0.5 y casi 0.7 en la escala normalizada. 
-
-Estos estallidos predictivos anómalos no corresponden a una incapacidad de extrapolación (como se vio en la fase piloto), sino a un fenómeno crítico de \textbf{hipersensibilidad contextual inducida por el entrenamiento asimétrico}. Dado que el \textit{Random Forest} fue entrenado sobre una matriz unificada que contenía tanto el letargo real continuo como las ráfagas sintéticas masivas de congestión, el algoritmo aprendió a asociar ciertas micro-fluctuaciones en las variables de rezago con el preludio de una crisis inminente. Al enfrentarse a variaciones ínfimas e inofensivas en el tráfico de fondo del conjunto de prueba, el modelo alucina una ráfaga y sobre-reacciona violentamente, proyectando un pico de utilización que jamás ocurre en la realidad. 
-
-Esta dinámica demuestra empíricamente una vulnerabilidad profunda del \textit{Machine Learning} clásico: si bien los árboles de decisión son excepcionales para segmentar patrones no lineales severos, resultan sumamente susceptibles a generar falsas alarmas de regresión continua cuando su hipervigilancia, calibrada con anomalías masivas, se despliega sobre un entorno operativo puramente ocioso.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
-    \caption{\textit{Random Forest}: Evaluación de regresión en prueba. Se evidencia la hipersensibilidad del ensamble, detonando predicciones masivas de hasta 0.7 ante fluctuaciones inofensivas en un entorno dominado por tráfico real ocioso.}
-    \label{fig:rf_primario_regresion_test}
-\end{figure}
-
-\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
-
-La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en la cota de congestión $U_{th}=0.80$ (normalizado).
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
-        \hline
-        Exactitud & 0.9803 & 0.9813 \\
-        Precisión & 0.9121 & 0.9318 \\
-        \textit{Recall} & 0.2923 & 0.2982 \\
-        \textit{F1-score} & 0.4427 & 0.4518 \\
-        AUC-ROC & 0.8796 & 0.9187 \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de clasificación de \textit{Random Forest}, umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
-    \label{tab:rf_primario_clasificacion}
-\end{table}
-
-Para dimensionar el salto cualitativo de este paradigma algorítmico, es indispensable analizar la matriz de confusión sobre el conjunto de prueba, presentada en la Ecuación \ref{eq:confusion_rf}. Esta matriz evidencia una mejora operativa monumental respecto a la línea base estadística (ARIMA):
-
-\begin{equation}
-    \begin{pmatrix} \mbox{VN}=10\,341 & \mbox{FP}=6 \\ \mbox{FN}=193 & \mbox{VP}=82 \end{pmatrix}
-    \label{eq:confusion_rf}
-\end{equation}
-
-El desglose de estos componentes revela el verdadero comportamiento del ensamble:
-\begin{itemize}
-    \item \textbf{Verdaderos Negativos (VN=10\,341):} El ensamble mantiene una capacidad excepcional para reconocer los extensos periodos de tráfico ocioso, sin confundirlos con anomalías.
-    \item \textbf{Falsos Positivos (FP=6):} El modelo detonó únicamente 6 falsas alarmas en todo el conjunto de prueba. Esto se traduce en una Precisión sobresaliente del 93.18\,\%, garantizando operativamente que cuando el sistema lanza una alerta preventiva, la probabilidad de que la red efectivamente esté colapsando es casi absoluta.
-    \item \textbf{Verdaderos Positivos (VP=82):} De los 275 instantes de congestión crítica inyectados, el modelo detectó correctamente 82. Esto representa un salto cuántico en comparación con la única detección (VP=1) lograda por ARIMA.
-    \item \textbf{Falsos Negativos (FN=193):} Aunque la omisión de 193 instantes de crisis indica que el modelo aún no es infalible (reflejado en un \textit{Recall} del 29.8\,\%), la mejora comparativa es innegable.
-\end{itemize}
-
-Las Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test} proporcionan la radiografía visual exacta de por qué ocurren estos falsos negativos. A diferencia de ARIMA (cuya inercia aplanaba la predicción), el \textit{Random Forest} logra sincronizarse temporalmente a la perfección con los eventos de congestión: por cada pico azul (tráfico real), emerge simultáneamente un pico naranja (predicción). El modelo sabe exactamente \textit{cuándo} está ocurriendo la crisis.
-
-Sin embargo, el volumen de falsos negativos (193) se origina en el eje vertical (la magnitud). Debido al fenómeno de promediado geométrico en las hojas de los árboles de decisión analizado en la regresión, el \textit{Random Forest} tiende a recortar la cúspide de sus predicciones. Como resultado, decenas de sus picos naranjas escalan verticalmente y diagnostican la anomalía de manera correcta, pero se quedan a escasos milímetros por debajo del umbral matemático rígido de $U_{th}=0.80$ (línea punteada roja). El modelo detecta el evento estocástico, pero el umbral binario estricto penaliza su incapacidad de extrapolar la magnitud máxima.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_val.png}
-    \caption{\textit{Random Forest}: Evaluación de clasificación (Validación). El modelo detecta la temporalidad de las anomalías (eje X), pero recorta la magnitud de varios picos (eje Y) impidiendo que crucen el umbral.}
-    \label{fig:rf_primario_clasificacion_val}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
-    \caption{\textit{Random Forest}: Evaluación de clasificación (Prueba). Se ratifica el comportamiento: picos predictivos altamente precisos en tiempo, pero ligeramente amortiguados en magnitud.}
-    \label{fig:rf_primario_clasificacion_test}
-\end{figure}
-
-\subsubsection*{Importancia de variables y el efecto de la granularidad temporal}
-
-La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_importancia} presentan la distribución de la importancia relativa de cada característica (\textit{feature}) de entrada sobre el \textit{dataset} primario.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|}
-        \hline
-        \textbf{Variable} & \textbf{Importancia relativa} \\
-        \hline
-        $U_{\mbox{\scriptsize lag1}}$ & 0.6644 \\
-        $U_{\mbox{\scriptsize media\_movil}}$ & 0.1249 \\
-        $U_{\mbox{\scriptsize lag5}}$ & 0.1171 \\
-        $U_{\mbox{\scriptsize lag2}}$ & 0.0320 \\
-        $U_{\mbox{\scriptsize lag3}}$ & 0.0315 \\
-        $U_{\mbox{\scriptsize lag4}}$ & 0.0301 \\
-        \hline
-    \end{tabular}
-    \caption{Importancia relativa de variables (Impureza de Gini), \textit{Random Forest}, \textit{dataset} primario.}
-    \label{tab:rf_primario_importancia}
-\end{table}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{rf_primario_importancia.png}
-    \caption{Importancia relativa de variables. Se evidencia la dominancia absoluta del rezago inmediato ($U_{\mbox{\scriptsize lag1}}$) en la toma de decisiones algorítmica.}
-    \label{fig:rf_primario_importancia}
-\end{figure}
-
-Resulta de vital importancia analítica notar que el patrón de dominancia obtenido sobre el \textit{dataset} primario \textbf{se invierte radicalmente} respecto al observado durante la fase piloto. En el entorno MAWI, la media móvil concentraba el 66.2\,\% de la importancia predictiva, relegando al rezago inmediato a un mero 13.9\,\%. Sobre el \textit{dataset} primario (Figura \ref{fig:rf_primario_importancia}), en cambio, el rezago inmediato ($U_{\mbox{\scriptsize lag1}}$) asume el liderazgo absoluto con el 66.4\,\% de la importancia, provocando el desplome de la media móvil al 12.5\,\%.
-
-La explicación matemática de esta inversión algorítmica radica en el profundo efecto que ejerce la \textbf{granularidad temporal} (la frecuencia de muestreo) sobre la entropía de los datos. A una granularidad fina de 1 segundo (como en MAWI), el valor inmediatamente anterior está altamente contaminado por el ruido estocástico de alta frecuencia del canal; bajo esas condiciones, el algoritmo requiere apoyarse en la media móvil para filtrar el ruido y obtener una señal suavizada confiable. 
-
-Sin embargo, a una granularidad de 1 minuto ---como se instrumentó en el \textit{dataset} primario mediante los \textit{scripts} de RouterOS (Sección \ref{sec:preprocesamiento_desarrollo})--- ocurre un efecto de agregación temporal. Cada muestra de 60 segundos ya promedia intrínsecamente cientos de micro-picos, actuando \textit{de facto} como un filtro paso bajo natural. Al estar el ruido de alta frecuencia suprimido por la propia naturaleza de la captura, el valor inmediato ($U_{\mbox{\scriptsize lag1}}$) se convierte en una métrica limpia y altamente informativa por sí misma, volviendo redundante el cálculo adicional de la media móvil para el algoritmo. Este hallazgo subraya que el diseño de \textit{features} en \textit{Machine Learning} aplicado a redes no puede desligarse de las condiciones físicas del muestreo.
-
-
-\subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
-
-La Tabla \ref{tab:comparativa_rf_piloto_primario} contrasta el desempeño de clasificación de \textit{Random Forest} entre ambas fases, cerrando el desarrollo del \textit{Machine Learning} clásico y dando paso a la implementación arquitectónica de \textit{Deep Learning} (Sección \ref{sec:lstm_desarrollo}).
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
-        \hline
-        \textit{Recall} (clasificación) & N/A\footnotemark & 0.2982 \\
-        \textit{F1-score} (clasificación) & N/A\footnotemark[\value{footnote}] & 0.4518 \\
-        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.9187 \\
-        Variable más importante & $U_{\mbox{\scriptsize media\_movil}}$ (66.2\,\%) & $U_{\mbox{\scriptsize lag1}}$ (66.4\,\%) \\
-        \hline
-    \end{tabular}
-    \caption{Comparación de \textit{Random Forest} entre la fase piloto y el \textit{dataset} primario.}
-    \label{tab:comparativa_rf_piloto_primario}
-\end{table}
-\footnotetext{No aplicable: el \textit{dataset} piloto de MAWI no contuvo casos naturales de congestión (Sección \ref{sec:obtencion_exploracion}), impidiendo una evaluación comparativa bajo el umbral oficial.}
+La evaluación sigue el diseño de la Sección \ref{sec:obtencion_exploracion}: la regresión se evalúa sobre las particiones reales y la clasificación, sobre las sintéticas aisladas, binarizando las predicciones con el umbral correspondiente a cada conjunto de datos. La importancia de las variables se calculó a partir de la disminución media de impureza que aporta cada entrada en los árboles. Los resultados de ambas tareas se presentan en la Sección \ref{cap:resultados}.
 
 \section{Construcción del modelo LSTM}
 \label{sec:lstm_desarrollo}
 
-Conforme a la justificación topológica de la Sección \ref{sec:modelos_justificacion}, se implementó una red neuronal recurrente (LSTM) como representante del paradigma de \textit{Deep Learning}, orquestada mediante la API de \texttt{Keras/TensorFlow}. El modelo consumió los tensores tridimensionales construidos mediante la función de ventana deslizante en el preprocesamiento (Sección \ref{sec:preprocesamiento_desarrollo}), explotando la secuencialidad inherente de los datos.
+Conforme a la Sección \ref{sec:modelos_justificacion}, se implementó una red LSTM como representante del \textit{Deep Learning} con \texttt{Keras/TensorFlow}. A diferencia de \textit{Random Forest}, la red consume directamente los tensores tridimensionales de la ventana deslizante (Sección \ref{sec:preprocesamiento_desarrollo}), sin aplanarlos, para aprovechar el orden temporal de la secuencia. Como en los modelos anteriores, se calibró primero sobre MAWI y luego se reentrenó sobre el \textit{dataset} primario con la misma arquitectura y el mismo criterio de parada, usando sus 46\,582 secuencias de entrenamiento.
 
-\subsection*{Fase 1: Calibración sobre el \textit{dataset} piloto MAWI}
+\subsection*{Arquitectura y entrenamiento}
 
-\subsubsection*{Arquitectura y configuración}
-
-Se diseñó una arquitectura secuencial encabezada por una capa LSTM de 32 unidades con activación tangente hiperbólica (optimizada para la actualización del estado oculto), seguida de una capa densa de 16 unidades con activación ReLU para el mapeo no lineal, y una neurona de salida sin función de activación para la regresión continua del factor de utilización. La Tabla \ref{tab:arquitectura_lstm} detalla la estructura y el conteo de los 4\,897 parámetros entrenables.
+La red es secuencial: una capa LSTM de 32 unidades con activación tangente hiperbólica, una capa densa de 16 unidades con ReLU y una neurona de salida lineal para la regresión de la utilización, con 4\,897 parámetros entrenables. Se minimizó el MSE con Adam y lotes de 16 secuencias, durante un máximo de 100 épocas. Como regularización se usó detención temprana (\textit{Early Stopping}) sobre la pérdida de validación, con paciencia de 10 épocas y restauración de los mejores pesos. En el \textit{dataset} primario, esa partición de validación es la de regresión, es decir, 100\,\% tráfico real (Sección \ref{sec:obtencion_exploracion}). La Tabla \ref{tab:config_lstm} resume la configuración.
 
 \begin{table}[H]
     \centering
-    \begin{tabular}{|l|l|r|}
+    \begin{tabular}{|l|p{6cm}|}
         \hline
-        \textbf{Capa (Tipo)} & \textbf{Forma de salida} & \textbf{Parámetros} \\
+        \textbf{Parámetro} & \textbf{Configuración} \\
         \hline
-        lstm\_1 (LSTM) & $(\mbox{None}, 32)$ & 4\,352 \\
-        dense\_1 (Dense) & $(\mbox{None}, 16)$ & 528 \\
-        dense\_2 (Dense) & $(\mbox{None}, 1)$ & 17 \\
-        \hline
-        \textbf{Total entrenables} & & \textbf{4\,897} \\
-        \hline
-    \end{tabular}
-    \caption{Arquitectura algorítmica de la red neuronal recurrente LSTM.}
-    \label{tab:arquitectura_lstm}
-\end{table}
-
-La optimización de pesos se ejecutó minimizando el Error Cuadrático Medio (MSE) a través del algoritmo Adam, procesando la información en lotes (\textit{batches}) de 16 secuencias. Como mecanismo de regularización activa, se integró un \textit{callback} de detención temprana (\textit{Early Stopping}): el entrenamiento monitoreó la pérdida en el conjunto de validación, abortando la iteración tras 10 épocas sin mejora heurística y restaurando los pesos óptimos históricos. La convergencia bajo este criterio se alcanzó prematuramente en la época 12 de 100.
-
-\subsubsection*{Resultados de pronóstico continuo (Regresión)}
-
-La Figura \ref{fig:lstm_curva} corrobora la estabilidad algorítmica durante la fase de entrenamiento de la red recurrente. La gráfica expone cómo la función de pérdida (MSE) decae abruptamente en la primera época y posteriormente se estabiliza, manteniendo una separación constante y controlada entre las curvas de entrenamiento y validación. Esta topología descarta un sobreajuste sistémico (\textit{overfitting}), demostrando que la red aprendió a generalizar los patrones secuenciales sin memorizar el ruido estocástico de alta frecuencia.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{lstm_curva_aprendizaje.png}
-    \caption{Curva de aprendizaje de la red LSTM (pérdida MSE por época). Convergencia estable sin divergencia severa de validación.}
-    \label{fig:lstm_curva}
-\end{figure}
-
-La Tabla \ref{tab:resultados_lstm_regresion} presenta las métricas de error continuo. Es fundamental contextualizar estos resultados frente a los paradigmas anteriores: a diferencia de \textit{Random Forest}, la red neuronal recurrente no sufrió una degradación severa por incapacidad de extrapolación, manteniendo un error porcentual sumamente estable entre las particiones de validación y prueba (MAPE de 11.53\,\% a 11.00\,\%).
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
-        \hline
-        Validación & 0.0860 & 0.0664 & 11.53\,\% \\
-        Prueba & 0.0891 & 0.0690 & 11.00\,\% \\
+        Biblioteca & \texttt{Keras/TensorFlow} \\
+        Capas & LSTM (32, tanh), Dense (16, ReLU), Dense (1, lineal) \\
+        Parámetros entrenables & 4\,897 \\
+        Entrada & Tensor 3D de la ventana deslizante \\
+        Función de pérdida y optimizador & MSE, Adam \\
+        Tamaño de lote & 16 \\
+        Épocas máximas & 100 \\
+        Detención temprana & Paciencia de 10 épocas; restauración de mejores pesos \\
+        Escalado & Min-Max \\
+        Umbral de clasificación & $U_{test}=0.25$ (MAWI); $U_{th}=0.80$ (primario) \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de LSTM (escala normalizada), \textit{dataset} piloto MAWI.}
-    \label{tab:resultados_lstm_regresion}
+    \caption{Configuración del modelo LSTM.}
+    \label{tab:config_lstm}
 \end{table}
 
-La Figura \ref{fig:lstm_prediccion} aporta la evidencia visual que explica esta superioridad matemática. Resulta pertinente aclarar que la señal real observada (línea azul continua) es analíticamente idéntica a la evaluada por el \textit{Random Forest}, representada en su escala normalizada; su divergencia visual respecto a las gráficas iniciales de ARIMA obedece únicamente a que el modelo estadístico autorregresivo operó sobre la métrica cruda sin escalamiento.
+\subsection*{Esquema de evaluación}
 
-Al analizar la predicción de la red LSTM (línea discontinua púrpura), se evidencia una síntesis geométrica superior entre los dos modelos predecesores. Por un lado, la LSTM emula el suavizado de tendencia que caracterizaba a ARIMA, ignorando la volatilidad milimétrica extrema para trazar el flujo basal con precisión. Por otro lado, supera categóricamente la deficiencia estructural del \textit{Random Forest}: cuando la utilización real experimenta una caída profunda al final de la serie (cerca de la observación 330), la red neuronal extrapola el descenso geométrico con éxito, acompañando la caída en lugar de quedarse estancada en un tope promedio u hoja de decisión. Esta capacidad intrínseca para recordar dependencias a largo plazo y adaptar su trayectoria no lineal explica por qué su RMSE (0.0891) mejoró sustancialmente frente al del ensamble de árboles (0.1311).
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_prediccion_vs_real.png}
-    \caption{LSTM: Evaluación de regresión. La red combina el filtrado de ruido estocástico con la capacidad de extrapolar descensos profundos, superando la limitación matemática del \textit{Random Forest}.}
-    \label{fig:lstm_prediccion}
-\end{figure}
-
-\subsubsection*{Evaluación de umbral de alerta temprana (Clasificación)}
-
-Al evaluar la capacidad operativa de la red neuronal mediante el umbral de calibración $U_{test} \geq 0.25$, la arquitectura profunda demostró el beneficio tangible de retener el estado temporal (memoria a corto y largo plazo). La Tabla \ref{tab:resultados_lstm_clasificacion} expone sus métricas binarizadas.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|}
-        \hline
-        \textbf{Métrica de Clasificación ($U \geq 0.25$)} & \textbf{Valor obtenido (Prueba)} \\
-        \hline
-        Precisión & 81.2\,\% \\
-        \textit{Recall} & 79.4\,\% \\
-        \textit{F1-score} & 80.3\,\% \\
-        \textbf{Tiempo de Anticipación Efectivo (TAE) Promedio} & \textbf{3.9 minutos} \\
-        \hline
-    \end{tabular}
-    \caption{Desempeño de clasificación temprana y alertamiento (TAE) de la red LSTM.}
-    \label{tab:resultados_lstm_clasificacion}
-\end{table}
-
-La capacidad del LSTM para decodificar la aceleración en las secuencias de entrada le permitió catapultar el \textit{Recall} hasta un 79.4\,\%, anticipándose a los picos de utilización con un $TAE$ promedio de 3.9 minutos frente al horizonte objetivo de 5 minutos, acercándose al desempeño ideal de un sistema de alerta preventiva.
-
-\subsubsection*{Síntesis comparativa de la fase piloto}
-
-La Tabla \ref{tab:sintesis_modelos_piloto} consolida el desempeño transversal de los tres paradigmas algorítmicos implementados durante la validación del código. Esta comparativa contrasta el MAPE continuo con el Tiempo de Anticipación Efectivo ($TAE$), erigiéndose como el dictamen de validación de este \textit{pipeline}.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|r|}
-        \hline
-        \textbf{Modelo / Arquitectura} & \textbf{MAPE (Prueba)} & \textbf{\textit{Recall} ($U_{test} \ge 0.25$)} & \textbf{TAE Promedio} \\
-        \hline
-        ARIMA(1,1,1) & 10.80\,\% & 41.5\,\% & 1.2 minutos \\
-        \textit{Random Forest} (Ensamble) & 16.26\,\% & 68.3\,\% & 2.8 minutos \\
-        LSTM (Recurrente) & 11.00\,\% & 79.4\,\% & 3.9 minutos \\
-        \hline
-    \end{tabular}
-    \caption{Validación de \textit{software}: Evolución operativa de los tres paradigmas evaluados.}
-    \label{tab:sintesis_modelos_piloto}
-\end{table}
-
-La evidencia recabada en esta iteración de prueba confirma estructuralmente la hipótesis algorítmica: mientras que la regresión estadística (ARIMA) es funcional como línea base reactiva, el incremento en la complejidad topológica hacia modelos de ensamble (\textit{Random Forest}) y estructuras neuronales profundas (LSTM) se traduce en ganancias no lineales para el alertamiento preventivo (pasando de 1.2 a 3.9 minutos de anticipación). 
-
-Con este resultado se da por concluida la fase de desarrollo e implementación algorítmica. El \textit{pipeline} de \textit{software} ---desde la decodificación de telemetría hasta el dictamen tensorial--- ha demostrado ser numéricamente estable y metodológicamente congruente. La evaluación de rendimiento definitiva se ejecutará a continuación al someter estas tres arquitecturas al volumen longitudinal de 21 días de recolección proveniente de la infraestructura primaria RouterOS.
-
-\subsection*{Fase 2: Entrenamiento sobre el \textit{dataset} primario}
-
-La red LSTM se reentrenó con la arquitectura validada en la fase piloto (Tabla \ref{tab:arquitectura_lstm}: capa LSTM de 32 unidades, capa densa de 16 unidades con activación ReLU, capa de salida de una unidad; 4\,897 parámetros entrenables), sobre las 46\,582 secuencias de entrenamiento del \textit{dataset} primario (Sección \ref{sec:preprocesamiento_desarrollo}), bajo el mismo criterio de parada temprana (\textit{Early Stopping} con paciencia de 10 épocas y restauración de los mejores pesos).
-
-El entrenamiento convergió en la época 16 de las 100 configuradas ---ligeramente más tardío que en la fase piloto (época 12)---, un resultado algorítmicamente previsible dado el volumen considerablemente mayor de la matriz tensorial del \textit{dataset} primario (46\,582 secuencias frente a las apenas 1\,026 del piloto). 
-
-La Figura \ref{fig:lstm_primario_curva} presenta la evolución de la función de pérdida (MSE) durante este proceso. A primera vista, la gráfica revela una marcada asimetría visual: la pérdida de entrenamiento (línea azul continua) desciende gradualmente desde 0.010 hasta estabilizarse cerca de 0.006, mientras que la pérdida de validación (línea naranja discontinua) se mantiene prácticamente plana y pegada al cero absoluto (0.000) desde la primera época.
-
-Lejos de representar un desbordamiento o una fuga de datos, este comportamiento es el reflejo matemático exacto del diseño de evaluación dual asimétrico establecido en la Sección \ref{sec:obtencion_exploracion}. La línea azul es numéricamente mayor porque el conjunto de entrenamiento incluye los 126 eventos sintéticos masivos de congestión inyectados; la red experimenta un error mayor porque debe ajustar sus pesos para mapear la volatilidad extrema de dichas ráfagas (cuyos valores rozan el 1.0). Por el contrario, la línea naranja corresponde a la partición de validación para la tarea de regresión, la cual está conformada \textbf{al 100\,\% por tráfico real ocioso}. Dado que los valores objetivo reales en esta partición son minúsculos (con un máximo normalizado de apenas 0.0029, como se demostró en la Tabla \ref{tab:rangos_normalizados}), el cálculo del Error Cuadrático Medio de las predicciones basales arroja una cifra microscópica que, visualmente, colapsa en el eje inferior. 
-
-Esta gráfica certifica empíricamente la pureza de las particiones: la red aprende a lidiar con el caos en el entrenamiento, pero se le evalúa su estabilidad sobre el letargo real absoluto, sin incurrir en sobreajuste sistémico.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.75\textwidth]{lstm_primario_curva_aprendizaje.png}
-    \caption{Curva de aprendizaje de la red LSTM (\textit{dataset} primario). La separación estructural entre ambas curvas es el producto del diseño experimental asimétrico: entrenamiento estresado (azul) vs. validación ociosa (naranja).}
-    \label{fig:lstm_primario_curva}
-\end{figure}
-
-Para disipar cualquier ambigüedad visual inducida por la extrema disparidad de magnitudes entre las particiones de entrenamiento y validación, se generaron dos representaciones analíticas adicionales del proceso de convergencia.
-
-La Figura \ref{fig:lstm_primario_curva_split} desglosa el entrenamiento en dos ejes independientes. Esta perspectiva de alta resolución revela que la pérdida de validación (panel inferior) no es estáticamente nula, sino que exhibe una dinámica geométrica microscópica en el orden de los $10^{-4}$. Es en esta escala donde se observa el verdadero comportamiento del modelo sobre el tráfico real ocioso: la red alcanza su óptimo de generalización basal de manera casi inmediata en la Época 1 (marcada por la línea vertical discontinua). A partir de la Época 2, el modelo comienza a sobreajustarse microscópicamente al ruido estocástico de fondo, elevando su error hacia $4.0 \times 10^{-4}$. Esta degradación milimétrica fue detectada con precisión por el mecanismo de \textit{Early Stopping}, justificando algorítmicamente la restauración de los pesos de la primera época.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=\textwidth]{lstm_primario_curva_aprendizaje1.png} % Ajusta el nombre del archivo si es necesario
-    \caption{Desglose de la curva de aprendizaje en ejes independientes. Se hace visible la dinámica microscópica ($10^{-4}$) de la validación y el punto de corte del \textit{Early Stopping} en la Época 1.}
-    \label{fig:lstm_primario_curva_split}
-\end{figure}
-
-Por su parte, la Figura \ref{fig:lstm_primario_curva_log} unifica ambas curvas empleando una escala logarítmica en el eje de las ordenadas. Esta representación corrobora de forma irrefutable la separación estructural de aproximadamente dos órdenes de magnitud (de $10^{-2}$ en el entrenamiento estresado a $10^{-4}$ en la validación ociosa) impuesta por el diseño experimental asimétrico. La paralelidad general de las curvas en escala logarítmica demuestra que la arquitectura tensorial se mantuvo matemáticamente estable y controlada durante todo el ciclo de aprendizaje.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_primario_curva_aprendizaje_log.png}
-    \caption{Curva de aprendizaje de la red LSTM (escala logarítmica). Se confirma la brecha de dos órdenes de magnitud entre las particiones producto de la inyección de anomalías sintéticas.}
-    \label{fig:lstm_primario_curva_log}
-\end{figure}
-
-\subsubsection*{Evaluación de regresión (datos reales)}
-
-La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas de regresión obtenidas sobre las particiones puras (100\,\% tráfico real ocioso) de validación y prueba.
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
-        \hline
-        Validación (real) & 0.000131 & 0.000019 \\
-        Prueba (real) & 0.001036 & 0.000125 \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de regresión de LSTM sobre el \textit{dataset} primario (escala normalizada). Se destaca la drástica reducción del error continuo frente a los modelos clásicos.}
-    \label{tab:lstm_primario_regresion}
-\end{table}
-
-Estos resultados constituyen, por un margen categórico, el mejor desempeño de regresión continua entre los tres modelos evaluados sobre el \textit{dataset} primario. El RMSE de prueba (0.0010) resulta ser casi \textbf{dos órdenes de magnitud inferior} a los reportados por la línea base estadística ARIMA (0.0458) y por el ensamble \textit{Random Forest} (0.0496). 
-
-Las Figuras \ref{fig:lstm_primario_regresion_val} y \ref{fig:lstm_primario_regresion_test} contrastan visualmente las predicciones contra los valores reales observados, revelando el comportamiento analítico que fundamenta esta superioridad.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
-    \caption{LSTM: Evaluación de regresión en validación. La red ancla su predicción base (línea discontinua) al cero real, exhibiendo perturbaciones de escala microscópica (tope en 0.006).}
-    \label{fig:lstm_primario_regresion_val}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
-    \caption{LSTM: Evaluación de regresión en prueba. El estado celular de la red amortigua exitosamente la hipersensibilidad, limitando los picos predictivos a una magnitud inocua de apenas 0.03.}
-    \label{fig:lstm_primario_regresion_test}
-\end{figure}
-
-A primera vista, la Figura \ref{fig:lstm_primario_regresion_test} muestra que la red neuronal también reacciona ante ciertas micro-fluctuaciones del tráfico de fondo (generando picos transitorios). Sin embargo, la escala del eje de las ordenadas revela el verdadero triunfo del modelo: mientras que \textit{Random Forest} alucinaba falsas alarmas masivas con magnitudes de hasta 0.7, las perturbaciones espurias de la LSTM están brutalmente contenidas, alcanzando un máximo casi imperceptible de 0.03. Asimismo, el sesgo de sobreestimación constante que penalizó severamente a ARIMA desaparece por completo; la predicción base de la LSTM se adhiere casi a la perfección a la señal real (con una oscilación milimétrica hacia el dominio negativo, típica de topologías sin activación restrictiva en la capa de salida).
-
-La justificación analítica de esta ventaja sustancial reside en la arquitectura intrínseca de la memoria a corto y largo plazo. A diferencia de ARIMA ---que internaliza una media estática incondicional fuertemente sesgada por las anomalías del entrenamiento--- y de \textit{Random Forest} ---que segmenta de forma aislada el espacio temporal perdiendo el contexto---, la red LSTM propaga un \textbf{estado celular persistente ($C_t$)} a lo largo de toda la secuencia. A través de sus \textit{forget gates} (compuertas de olvido), la red aprendió a retener el contexto a largo plazo de que la red se encuentra en un régimen basal ocioso. Por consiguiente, ante la aparición de un micro-pico estocástico en la secuencia de entrada, la red neuronal amortigua agresivamente la predicción, reconociéndolo como ruido transitorio y no como el inicio de una congestión masiva.
-
-\subsubsection*{Evaluación de clasificación (datos sintéticos aislados)}
-
-La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasificación, obtenidas mediante la umbralización estricta de las predicciones continuas en la cota de congestión $U_{th}=0.80$ (normalizado).
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica} & \textbf{Validación} & \textbf{Prueba} \\
-        \hline
-        Exactitud & 0.9742 & 0.9750 \\
-        Precisión & 0.7619 & 0.7778 \\
-        \textit{Recall} & 0.0563 & 0.0509 \\
-        \textit{F1-score} & 0.1049 & 0.0956 \\
-        AUC-ROC & 0.8783 & 0.9000 \\
-        \hline
-    \end{tabular}
-    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, evaluado sobre la partición de datos sintéticos aislados.}
-    \label{tab:lstm_primario_clasificacion}
-\end{table}
-
-La disección de la matriz de confusión sobre el conjunto de prueba (Ecuación \ref{eq:confusion_lstm}) revela que la red recurrente exhibió un desempeño operativo \textbf{intermedio} entre la inercia estadística de ARIMA y la agudeza no lineal de \textit{Random Forest}:
-
-\begin{equation}
-    \begin{pmatrix} \mbox{VN}=10\,314 & \mbox{FP}=4 \\ \mbox{FN}=261 & \mbox{VP}=14 \end{pmatrix}
-    \label{eq:confusion_lstm}
-\end{equation}
-
-El análisis de estos componentes revela la postura de la red ante la congestión:
-\begin{itemize}
-    \item \textbf{Verdaderos Negativos (VN=10\,314):} Consistente con su excelente desempeño en regresión basal, la red reconoce el letargo de forma magistral.
-    \item \textbf{Falsos Positivos (FP=4):} La tasa de falsas alarmas es prácticamente nula, lo que garantiza una Precisión robusta (77.78\,\%).
-    \item \textbf{Verdaderos Positivos (VP=14):} De los 275 eventos de congestión reales, la red detectó correctamente 14. Aunque supera por un amplio margen la única detección de ARIMA (VP=1), queda dramáticamente rezagada frente al poder de clasificación del ensamble de árboles (VP=82).
-    \item \textbf{Falsos Negativos (FN=261):} Este volumen crítico de omisiones desploma el \textit{Recall} del modelo a un paupérrimo 5.09\,\%, indicando que la red guardó silencio frente al 95\,\% de las crisis que enfrentó la infraestructura.
-\end{itemize}
-
-Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test} exponen la evidencia visual que explica esta severa limitación en la detección. Al observar los picos predictivos de la red (línea discontinua morada), es evidente que el modelo reacciona frente a las anomalías inyectadas, pero su respuesta es sumamente conservadora. Decenas de picos ascienden temporalmente sincronizados con las crisis, pero su magnitud vertical es sistemáticamente amortiguada, quedándose ahogados justo por debajo de la línea de alerta roja ($U_{th}=0.80$). Solo 14 de esos picos lograron suficiente inercia matemática para cruzar el umbral y registrar un Verdadero Positivo.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_val.png}
-    \caption{LSTM: Evaluación de clasificación (Validación). La red reacciona ante las crisis, pero su amortiguación intrínseca ahoga la magnitud de los picos antes de que crucen el umbral de alerta (0.80).}
-    \label{fig:lstm_primario_clasificacion_val}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
-    \caption{LSTM: Evaluación de clasificación (Prueba). Se confirma el patrón conservador que penaliza el \textit{Recall}, limitando drásticamente el número de cruces efectivos del umbral.}
-    \label{fig:lstm_primario_clasificacion_test}
-\end{figure}
-
-Este resultado ---aparentemente contraintuitivo--- resulta matemáticamente congruente con el diseño de la función de pérdida (\textit{Loss Function}) empleada. Al minimizar iterativamente el Error Cuadrático Medio (MSE) sobre un conjunto de entrenamiento masivamente desbalanceado (donde la inmensa mayoría del tiempo el canal opera ocioso, Sección \ref{sec:obtencion_exploracion}), la red aprendió que la estrategia óptima para reducir su error global es volverse conservadora. La LSTM priorizó la perfección predictiva sobre el régimen mayoritario de letargo (lo cual logró con maestría en la regresión), pero el costo de esa "perfección plana" fue penalizar y subestimar estructuralmente los eventos infrecuentes de congestión.
-
-\subsubsection*{Síntesis comparativa piloto vs. \textit{dataset} primario}
-
-\begin{table}[H]
-    \centering
-    \begin{tabular}{|l|r|r|}
-        \hline
-        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
-        \hline
-        RMSE (regresión) & 0.0891 & 0.001036 \\
-        \textit{Recall} (clasificación) & N/A\footnotemark & 0.0509 \\
-        AUC-ROC (clasificación) & N/A\footnotemark[\value{footnote}] & 0.9000 \\
-        Épocas hasta convergencia & 12 & 16 \\
-        \hline
-    \end{tabular}
-    \caption{Comparación de LSTM entre la fase piloto y el \textit{dataset} primario.}
-    \label{tab:comparativa_lstm_piloto_primario}
-\end{table}
-\footnotetext{No aplicable: el \textit{dataset} piloto de MAWI no contuvo casos naturales de congestión (Sección \ref{sec:obtencion_exploracion}), por lo que la formulación de clasificación formal no pudo evaluarse en esa fase.}
+La evaluación sigue el diseño de la Sección \ref{sec:obtencion_exploracion}: la regresión se mide sobre las particiones reales y la clasificación, sobre las sintéticas aisladas, binarizando la salida continua con el umbral de cada conjunto de datos. Las curvas de aprendizaje, las métricas de ambas tareas y la comparación con ARIMA y \textit{Random Forest} se presentan en el Capítulo \ref{cap:resultados}.
 
 \chapter{Resultados y Discusión}
 \label{cap:resultados}
@@ -2653,12 +2058,76 @@ contra la evidencia de la literatura revisada, y discute con honestidad las limi
 \section{Resultados de ARIMA}
 \label{sec:resultados_arima}
 
-Esta sección consolida la totalidad de los resultados obtenidos con el modelo ARIMA a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:arima_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y su validación exploratoria de generalización frente a MAWI reagregado a granularidad oficial. El propósito de esta sección es exclusivamente descriptivo: 
-se presentan, comparan y sintetizan los resultados obtenidos en cada contexto, reservando la interpretación conjunta con los demás modelos y las conclusiones derivadas de dicha comparación para las Secciones 6.4 y 6.5.
+Esta sección reporta los resultados del modelo ARIMA, configurado según la Sección \ref{sec:arima_desarrollo}: su desempeño en la fase piloto con MAWI, su evaluación de regresión y clasificación sobre el \textit{dataset} primario y una validación exploratoria de generalización frente a MAWI reagregado a granularidad oficial. Cada resultado se acompaña de su lectura inmediata. La comparación con los demás modelos se presenta en la Sección 6.4 y la discusión conjunta en la Sección 6.5.
 
-\subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
+\subsection*{Identificación y ajuste del modelo}
 
-Como se documentó en la Sección \ref{sec:arima_desarrollo}, el orden identificado durante la fase piloto fue $\mbox{ARIMA}(1,1,1)$, ajustado sobre las 1\,064 observaciones de entrenamiento del \textit{dataset} piloto de MAWI a granularidad de 1 segundo. La Tabla \ref{tab:recap_arima_piloto} recuerda las métricas de regresión obtenidas en dicha fase.
+La Tabla \ref{tab:ajuste_arima} resume la identificación del orden en ambos conjuntos de datos. En el piloto, la prueba de Dickey-Fuller Aumentada no permitió rechazar la hipótesis nula de no estacionariedad ($p=0.4315>0.05$), por lo que se aplicó una diferenciación de primer orden ($d=1$). En el \textit{dataset} primario, la serie de entrenamiento resultó estacionaria sin diferenciar ($\text{ADF}=-23.6571$, $p<0.0001$), a diferencia del piloto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Resultado} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        Estadístico ADF & $-1.6992$ & $-23.6571$ \\
+        Valor $p$ (ADF) & 0.4315 & $<0.0001$ \\
+        Orden de diferenciación $d$ & 1 & 0 \\
+        Orden seleccionado $(p,d,q)$ & (1,1,1) & (3,0,3) \\
+        AIC & $-5\,656.68$ & $-111\,594.72$ \\
+        Valor $p$ (Ljung-Box, residuos) & 0.92 & 0.98 \\
+        Observaciones de ajuste & 1\,064 & 31\,934 \\
+        \hline
+    \end{tabular}
+    \caption{Identificación y diagnóstico del ajuste de ARIMA en cada conjunto de datos.}
+    \label{tab:ajuste_arima}
+\end{table}
+
+El cambio de $d=1$ a $d=0$ refleja la diferencia entre ambas series: la de MAWI es un tráfico troncal con deriva lenta, mientras que la del primario se comporta como un proceso que regresa a su media, con picos transitorios debidos a los eventos inyectados. En ambos casos la prueba de Ljung-Box ($p=0.92$ y $p=0.98$) no rechaza la ausencia de autocorrelación residual, por lo que el modelo captura la estructura lineal de la serie.
+
+La Tabla \ref{tab:busqueda_arima} muestra los cinco mejores órdenes de la búsqueda en el piloto.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Orden $(p,d,q)$} & \textbf{AIC} \\
+        \hline
+        ARIMA(1,1,1) & \textbf{$-5\,656.68$} \\
+        ARIMA(2,1,1) & $-5\,654.95$ \\
+        ARIMA(0,1,3) & $-5\,653.74$ \\
+        ARIMA(2,1,2) & $-5\,653.04$ \\
+        ARIMA(3,1,1) & $-5\,653.03$ \\
+        \hline
+    \end{tabular}
+    \caption{Órdenes ARIMA con menor AIC, \textit{dataset} piloto MAWI.}
+    \label{tab:busqueda_arima}
+\end{table}
+
+El ARIMA(1,1,1) obtuvo el menor AIC, aunque la diferencia con el quinto es de solo 3.65 unidades. Los cinco modelos son, por tanto, prácticamente equivalentes en ajuste, y el criterio de mínimo AIC favorece además al más parsimonioso.
+
+Los coeficientes estimados instancian la formulación general de la Ecuación \ref{eq:arima}. Para el piloto se obtuvo la Ecuación \ref{eq:arima_ajustado}, con ambos coeficientes significativos ($p<0.001$):
+
+\begin{equation}
+    (1 - 0.4305\,L)(1-L)\,U_t = (1 - 0.8280\,L)\,\varepsilon_t
+    \label{eq:arima_ajustado}
+\end{equation}
+
+El coeficiente autorregresivo (0.4305) indica una dependencia moderada del incremento anterior, y el de media móvil (0.8280), un peso importante del error de predicción previo, lo que ya anticipa una predicción suavizada. Para el \textit{dataset} primario se obtuvo la Ecuación \ref{eq:arima_primario_ajustado}, donde $\mu$ es la media del proceso. Todos sus coeficientes fueron significativos ($p<0.01$):
+
+\begin{equation}
+\begin{aligned}
+    (1 - 2.3103\,L + 1.7123\,L^2 - 0.3971\,L^3)\,(U_t - \mu) &= (1 - 1.0847\,L + 0.1825\,L^2 - 0.0209\,L^3)\,\varepsilon_t, \\
+    \mu &= 0.0324
+\end{aligned}
+\label{eq:arima_primario_ajustado}
+\end{equation}
+
+La suma de los coeficientes autorregresivos del ARIMA(3,0,3) es 0.995, es decir, un proceso muy persistente que regresa lentamente a su media, y esa media ($\mu=0.0324$) está elevada por los eventos de congestión inyectados en la sesión de ajuste. Ambas características resultan relevantes para entender los resultados de regresión del primario. Además, la prueba de Jarque-Bera rechazó la normalidad de los residuos, con una curtosis de 249.4, atribuible a los cambios abruptos de régimen que introducen los eventos sintéticos: generan residuos ocasionales de magnitud muy superior a la del comportamiento típico de la serie.
+
+\subsection*{Fase piloto: regresión}
+
+La Tabla \ref{tab:resultados_arima_regresion} presenta las métricas del pronóstico progresivo sobre MAWI, y la Figura \ref{fig:arima_prediccion} contrasta la predicción con la serie real en prueba.
 
 \begin{table}[H]
     \centering
@@ -2666,19 +2135,50 @@ Como se documentó en la Sección \ref{sec:arima_desarrollo}, el orden identific
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0265 & 0.0204 & 10.61\,\% \\
-        Prueba (piloto, MAWI) & 0.0282 & 0.0221 & 10.80\,\% \\
+        Validación & 0.0265 & 0.0204 & 10.61\,\% \\
+        Prueba & 0.0282 & 0.0221 & 10.80\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de ARIMA(1,1,1), fase piloto (Sección \ref{sec:arima_desarrollo}).}
-    \label{tab:recap_arima_piloto}
+    \caption{Métricas de regresión de ARIMA(1,1,1), \textit{dataset} piloto MAWI.}
+    \label{tab:resultados_arima_regresion}
 \end{table}
 
-Es importante recordar que, en esta fase piloto, la formulación de clasificación no pudo evaluarse: el \textit{dataset} piloto de MAWI no contuvo, de forma natural, ningún caso de congestión ($U \geq U_{th}=0.80$), tal como se justificó empíricamente en la Sección \ref{sec:obtencion_exploracion}.
+El error es similar en ambas particiones (MAPE de 10.61\,\% y 10.80\,\%, con un aumento de apenas 0.19 puntos porcentuales). Esta estabilidad entre validación y prueba indica que el modelo no sufre una degradación apreciable al pasar a datos no vistos, lo que es un indicio de ausencia de sobreajuste. El RMSE de prueba (0.0282) queda además por debajo de la desviación estándar de la utilización en MAWI (0.051, Tabla \ref{tab:estadisticas_mawi_piloto}).
 
-\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{arima_prediccion_vs_real.png}
+    \caption{ARIMA(1,1,1): pronóstico progresivo ($h=5$) frente al valor real, partición de prueba del piloto MAWI.}
+    \label{fig:arima_prediccion}
+\end{figure}
 
-Sobre el \textit{dataset} primario, se esperaba que $\mbox{ARIMA}(3,0,3)$ ---el orden identificado mediante minimización del AIC sobre la sesión sintética continua de entrenamiento--- mantuviera un desempeño de regresión razonable al evaluarse sobre las particiones reales de validación y prueba, dada la estabilidad observada durante la fase piloto. La Tabla \ref{tab:recap_arima_primario_regresion} presenta los resultados observados.
+En la Figura \ref{fig:arima_prediccion}, la predicción (línea roja discontinua) funciona como una versión suavizada de la utilización real (línea azul): la serie observada presenta oscilaciones de corto plazo con aspecto de ruido, mientras que el modelo traza únicamente la tendencia central. Este suavizado explica el error moderado y estable en regresión, pero tiene una contraparte: la inercia del modelo lo hace lento ante cambios súbitos, lo que se refleja en la clasificación.
+
+\subsection*{Fase piloto: clasificación}
+
+Con el umbral oficial $U_{th}=0.80$ la clasificación no es evaluable en MAWI, porque su utilización máxima es de 32.3\,\% (Sección \ref{sec:obtencion_exploracion}). Para ejercitar el código de evaluación se usó el umbral relativo de prueba $U_{test}=0.25$. La Tabla \ref{tab:resultados_arima_clasificacion} muestra el desempeño como clasificador de alertas tempranas sobre la partición de prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Métrica ($U_{test} \geq 0.25$)} & \textbf{Prueba} \\
+        \hline
+        Precisión & 64.2\,\% \\
+        \textit{Recall} & 41.5\,\% \\
+        \textit{F1-score} & 50.4\,\% \\
+        \textbf{Tiempo de Anticipación Efectivo (TAE) promedio} & \textbf{1.2 minutos} \\
+        \hline
+    \end{tabular}
+    \caption{Clasificación y alertamiento (TAE) de ARIMA(1,1,1), fase piloto.}
+    \label{tab:resultados_arima_clasificacion}
+\end{table}
+
+La precisión de 64.2\,\% indica que cerca de dos de cada tres alertas corresponden a un evento real, mientras que el \textit{recall} de 41.5\,\% indica que el modelo deja pasar casi seis de cada diez eventos. El $TAE$ de 1.2 minutos queda muy por debajo del horizonte objetivo de 5 minutos: aun cuando acierta, el modelo alerta con poca antelación, coherente con el suavizado observado en regresión. Estas cifras validan el funcionamiento del \textit{pipeline}, pero no son comparables con las del \textit{dataset} primario, que usan otro umbral y otros datos.
+
+\subsection*{\textit{Dataset} primario: regresión}
+
+La Tabla \ref{tab:arima_primario_regresion} presenta el error de ARIMA(3,0,3) sobre las particiones reales, en escala original de utilización. No se reporta MAPE, porque la utilización real, cercana a cero, vuelve inestable su denominador (Sección \ref{sec:evaluacion}).
 
 \begin{table}[H]
     \centering
@@ -2686,29 +2186,30 @@ Sobre el \textit{dataset} primario, se esperaba que $\mbox{ARIMA}(3,0,3)$ ---el 
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
         \hline
-        Validación (primario, real) & 0.046045 & 0.015110 \\
-        Prueba (primario, real) & 0.045872 & 0.015059 \\
+        Validación (real) & 0.046045 & 0.015110 \\
+        Prueba (real) & 0.045872 & 0.015059 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de ARIMA(3,0,3) sobre el \textit{dataset} primario (escala original de utilización).}
-    \label{tab:recap_arima_primario_regresion}
+    \caption{Métricas de regresión de ARIMA(3,0,3), \textit{dataset} primario (escala original de utilización).}
+    \label{tab:arima_primario_regresion}
 \end{table}
 
-Contrario a lo esperado, el RMSE resultó aproximadamente un 63\,\% mayor que el observado en la fase piloto (0.0459 frente a 0.0282), a pesar de que la utilización real del \textit{dataset} primario (máximo de 1.44\,\%, Tabla \ref{tab:estadisticas_real}) es considerablemente más reducida que la de MAWI (máximo de 32.3\,\%, Tabla \ref{tab:estadisticas_mawi_piloto}) ---una condición que, en principio, debería facilitar la predicción, no dificultarla---. La Figura \ref{fig:recap_arima_regresion} 
-contrasta visualmente las predicciones del modelo contra los valores reales observados en el conjunto de prueba.
+El error es prácticamente idéntico en validación y prueba (RMSE de 0.0460 y 0.0459), lo que indica que su origen es sistemático y no una pérdida de generalización entre particiones. Sin embargo, resulta aproximadamente un 63\,\% mayor que el del piloto (0.0459 frente a 0.0282), a pesar de que la utilización real del primario es mucho menor (máximo de 1.44\,\%, Tabla \ref{tab:estadisticas_real}) que la de MAWI (máximo de 32.3\,\%). Un RMSE de 0.0459 supera incluso la utilización máxima observada (0.0144), de modo que el error no puede deberse a la dificultad de seguir la señal, sino a un desajuste de nivel.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_regresion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:recap_arima_regresion}
+    \caption{ARIMA(3,0,3): predicción frente al valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \label{fig:arima_primario_regresion}
 \end{figure}
 
-Como es visible en la Figura \ref{fig:recap_arima_regresion}, el modelo sobreestima de manera sistemática y sostenida el valor real de utilización, prácticamente sin seguir las fluctuaciones de la serie real. Esta observación analítica se retoma en la discusión al cierre de esta sección.
+La Figura \ref{fig:arima_primario_regresion} permite identificar dos fenómenos. El primero es un sesgo sistemático de sobreestimación: la predicción de fondo (línea roja discontinua) se mantiene por encima de la señal real, que es plana y cercana a cero (línea azul). Esto es consistente con la media del proceso ajustado ($\mu=0.0324$), elevada por los eventos sintéticos de la sesión de ajuste, que rozan la saturación (hasta 0.98), mientras que el comportamiento típico del canal real es muy inferior.
 
-\subsection*{Resultados de clasificación sobre datos sintéticos aislados}
+El segundo fenómeno son oscilaciones transitorias, con picos agudos de hasta cerca de 0.7 y valles que perforan el eje negativo, espaciadas a intervalos regulares. Esta regularidad coincide con el inicio de cada bloque del pronóstico progresivo, donde el modelo reinicia su estado autorregresivo y de media móvil asimilando de golpe las observaciones previas. Con coeficientes autorregresivos de gran magnitud y suma cercana a 1, un pequeño desajuste inicial tarda en disiparse. Por eso las oscilaciones se interpretan como un artefacto del esquema de evaluación por bloques y no como un error de cálculo, y elevan el RMSE por encima de lo que reflejaría el comportamiento en régimen estable.
 
-Se esperaba que, al evaluar el modelo sobre la partición sintética de clasificación ---que sí contiene eventos de congestión inyectados deliberadamente (Sección \ref{sec:obtencion_exploracion})---, ARIMA lograra un desempeño de clasificación moderado, en virtud de haber sido entrenado precisamente sobre una sesión que incluye dichos eventos. La Tabla \ref{tab:recap_arima_primario_clasificacion} presenta los resultados observados.
+\subsection*{\textit{Dataset} primario: clasificación}
+
+La Tabla \ref{tab:arima_primario_clasificacion} reporta la clasificación sobre las particiones sintéticas aisladas, con $U_{th}=0.80$.
 
 \begin{table}[H]
     \centering
@@ -2723,38 +2224,50 @@ Se esperaba que, al evaluar el modelo sobre la partición sintética de clasific
         AUC-ROC & 0.8905 & 0.8939 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de ARIMA(3,0,3), umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
-    \label{tab:recap_arima_primario_clasificacion}
+    \caption{Métricas de clasificación de ARIMA(3,0,3), $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:arima_primario_clasificacion}
 \end{table}
 
-La Figura \ref{fig:recap_arima_clasificacion_metricas} presenta estas mismas métricas de forma comparativa entre validación y prueba.
+La tabla contiene una aparente contradicción: una exactitud de 0.975 junto con un \textit{recall} de 0.0185. Se explica por el desbalance de clases, pues los casos de congestión son una fracción mínima (cerca del 2.6\,\%), de modo que un modelo que casi nunca alerta acierta en la inmensa mayoría de las observaciones y obtiene una exactitud alta. Por eso la exactitud no es informativa en este problema y las métricas relevantes son el \textit{recall} y el \textit{F1-score}, ambos muy bajos. La precisión de 1.0 en prueba se apoya en un único acierto, por lo que dice poco por sí sola. En contraste, el AUC-ROC es alto (0.89), lo que indica que la predicción continua sí ordena los instantes de congestión por encima de los normales, aunque no los lleve a cruzar el umbral de decisión.
+
+La Figura \ref{fig:recap_arima_clasificacion_metricas} presenta estas métricas de forma comparativa entre validación y prueba.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{arima_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, ARIMA sobre el \textit{dataset} primario.}
+    \caption{Comparación de métricas de clasificación, validación frente a prueba, ARIMA sobre el \textit{dataset} primario.}
     \label{fig:recap_arima_clasificacion_metricas}
 \end{figure}
 
-Los resultados observados difieren marcadamente de lo esperado: si bien la precisión es alta ---perfecta en el conjunto de prueba (100\,\%)---, el \textit{Recall} es extremadamente bajo (1.85\,\% en prueba), de modo que, de los 275 eventos de congestión reales en el conjunto de prueba, el modelo únicamente detectó 1. La Ecuación \ref{eq:recap_confusion_arima} reproduce la matriz de confusión correspondiente.
+La figura confirma que el patrón es el mismo en ambas particiones: exactitud y AUC-ROC elevados, y \textit{recall} y \textit{F1-score} cercanos a cero. La Ecuación \ref{eq:confusion_arima} presenta la matriz de confusión sobre la partición de prueba.
 
 \begin{equation}
-    \begin{pmatrix} \mbox{VN}=2070 & \mbox{FP}=0 \\ \mbox{FN}=53 & \mbox{VP}=1 \end{pmatrix}
-    \label{eq:recap_confusion_arima}
+    \begin{pmatrix} \text{VN}=2070 & \text{FP}=0 \\ \text{FN}=53 & \text{VP}=1 \end{pmatrix}
+    \label{eq:confusion_arima}
 \end{equation}
 
-La Figura \ref{fig:recap_arima_clasificacion_pred} ilustra las predicciones continuas del modelo sobre este conjunto, contrastadas contra el umbral de decisión.
+Esta matriz describe el comportamiento del modelo frente al desbalance de clases:
+\begin{itemize}
+    \item \textbf{Verdaderos negativos (VN=2070):} el modelo reconoce correctamente los periodos de operación normal.
+    \item \textbf{Falsos positivos (FP=0):} no emitió ninguna alerta injustificada, lo que explica la precisión de 100\,\%.
+    \item \textbf{Falsos negativos (FN=53):} es el fallo crítico. De los 54 casos positivos, el modelo no alertó en 53, es decir, la red quedaría sin aviso ante casi todos los episodios de congestión.
+    \item \textbf{Verdaderos positivos (VP=1):} solo se detectó un caso de congestión en toda la partición de prueba.
+\end{itemize}
+
+En términos operativos, un sistema que nunca da falsas alarmas pero que no avisa en el 98\,\% de las congestiones no resulta útil como mecanismo de alerta temprana.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_primario_clasificacion_test.png}
-    \caption{ARIMA(3,0,3): predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
-    \label{fig:recap_arima_clasificacion_pred}
+    \caption{ARIMA(3,0,3): predicción frente al valor real y umbral $U_{th}=0.80$, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \label{fig:arima_primario_clasificacion}
 \end{figure}
 
-\subsection*{Resultados de la validación de generalización (MAWI, granularidad oficial)}
+La Figura \ref{fig:arima_primario_clasificacion} muestra la causa de los falsos negativos. La predicción (línea roja discontinua) intenta seguir la trayectoria de los picos de utilización, pero con una amortiguación marcada: el componente de media móvil empuja el pronóstico hacia la tendencia central, y el modelo subestima sistemáticamente la magnitud de las ráfagas. Como consecuencia, las predicciones se quedan por debajo del umbral de 0.80 (línea punteada negra) y solo una lo cruza, lo que se traduce en un único verdadero positivo.
 
-Se esperaba, de manera exploratoria, que el modelo estadístico ---aunque entrenado sobre un régimen de tráfico radicalmente distinto--- pudiera al menos aproximar el orden de magnitud de la utilización observada en un enlace de mayor escala y complejidad como MAWI. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado obtenido sobre las 6 observaciones evaluables derivadas de las trazas de MAWI reagregadas a la granularidad oficial de 1 minuto.
+\subsection*{Validación de generalización (MAWI, granularidad oficial)}
+
+Como prueba exploratoria, el ARIMA(3,0,3) entrenado con el \textit{dataset} primario se evaluó sobre MAWI reagregado a granularidad oficial de 1 minuto. La Tabla \ref{tab:recap_arima_generalizacion} presenta el resultado sobre las seis observaciones evaluables.
 
 \begin{table}[H]
     \centering
@@ -2768,42 +2281,40 @@ Se esperaba, de manera exploratoria, que el modelo estadístico ---aunque entren
         Rango real observado & [0.099, 0.213] \\
         \hline
     \end{tabular}
-    \caption{Validación de generalización de ARIMA(3,0,3) sobre MAWI (granularidad oficial de 1 minuto).}
+    \caption{Generalización de ARIMA(3,0,3) sobre MAWI (granularidad de 1 minuto).}
     \label{tab:recap_arima_generalizacion}
 \end{table}
 
-El resultado cuantitativo contradice de manera contundente la expectativa inicial de viabilidad: un RMSE de 0.323 frente a un rango real de utilización que fluctúa únicamente entre 0.099 y 0.213 implica que el error promedio del algoritmo supera con creces la magnitud total de la señal que intenta predecir. La Figura \ref{fig:recap_arima_generalizacion} proporciona la radiografía visual de este colapso predictivo.
+El RMSE de 0.323 equivale a casi el triple de la amplitud del rango real observado (0.114), de modo que el error medio supera con creces la variación total de la señal. Por el tamaño de la muestra (seis observaciones), el resultado es indicativo y no concluyente.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_generalizacion_mawi.png}
-    \caption{Validación de generalización: ARIMA (\textit{dataset} primario) evaluado sobre MAWI. Se evidencia una severa disrupción matemática al cambiar de dominio operativo.}
+    \caption{Generalización: ARIMA(3,0,3) entrenado con el \textit{dataset} primario y evaluado sobre MAWI.}
     \label{fig:recap_arima_generalizacion}
 \end{figure}
 
-Al analizar la gráfica, resulta evidente que la trayectoria de predicción (línea roja discontinua) carece de cualquier correlación con la dinámica real del canal (línea azul continua). Mientras que el tráfico real de MAWI mantiene una estabilidad notable en torno al nivel de 0.15, las predicciones de ARIMA sufren oscilaciones violentas, detonando falsas alarmas masivas cercanas a 0.7 (bloques 0 y 3) seguidas de colapsos inmediatos hacia el cero.
+La Figura \ref{fig:recap_arima_generalizacion} muestra que la trayectoria de predicción carece de correlación con la dinámica real. Mientras el tráfico real de MAWI se mantiene estable en torno a 0.15, las predicciones oscilan de forma violenta, con picos cercanos a 0.7 (bloques 0 y 3) seguidos de caídas hacia el cero. Los coeficientes autorregresivos y de media móvil se calibraron para un régimen con media cercana a cero y eventos de alta volatilidad (el primario); al recibir una serie con un nivel basal muy superior y otra varianza, el modelo sobrecorrige en cada bloque de evaluación.
 
-Este fenómeno errático constituye la prueba empírica definitiva de la principal debilidad estructural de los modelos autorregresivos puros: su extrema rigidez al dominio espacial de entrenamiento. Los coeficientes de las medias móviles (MA) y los términos autorregresivos (AR) del modelo fueron rígidamente calibrados para un ecosistema con una media asintótica a cero y sujetos a eventos sintéticos de alta volatilidad (el \textit{dataset} primario). Al ser forzada a ingerir una serie de tiempo ajena con una media basal estructuralmente superior y una varianza distinta, la ecuación estática entra en una severa descompensación matemática. El modelo sobre-corrige agresivamente en cada nuevo bloque de evaluación, invalidando por completo a ARIMA para escenarios de transferencia de aprendizaje (\textit{Transfer Learning}) en infraestructuras heterogéneas.
+\subsection*{Síntesis de los resultados de ARIMA}
 
-\subsection*{Síntesis visual: Evolución del error (RMSE) a través de los contextos de evaluación}
-
-La Figura \ref{fig:arima_sintesis_rmse} consolida visualmente la trayectoria del Error Cuadrático Medio (RMSE) de regresión del modelo ARIMA a lo largo de las distintas fases de esta investigación, revelando de manera gráfica la fragilidad inherente a este paradigma estadístico al enfrentarse a entornos dinámicos.
+La Figura \ref{fig:arima_sintesis_rmse} muestra la evolución del RMSE de regresión entre contextos de evaluación.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{arima_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de regresión de ARIMA. Se evidencia la contención del error en entornos controlados (barras azules) frente al colapso algorítmico en generalización (barra roja).}
+    \caption{RMSE de regresión de ARIMA en los contextos de evaluación.}
     \label{fig:arima_sintesis_rmse}
 \end{figure}
 
-La progresión escalar de las barras ilustra tres fenómenos analíticos clave en el comportamiento del algoritmo:
+La progresión de las barras muestra tres comportamientos:
 \begin{itemize}
-    \item \textbf{Estabilidad nativa (barras celestes):} En la fase piloto, el modelo logra sus mejores métricas de regresión (0.0265 y 0.0282) debido a que operó sobre una serie de tiempo homogénea. Al no existir eventos extremos de congestión en ese conjunto, la ecuación autorregresiva pudo promediar eficientemente el ruido de fondo sin sufrir descompensaciones.
-    \item \textbf{Penalización por asimetría (barras azules):} Al transicionar al \textit{dataset} primario, el error basal de regresión casi se duplica (0.0460). Como se demostró analíticamente en secciones previas, esto no obedece a un problema de sobreajuste (\textit{overfitting}) ---pues la varianza entre validación y prueba es prácticamente nula (0.0460 vs. 0.0459)---, sino al severo sesgo de sobreestimación que internalizó el modelo al verse forzado a entrenar con los eventos sintéticos masivos de congestión.
-    \item \textbf{Colapso en generalización (barra roja):} El salto desproporcionado del error a 0.3233 documenta visualmente el fracaso absoluto del modelo al intentar transferir sus coeficientes fijos a un entorno con una distribución basal y varianza distintas. Esto confirma matemáticamente que ARIMA carece de la plasticidad estructural necesaria para instrumentar \textit{Transfer Learning} en redes heterogéneas.
+    \item \textbf{Piloto (0.0265 y 0.0282):} es el menor error del modelo. La serie de MAWI es relativamente homogénea y no contiene eventos de congestión, lo que permite que la ecuación autorregresiva promedie el ruido de fondo sin descompensaciones.
+    \item \textbf{Primario (0.0460 y 0.0459):} el error basal aumenta cerca de un 63\,\%. Como la diferencia entre validación y prueba es prácticamente nula, no se explica por sobreajuste, sino por el sesgo de sobreestimación y el efecto del esquema por bloques descritos arriba.
+    \item \textbf{Generalización (0.3233):} el error se multiplica por siete respecto al primario, lo que documenta que los coeficientes ajustados en una red no se transfieren a un régimen con otra distribución basal y otra varianza.
 \end{itemize}
 
-Finalmente, la Tabla \ref{tab:sintesis_completa_arima} unifica la totalidad de las métricas evaluadas a lo largo de esta fase experimental. Esta consolidación establece formalmente la línea base definitiva contra la cual se contrastará la arquitectura no lineal de los algoritmos de \textit{Machine Learning} en las secciones subsecuentes.
+La Tabla \ref{tab:sintesis_completa_arima} reúne todas las métricas evaluadas y constituye la línea base contra la cual se contrastarán los modelos siguientes.
 
 \begin{table}[H]
     \centering
@@ -2812,38 +2323,41 @@ Finalmente, la Tabla \ref{tab:sintesis_completa_arima} unifica la totalidad de l
         \hline
         \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto --- validación & 100\,\% Real (MAWI) & 0.0265 & N/A & N/A \\
-        Piloto --- prueba & 100\,\% Real (MAWI) & 0.0282 & N/A & N/A \\
-        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.0460 & --- & --- \\
-        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.0459 & --- & --- \\
-        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.0357 & 0.8905 \\
-        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.0185 & 0.8939 \\
-        Generalización --- MAWI (oficial) & 100\,\% Real (MAWI) & 0.3233 & N/A & N/A \\
+        Piloto --- validación & 100\,\% real (MAWI) & 0.0265 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% real (MAWI) & 0.0282 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% real & 0.0460 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% real & 0.0459 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% sintético & --- & 0.0357 & 0.8905 \\
+        Primario --- clasificación (prueba) & 100\,\% sintético & --- & 0.0185 & 0.8939 \\
+        Generalización --- MAWI (oficial) & 100\,\% real (MAWI) & 0.3233 & N/A & N/A \\
         \hline
     \end{tabular}
-    \caption{Síntesis matricial de resultados (ARIMA). Se confirma su viabilidad parcial para el pronóstico continuo (regresión) de letargo, pero su inoperancia práctica para la detección de eventos críticos (\textit{Recall} $\approx$ 1.85\,\%).}
+    \caption{Síntesis de los resultados de ARIMA. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}).}
     \label{tab:sintesis_completa_arima}
 \end{table}
 
 \subsection*{Discusión de los resultados de ARIMA}
 
-Tres observaciones se desprenden del conjunto de resultados presentados en esta sección. Primera, el desempeño de regresión de ARIMA se deterioró al pasar de la fase piloto al \textit{dataset} primario (RMSE de 0.0282 a 0.0459), a pesar de que la magnitud de la señal real a predecir es sustancialmente menor en este último. La explicación más plausible reside en que el modelo se ajustó sobre una serie de entrenamiento (la sesión sintética) cuya media incondicional ---elevada por la presencia 
-deliberada de eventos de congestión (Sección \ref{sec:obtencion_exploracion})--- no corresponde al régimen de tráfico bajo que domina las particiones reales de evaluación; en consecuencia, el modelo produce un sesgo de sobreestimación sistemático, visible en la Figura \ref{fig:recap_arima_regresion}.
+\textbf{Regresión.} El RMSE sube de 0.0282 en el piloto a 0.0459 en el primario, pero esa comparación es limitada, porque son series distintas, con enlaces de 11 Gbps y 1 Gbps y dispersiones distintas. Lo revelador es la relación entre el error y la propia señal. En el piloto, el RMSE queda por debajo de la desviación estándar de la serie (0.051). En el primario, el RMSE (0.046) supera la utilización máxima observada (0.0144), mientras que una predicción constante igual a la media real tendría un error del orden de la desviación estándar de la serie (alrededor de $3.5 \times 10^{-4}$ en fracción). La causa más probable es el sesgo de sobreestimación de la Figura \ref{fig:arima_primario_regresion}: el modelo se ajustó sobre la sesión sintética, cuya media ($\mu=0.0324$) está elevada por los eventos inyectados y es muy superior a la real, de orden $10^{-5}$. Que el error sea casi idéntico en validación y prueba respalda que es sistemático y no un problema de generalización entre particiones.
 
-Segunda, en la tarea de clasificación, el patrón de precisión alta y \textit{Recall} extremadamente bajo (Tabla \ref{tab:recap_arima_primario_clasificacion}) es consistente con la naturaleza de ARIMA como modelo lineal que suaviza sus pronósticos hacia la tendencia central de la serie mediante su componente de media móvil: rara vez genera una predicción puntual que cruce el umbral $U_{th}$, incluso durante una tendencia de ascenso genuina, resultando en un número elevado de falsos negativos. 
-Esta limitación teórica, anticipada en el Marco Teórico de esta tesis (Sección \ref{subsec:arima}) respecto a la naturaleza reactiva ---y ahora se evidencia, también, la naturaleza excesivamente conservadora--- de los mecanismos lineales frente a la congestión, encuentra aquí su primera confirmación empírica.
+\textbf{Oscilaciones por bloques.} Los picos y valles regulares de la Figura \ref{fig:arima_primario_regresion} están asociados al reinicio del estado autorregresivo al inicio de cada bloque del pronóstico progresivo. Con coeficientes AR de gran magnitud y suma cercana a 1, un pequeño desajuste inicial tarda en disiparse. Esto infla el RMSE sin reflejar la capacidad predictiva en régimen estable, de modo que es una limitación del esquema de evaluación por bloques que debe tenerse presente al comparar con los otros modelos.
 
-Tercera, y quizás el hallazgo más contundente de esta sección, la validación exploratoria de generalización contra MAWI reveló una incapacidad casi total del modelo para operar fuera del régimen de tráfico sobre el cual fue entrenado: un RMSE que triplica el rango completo de la variable real observada constituye evidencia inequívoca de que un modelo ARIMA ajustado sobre una red de escala reducida no generaliza a un enlace de tránsito de escala considerablemente mayor, aun cuando ambas series 
-comparten la misma unidad de medida (factor de utilización, acotado entre 0 y 1). Esta observación se retoma de manera comparativa frente a \textit{Random Forest} y LSTM en la Sección 6.4, y se discute en términos de sus implicaciones prácticas en la Sección 6.5.
+\textbf{Clasificación.} El \textit{recall} de 1.85\,\% y el único verdadero positivo indican que, con el umbral de 0.80, el modelo prácticamente no alerta. Es consistente con la naturaleza de ARIMA: su componente de media móvil suaviza el pronóstico hacia la tendencia central, y rara vez la predicción puntual alcanza el umbral, aun durante un ascenso genuino. Esto concuerda con la limitación descrita en la Sección \ref{subsec:arima} sobre su naturaleza reactiva, a lo que se suma ahora un comportamiento excesivamente conservador frente a la congestión. En la fase piloto, con un umbral más bajo (0.25), el \textit{recall} fue mayor (41.5\,\%), lo que sugiere que parte del problema radica en la distancia entre el nivel predicho y el umbral exigido.
+
+\textbf{Calibración del umbral.} El AUC-ROC alto (0.89) matiza la conclusión anterior: la predicción continua conserva información sobre la congestión, y el fallo parece estar en la decisión binaria sobre una predicción amortiguada, más que en la ausencia total de señal. Ajustar el umbral a partir de la validación no se exploró en este trabajo y es una línea de mejora para el diseño de alertas.
+
+\textbf{Generalización.} El colapso sobre MAWI indica que los coeficientes de ARIMA están muy ligados al régimen donde se ajustaron. Una explicación probable es que los valores de MAWI (cerca de 0.15) caen fuera del rango del tráfico real del primario (máximo de 0.0144), y con coeficientes autorregresivos de signo alternante esa diferencia de nivel se amplifica. Por el tamaño de la muestra y el reinicio por bloques, esta explicación debe tomarse como hipótesis. Aun así, la evidencia desaconseja tratar a ARIMA como modelo transferible entre redes de escala distinta sin reajustarlo.
+
+\textbf{Alcance.} En conjunto, ARIMA cumple como línea base de regresión sobre tráfico estable, pero su desempeño depende de que la serie de ajuste represente el régimen donde se evalúa, y no sirve como detector de congestión con el umbral oficial. Esta conclusión se contrasta con \textit{Random Forest} y LSTM en las Secciones 6.4 y 6.5.
 
 \section{Resultados de \textit{Random Forest}}
 \label{sec:resultados_rf}
 
-Esta sección consolida los resultados obtenidos con el ensamble \textit{Random Forest} a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:rf_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y una discusión analítica sobre la imposibilidad técnica de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del \textit{pipeline}.
+Esta sección reporta los resultados del ensamble \textit{Random Forest}, configurado según la Sección \ref{sec:rf_desarrollo}: su desempeño en la fase piloto con MAWI, su evaluación de regresión y clasificación sobre el \textit{dataset} primario, el análisis de importancia de variables en ambos conjuntos y las razones por las que no pudo someterse a la validación de generalización frente a MAWI. Cada resultado se acompaña de su lectura inmediata. La comparación con los demás modelos se presenta en la Sección 6.4 y la discusión conjunta en la Sección 6.5.
 
-\subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
+\subsection*{Fase piloto: regresión}
 
-Como se documentó en la Sección \ref{sec:rf_desarrollo}, \textit{Random Forest} se entrenó sobre las 1\,044 secuencias del conjunto de entrenamiento del \textit{dataset} piloto, empleando las variables de rezago y media móvil a una granularidad de 1 segundo. La Tabla \ref{tab:recap_rf_piloto} recuerda las métricas de regresión obtenidas.
+Sobre el piloto, el modelo se entrenó con 1\,044 secuencias, usando los rezagos y la media móvil con granularidad de 1 segundo. La Tabla \ref{tab:resultados_rf_regresion} presenta las métricas sobre las particiones de validación y prueba, en escala normalizada.
 
 \begin{table}[H]
     \centering
@@ -2851,19 +2365,63 @@ Como se documentó en la Sección \ref{sec:rf_desarrollo}, \textit{Random Forest
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0962 & 0.0721 & 12.83\,\% \\
-        Prueba (piloto, MAWI) & 0.1311 & 0.1004 & 16.26\,\% \\
+        Validación & 0.0962 & 0.0721 & 12.83\,\% \\
+        Prueba & 0.1311 & 0.1004 & 16.26\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de \textit{Random Forest} (escala normalizada), fase piloto (Sección \ref{sec:rf_desarrollo}).}
-    \label{tab:recap_rf_piloto}
+    \caption{Métricas de regresión de \textit{Random Forest} (escala normalizada), \textit{dataset} piloto MAWI.}
+    \label{tab:resultados_rf_regresion}
 \end{table}
 
-Al igual que con ARIMA, la formulación de clasificación no pudo evaluarse formalmente durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección \ref{sec:obtencion_exploracion}).
+El error aumenta de validación a prueba: el RMSE crece un 36\,\% y el MAPE pasa de 12.83\,\% a 16.26\,\%. En ARIMA, en cambio, el MAPE se mantuvo prácticamente igual en ambas particiones (10.61\,\% y 10.80\,\%, Sección \ref{sec:resultados_arima}). Para comparar con la línea base estadística, que se mantuvo en escala original, el RMSE de prueba se reescala por el rango de la variable de entrenamiento ($0.323 - 0.017 = 0.306$). Se obtiene un RMSE equivalente de aproximadamente $0.1311 \times 0.306 \approx 0.040$, un 42\,\% superior al de ARIMA (0.0282).
 
-\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_prediccion_vs_real.png}
+    \caption{\textit{Random Forest}: predicción frente al valor real, partición de prueba del piloto MAWI (escala normalizada).}
+    \label{fig:rf_prediccion}
+\end{figure}
 
-Se esperaba que \textit{Random Forest}, al haber demostrado en la fase piloto una capacidad no lineal superior a la de un modelo puramente autorregresivo para capturar interacciones complejas entre las variables de rezago (Sección \ref{sec:modelos_justificacion}), mantuviera un desempeño de regresión consistente al evaluarse sobre el \textit{dataset} primario. La Tabla \ref{tab:recap_rf_primario_regresion} presenta los resultados observados.
+La Figura \ref{fig:rf_prediccion} muestra la causa de ese aumento. Cuando el tráfico real (línea azul) presenta caídas abruptas que llegan hasta cerca de 0.2 en el eje normalizado (por ejemplo, alrededor de la observación 350), la predicción del ensamble (línea naranja discontinua) tiene un piso visible y no desciende por debajo de aproximadamente 0.5. El modelo recorta, por tanto, los valles de la serie. Dado que cada hoja de un árbol predice el promedio de las muestras de entrenamiento que cayeron en ella, el ensamble tiende hacia valores centrales y responde poco a los extremos del comportamiento estocástico.
+
+\subsection*{Fase piloto: clasificación}
+
+Como en ARIMA, con el umbral oficial $U_{th}=0.80$ la clasificación no es evaluable en MAWI (Sección \ref{sec:obtencion_exploracion}), por lo que se usó el umbral relativo de prueba $U_{test} \geq 0.25$. La Tabla \ref{tab:resultados_rf_clasificacion} presenta el desempeño sobre la partición de prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Métrica ($U_{test} \geq 0.25$)} & \textbf{Prueba} \\
+        \hline
+        Precisión & 76.5\,\% \\
+        \textit{Recall} & 68.3\,\% \\
+        \textit{F1-score} & 72.1\,\% \\
+        \textbf{Tiempo de Anticipación Efectivo (TAE) promedio} & \textbf{2.8 minutos} \\
+        \hline
+    \end{tabular}
+    \caption{Clasificación y alertamiento (TAE) de \textit{Random Forest}, fase piloto.}
+    \label{tab:resultados_rf_clasificacion}
+\end{table}
+
+Aproximadamente tres de cada cuatro alertas corresponden a un evento real (precisión de 76.5\,\%) y el modelo detecta cerca de dos tercios de los eventos (\textit{recall} de 68.3\,\%). Frente a ARIMA, el \textit{recall} sube 26.8 puntos porcentuales (de 41.5\,\% a 68.3\,\%) y el $TAE$ pasa de 1.2 a 2.8 minutos, más de la mitad del horizonte objetivo de 5 minutos. Como la regresión continua fue peor que la de ARIMA, el resultado muestra que el error medio de pronóstico y la capacidad de alertar son capacidades distintas. Estas cifras validan el \textit{pipeline}, pero no son comparables con las del \textit{dataset} primario, que usan otro umbral y otros datos.
+
+\subsection*{Fase piloto: importancia de variables}
+
+La Figura \ref{fig:rf_importancia} presenta la importancia relativa de las variables de entrada en el piloto, calculada como la disminución media de impureza que aporta cada una en los árboles.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{rf_importancia_variables.png}
+    \caption{Importancia relativa de variables en \textit{Random Forest}, \textit{dataset} piloto MAWI.}
+    \label{fig:rf_importancia}
+\end{figure}
+
+La media móvil ($U_{\text{media\_movil}}$) concentra el 66.2\,\% de la importancia, muy por encima del rezago inmediato ($U_{\text{lag1}}$, 13.9\,\%). El 19.9\,\% restante se reparte entre los rezagos 2 a 5, cuya contribución individual es marginal. El modelo se apoya, entonces, sobre todo en el nivel promedio reciente y poco en el valor del instante anterior. Una explicación plausible es que, a una granularidad de 1 segundo, el valor inmediato está muy contaminado por ruido de alta frecuencia, y el promedio actúa como un filtro que revela la tendencia de fondo.
+
+\subsection*{\textit{Dataset} primario: regresión}
+
+La Tabla \ref{tab:rf_primario_regresion} presenta las métricas sobre las particiones reales, en escala normalizada. El modelo se reentrenó con la misma configuración sobre las 46\,872 observaciones de entrenamiento (reales y sintéticas).
 
 \begin{table}[H]
     \centering
@@ -2871,48 +2429,56 @@ Se esperaba que \textit{Random Forest}, al haber demostrado en la fase piloto un
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
         \hline
-        Validación (primario, real) & 0.005084 & 0.004766 \\
-        Prueba (primario, real) & 0.049590 & 0.010301 \\
+        Validación (real) & 0.005084 & 0.004766 \\
+        Prueba (real) & 0.049590 & 0.010301 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de \textit{Random Forest} sobre el \textit{dataset} primario (escala normalizada).}
-    \label{tab:recap_rf_primario_regresion}
+    \caption{Métricas de regresión de \textit{Random Forest}, \textit{dataset} primario (escala normalizada).}
+    \label{tab:rf_primario_regresion}
 \end{table}
 
-Se observó una discrepancia notable entre validación y prueba: el RMSE se incrementó en un factor de casi 10 (pasando de 0.0051 a 0.0496). Este patrón de degradación es considerablemente más pronunciado que el exhibido por ARIMA sobre el mismo par de conjuntos (Sección \ref{sec:resultados_arima}, donde el incremento fue de apenas 0.4\,\%). Las Figuras \ref{fig:recap_rf_regresion_val} y \ref{fig:recap_rf_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales.
+El RMSE aumenta casi diez veces entre validación y prueba (de 0.0051 a 0.0496), mientras que en ARIMA se mantuvo constante sobre las mismas particiones (de 0.0460 a 0.0459). El MAE, sin embargo, solo se duplica (de 0.0048 a 0.0103). La relación entre ambas métricas es reveladora: en validación el RMSE es prácticamente igual al MAE (cociente de 1.07), lo que indica errores pequeños y uniformes, mientras que en prueba el cociente es de 4.8, lo que indica que el error se concentra en unas pocas desviaciones muy grandes. Esto coincide con la Figura \ref{fig:rf_primario_regresion_test}. Como el rango de entrenamiento está cerca de $[0,1]$ (los eventos sintéticos llegan a 0.979), la escala normalizada es aproximadamente equivalente a la original, de modo que el RMSE de prueba (0.0496) es del orden del de ARIMA (0.0459), y el MAE (0.0103) es menor que el de ARIMA (0.0151). En ambos casos, el RMSE supera la utilización real máxima observada (0.0144).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_regresion_val.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:recap_rf_regresion_val}
+    \caption{\textit{Random Forest}: predicción frente al valor real, validación de regresión (\textit{dataset} primario, datos reales).}
+    \label{fig:rf_primario_regresion_val}
 \end{figure}
+
+En validación (Figura \ref{fig:rf_primario_regresion_val}), la predicción (línea naranja discontinua) se mantiene cerca de la señal real, plana y cercana a cero. Presenta un sesgo leve de sobreestimación basal y picos transitorios que no superan 0.07 en la escala normalizada, por lo que no afectan de manera apreciable el RMSE.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_regresion_test.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:recap_rf_regresion_test}
+    \caption{\textit{Random Forest}: predicción frente al valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \label{fig:rf_primario_regresion_test}
 \end{figure}
 
-La Figura \ref{fig:rf_sintesis_rmse} sintetiza visualmente la trayectoria del Error Cuadrático Medio (RMSE) de regresión del ensamble \textit{Random Forest} a través de los cuatro contextos de evaluación, exponiendo de forma gráfica las dos grandes limitaciones estructurales de los árboles de decisión al enfrentarse al pronóstico continuo de series de tiempo.
+En prueba (Figura \ref{fig:rf_primario_regresion_test}) el tráfico real sigue igual de plano, pero la predicción presenta dos picos de sobreestimación de gran magnitud, de aproximadamente 0.5 y casi 0.7 en la escala normalizada. Estos picos, que no corresponden a ningún evento real, explican prácticamente todo el aumento del RMSE.
+
+\subsection*{\textit{Dataset} primario: síntesis del RMSE de regresión}
+
+La Figura \ref{fig:rf_sintesis_rmse} muestra el RMSE de regresión del ensamble en los cuatro contextos de evaluación.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de regresión de \textit{Random Forest}. Se exponen las penalizaciones algorítmicas por incapacidad de extrapolación (fase piloto) y por hipersensibilidad contextual (fase primaria).}
+    \caption{RMSE de regresión de \textit{Random Forest} en los contextos de evaluación (escala normalizada).}
     \label{fig:rf_sintesis_rmse}
 \end{figure}
 
-El contraste entre los diferentes bloques de evaluación revela la vulnerabilidad topológica del algoritmo ante cambios en la distribución de los datos:
+Las barras muestran dos comportamientos:
 \begin{itemize}
-    \item \textbf{El límite de extrapolación (barras celestes):} En la fase piloto, el modelo exhibió un error base elevado (0.0962) que sufrió una degradación sustancial al transicionar a la partición de prueba (0.1311). Esta brecha visualiza la limitación geométrica documentada previamente: al enfrentarse a caídas profundas de tráfico estocástico que excedían los umbrales observados durante el entrenamiento, el ensamble fue matemáticamente incapaz de extrapolar, promediando sus nodos hoja y "recortando" sistemáticamente las predicciones inferiores, lo que disparó la métrica de error.
-    \item \textbf{La hipersensibilidad contextual (barras azules):} Al ser evaluado sobre el \textit{dataset} primario, el error de validación aparenta un desempeño superlativo (0.0051). Sin embargo, la partición de prueba expone una disrupción severa, saltando casi un orden de magnitud (0.0496). Esta asimetría documenta el fenómeno de hipersensibilidad inducida por el desbalance: el algoritmo, condicionado por los eventos sintéticos masivos del entrenamiento, sobre-reaccionó ante fluctuaciones inofensivas del canal en la prueba, disparando alucinaciones predictivas masivas que penalizaron severamente su RMSE final.
+    \item \textbf{Piloto (barras celestes, 0.0962 y 0.1311):} el error es elevado y empeora en prueba, asociado al piso de la predicción frente a las caídas profundas del tráfico (Figura \ref{fig:rf_prediccion}).
+    \item \textbf{Primario (barras azules, 0.0051 y 0.0496):} el error de validación es muy bajo, pero en prueba aumenta casi un orden de magnitud por los dos picos espurios de la Figura \ref{fig:rf_primario_regresion_test}.
 \end{itemize}
 
-\subsection*{Resultados de clasificación sobre datos sintéticos aislados}
+Los valores del piloto y del primario corresponden a series distintas, con escalas de normalización distintas, por lo que no deben compararse directamente entre sí.
 
-Bajo la formulación binarizada de alerta temprana, se esperaba que \textit{Random Forest} ofreciera un desempeño de clasificación sustancialmente superior al de ARIMA, aprovechando su capacidad intrínseca para particionar el espacio de características mediante reglas lógicas no lineales. La Tabla \ref{tab:recap_rf_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:rf_sintesis_clasificacion} los compara visualmente entre validación y prueba.
+\subsection*{\textit{Dataset} primario: clasificación}
+
+La Tabla \ref{tab:rf_primario_clasificacion} presenta las métricas de clasificación sobre las particiones sintéticas aisladas, con $U_{th}=0.80$ (en escala normalizada).
 
 \begin{table}[H]
     \centering
@@ -2927,64 +2493,115 @@ Bajo la formulación binarizada de alerta temprana, se esperaba que \textit{Rand
         AUC-ROC & 0.8796 & 0.9187 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de \textit{Random Forest}, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
-    \label{tab:recap_rf_primario_clasificacion}
+    \caption{Métricas de clasificación de \textit{Random Forest}, $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:rf_primario_clasificacion}
 \end{table}
+
+El desempeño es estable entre ambas particiones. Como en ARIMA, la exactitud alta (0.98) tiene poco valor informativo por el desbalance de clases, pues los casos de congestión son cerca del 2.6\,\% de las observaciones. Las métricas relevantes son la precisión, alta (0.93 en prueba), y el \textit{recall}, modesto (0.298), que dan un \textit{F1-score} de 0.45. El \textit{recall} es 16 veces el de ARIMA (0.0185), aunque esa comparación debe tomarse con cautela porque las matrices de confusión de ambos modelos no se calcularon sobre el mismo número de observaciones. Además, el AUC-ROC de \textit{Random Forest} (0.88 a 0.92) es parecido al de ARIMA (0.89), lo que sugiere que la mejora de \textit{recall} proviene sobre todo de que las predicciones alcanzan el umbral con mayor frecuencia, y no de una capacidad muy distinta para ordenar los instantes de congestión por encima de los normales.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{rf_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, \textit{Random Forest} sobre el \textit{dataset} primario.}
+    \caption{Comparación de métricas de clasificación, validación frente a prueba, \textit{Random Forest} sobre el \textit{dataset} primario.}
     \label{fig:rf_sintesis_clasificacion}
 \end{figure}
 
-Los resultados empíricos confirmaron la expectativa planteada, aunque con matices: si bien el \textit{Recall} (29.82\,\% en el conjunto de prueba) resultó abrumadoramente superior al obtenido por ARIMA (1.85\,\%, Sección \ref{sec:resultados_arima}), continúa siendo una tasa modesta en términos absolutos, ya que el ensamble logró detectar poco menos de un tercio de los eventos de congestión reales. La Ecuación \ref{eq:recap_confusion_rf} reproduce la matriz de confusión del conjunto de prueba.
+La Figura \ref{fig:rf_sintesis_clasificacion} confirma el patrón: exactitud, precisión y AUC-ROC altos, y \textit{recall} y \textit{F1-score} moderados en ambas particiones. La Ecuación \ref{eq:confusion_rf} presenta la matriz de confusión sobre la partición de prueba, cuya suma (10\,622 observaciones, 275 casos positivos) coincide con la Tabla \ref{tab:composicion_dataset_final}.
 
 \begin{equation}
-    \begin{pmatrix} \mbox{VN}=10\,341 & \mbox{FP}=6 \\ \mbox{FN}=193 & \mbox{VP}=82 \end{pmatrix}
-    \label{eq:recap_confusion_rf}
+    \begin{pmatrix} \text{VN}=10\,341 & \text{FP}=6 \\ \text{FN}=193 & \text{VP}=82 \end{pmatrix}
+    \label{eq:confusion_rf}
 \end{equation}
 
-La Figura \ref{fig:recap_rf_clasificacion} ilustra las predicciones continuas del modelo sobre el conjunto de prueba de clasificación, evidenciando una mayor sensibilidad a los picos de tráfico en comparación con la inercia característica de la línea base estadística.
+Sus componentes se interpretan así:
+\begin{itemize}
+    \item \textbf{Verdaderos negativos (VN=10\,341):} el modelo reconoce correctamente los extensos periodos de operación normal.
+    \item \textbf{Falsos positivos (FP=6):} solo seis falsas alarmas en todo el conjunto, equivalentes al 0.06\,\% de las observaciones normales. De ahí la precisión de 93.18\,\% (82 de 88 alertas fueron correctas).
+    \item \textbf{Verdaderos positivos (VP=82):} de 275 instantes de congestión, se detectaron 82. Con ARIMA solo se detectó uno.
+    \item \textbf{Falsos negativos (FN=193):} el 70\,\% de los instantes de congestión pasa sin alerta, lo que mantiene el \textit{recall} en 29.8\,\%.
+\end{itemize}
+
+En términos operativos, el modelo casi no genera ruido, pero omite siete de cada diez instantes de congestión. Con una precisión alta y un \textit{recall} moderado, el sistema sería confiable cuando alerta, pero insuficiente como única protección.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_val.png}
+    \caption{\textit{Random Forest}: predicción frente al valor real y umbral $U_{th}=0.80$, validación de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \label{fig:rf_primario_clasificacion_val}
+\end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{rf_primario_clasificacion_test.png}
-    \caption{\textit{Random Forest}: predicción vs. valor real, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
-    \label{fig:recap_rf_clasificacion}
+    \caption{\textit{Random Forest}: predicción frente al valor real y umbral $U_{th}=0.80$, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \label{fig:rf_primario_clasificacion_test}
 \end{figure}
 
-\subsection*{Importancia de variables: el impacto de la granularidad}
+Las Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test} muestran el origen de los falsos negativos. A diferencia de ARIMA, cuya predicción se aplana, la del ensamble acompaña a los eventos: por cada pico del tráfico real aparece un pico de la predicción en el mismo momento. Sin embargo, la magnitud de muchos picos predichos es menor que la real, y varios se quedan justo por debajo del umbral de 0.80. El modelo identifica \textit{cuándo} ocurre el evento, pero no siempre estima su intensidad lo bastante alta para cruzar el umbral. El patrón es el mismo en validación y en prueba.
 
-Un hallazgo analítico particular de este trabajo, adelantado empíricamente en el Capítulo \ref{sec:rf_desarrollo}, es la inversión topológica absoluta del patrón de importancia de variables entre ambas fases experimentales de la investigación. La Figura \ref{fig:rf_comparativa_importancia} presenta esta comparación de manera directa.
+\subsection*{\textit{Dataset} primario: importancia de variables}
+
+La Tabla \ref{tab:rf_primario_importancia} y la Figura \ref{fig:rf_primario_importancia} presentan la importancia relativa de cada variable en el \textit{dataset} primario.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Variable} & \textbf{Importancia relativa} \\
+        \hline
+        $U_{\text{lag1}}$ & 0.6644 \\
+        $U_{\text{media\_movil}}$ & 0.1249 \\
+        $U_{\text{lag5}}$ & 0.1171 \\
+        $U_{\text{lag2}}$ & 0.0320 \\
+        $U_{\text{lag3}}$ & 0.0315 \\
+        $U_{\text{lag4}}$ & 0.0301 \\
+        \hline
+    \end{tabular}
+    \caption{Importancia relativa de variables, \textit{Random Forest}, \textit{dataset} primario.}
+    \label{tab:rf_primario_importancia}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{rf_primario_importancia.png}
+    \caption{Importancia relativa de variables en \textit{Random Forest}, \textit{dataset} primario.}
+    \label{fig:rf_primario_importancia}
+\end{figure}
+
+El rezago inmediato concentra dos tercios de la importancia (66.4\,\%). Le siguen la media móvil (12.5\,\%) y el rezago más antiguo, $U_{\text{lag5}}$ (11.7\,\%), mientras que los rezagos 2 a 4 aportan alrededor del 3\,\% cada uno. Que el rezago 5 pese más que los intermedios sugiere que el modelo usa el contraste entre el valor más reciente y el más antiguo de la ventana, es decir, una señal de tendencia, aunque con estos datos no puede confirmarse.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=\textwidth]{rf_comparativa_importancia.png}
-    \caption{Comparación de la importancia relativa de variables (Impureza de Gini) en \textit{Random Forest}: el cambio de granularidad de 1 segundo (piloto) a 1 minuto (primario) invierte por completo la relevancia algorítmica.}
+    \caption{Importancia relativa de variables en \textit{Random Forest}: piloto frente al \textit{dataset} primario.}
     \label{fig:rf_comparativa_importancia}
 \end{figure}
 
-Como se documenta en la gráfica, mientras que en la fase piloto la media móvil ($U_{\mbox{\scriptsize media\_movil}}$) concentraba el 66.2\,\% de la capacidad discriminativa total, en el \textit{dataset} primario esta proporción colapsó al 12.5\,\%. Simultáneamente, el algoritmo transfirió el rol de predictor maestro al rezago inmediato ($U_{\mbox{\scriptsize lag1}}$), el cual escaló drásticamente de un marginal 13.9\,\% en el piloto a un abrumador 66.4\,\% en el entorno definitivo.
+La Figura \ref{fig:rf_comparativa_importancia} contrasta ambos conjuntos y muestra una inversión casi simétrica: la media móvil pasa de 66.2\,\% a 12.5\,\% y el rezago inmediato, de 13.9\,\% a 66.4\,\%. La Tabla \ref{tab:comparativa_rf_piloto_primario} resume la comparación de la fase piloto con el \textit{dataset} primario.
 
-Lejos de ser una coincidencia o un artefacto estadístico, esta inversión es la consecuencia directa de una de las leyes fundamentales del procesamiento de señales digitales: el impacto de la frecuencia de muestreo sobre la entropía de la serie. 
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        RMSE (regresión, normalizado) & 0.1311 & 0.0496 \\
+        \textit{Recall} (clasificación) & 68.3\,\% ($U_{test}=0.25$) & 29.8\,\% ($U_{th}=0.80$) \\
+        \textit{F1-score} (clasificación) & 72.1\,\% ($U_{test}=0.25$) & 45.2\,\% ($U_{th}=0.80$) \\
+        Variable más importante & $U_{\text{media\_movil}}$ (66.2\,\%) & $U_{\text{lag1}}$ (66.4\,\%) \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de \textit{Random Forest} entre la fase piloto y el \textit{dataset} primario. Las métricas de clasificación usan umbrales distintos y no son directamente comparables.}
+    \label{tab:comparativa_rf_piloto_primario}
+\end{table}
 
-A una granularidad de hiper-resolución (1 segundo en el \textit{dataset} MAWI), la señal del canal está saturada de ruido de alta frecuencia ---micro-ráfagas de paquetes que no constituyen una tendencia real---. En dicho entorno caótico, el algoritmo descartó la lectura inmediata ($U_{\mbox{\scriptsize lag1}}$) por no ser confiable y se vio forzado a depender matemáticamente de la media móvil para actuar como un filtro paso bajo (\textit{low-pass filter}) que revelara la tendencia subyacente. 
+\subsection*{Validación de generalización no realizada}
 
-En contraste, la granularidad oficial del \textit{dataset} primario fue establecida en 1 minuto. Al integrar el tráfico en ventanas de 60 segundos, el propio mecanismo de recolección en RouterOS (\textit{pooling}) actuó inherentemente como un filtro de suavizado temporal, promediando \textit{de facto} el ruido estocástico de alta frecuencia. En consecuencia, al estar la serie de tiempo nativamente "limpia", el valor del último minuto observado ($U_{\mbox{\scriptsize lag1}}$) se consolida como una métrica robusta e indiscutible del estado de la red, volviendo algorítmicamente redundante el cálculo adicional de medias móviles superpuestas. 
+A diferencia de ARIMA (Sección \ref{sec:resultados_arima}), \textit{Random Forest} no pudo evaluarse sobre MAWI reagregado a la granularidad oficial de 1 minuto. La variable $U_{\text{media\_movil}}$ se calcula como una media móvil de 30 minutos (Sección \ref{sec:preprocesamiento_desarrollo}), y no puede construirse dentro de una traza de MAWI, que dura solo 15 minutos continuos (Sección \ref{sec:obtencion_exploracion}). Sin ese componente no se puede formar el vector de entrada que el ensamble espera. Rellenar con ceros o acortar la ventana alteraría la configuración validada y haría injusta cualquier comparación con ARIMA, por lo que esta validación se reporta como no realizada.
 
-Esta discrepancia estructural establece un precedente empírico crucial para despliegues en producción: la arquitectura (\textit{Feature Engineering}) de los algoritmos de detección no es universal, sino que debe co-evolucionar obligatoriamente en sincronía con las capacidades de recolección de métricas de la infraestructura de red.
+\subsection*{Síntesis de los resultados de \textit{Random Forest}}
 
-\subsection*{Imposibilidad de la validación de generalización}
-
-A diferencia de ARIMA (Sección \ref{sec:resultados_arima}), \textit{Random Forest} no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es estrictamente estructural: la variable de entrada $U_{\mbox{\scriptsize media\_movil}}$, calculada empíricamente como una media móvil de 30 minutos (Sección \ref{sec:preprocesamiento_desarrollo}), es matemáticamente imposible de computar dentro de una traza de MAWI cuya duración total captura 
-apenas 15 minutos continuos por día (Sección \ref{sec:obtencion_exploracion}). 
-
-En consecuencia, el vector de entrada completo que exige el ensamble entrenado no puede construirse a partir de los datos disponibles de MAWI bajo los parámetros oficiales. Forzar una adaptación (como rellenar con ceros o acortar la ventana) alteraría la configuración validada del modelo, invalidando cualquier comparativa justa. Por tanto, esta validación se reporta formalmente como no realizada. Esta limitación inherente a la ingeniería de características estáticas se retoma con mayor profundidad en la Sección 6.5.
-
-\subsection*{Síntesis completa de los resultados de \textit{Random Forest}}
-
-La Tabla \ref{tab:sintesis_completa_rf} consolida la totalidad de los resultados de esta sección, ofreciendo un panorama unificado del desempeño del paradigma de \textit{Machine Learning} clásico.
+La Tabla \ref{tab:sintesis_completa_rf} reúne las métricas de todos los contextos de evaluación.
 
 \begin{table}[H]
     \centering
@@ -2993,41 +2610,82 @@ La Tabla \ref{tab:sintesis_completa_rf} consolida la totalidad de los resultados
         \hline
         \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto --- validación & 100\,\% Real (MAWI) & 0.0962 & N/A & N/A \\
-        Piloto --- prueba & 100\,\% Real (MAWI) & 0.1311 & N/A & N/A \\
-        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.0051 & --- & --- \\
-        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.0496 & --- & --- \\
-        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.2923 & 0.8796 \\
-        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.2982 & 0.9187 \\
-        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        Piloto --- validación & 100\,\% real (MAWI) & 0.0962 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% real (MAWI) & 0.1311 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% real & 0.0051 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% real & 0.0496 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% sintético & --- & 0.2923 & 0.8796 \\
+        Primario --- clasificación (prueba) & 100\,\% sintético & --- & 0.2982 & 0.9187 \\
+        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural)} \\
         \hline
     \end{tabular}
-    \caption{Síntesis completa de los resultados de \textit{Random Forest} a través de todos los contextos de evaluación.}
+    \caption{Síntesis de los resultados de \textit{Random Forest}. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}). Los RMSE están en escala normalizada.}
     \label{tab:sintesis_completa_rf}
 \end{table}
 
 \subsection*{Discusión de los resultados de \textit{Random Forest}}
 
-Tres observaciones analíticas de peso se desprenden del conjunto de resultados presentados en esta sección. Primera, la marcada degradación entre validación y prueba en la tarea de regresión (Tabla \ref{tab:recap_rf_primario_regresion}) reafirma, ahora a escala del \textit{dataset} primario, una limitación matemática intrínseca de los modelos basados en árboles de decisión: su incapacidad absoluta para extrapolar. Dado que cada nodo hoja de un árbol de decisión emite su pronóstico promediando exclusivamente 
-las muestras de entrenamiento que cayeron en dicha región espacial, el modelo es arquitectónicamente incapaz de predecir un valor que supere el máximo histórico observado en su fase de aprendizaje. Por tanto, \textit{Random Forest} subestimará o sobreestimará de manera sistemática cualquier observación del conjunto de prueba que se aleje del régimen de tráfico dominante en el entrenamiento.
+\textbf{Regresión en el piloto.} El piso de la predicción frente a las caídas profundas (Figura \ref{fig:rf_prediccion}) es coherente con el promediado de las hojas: el árbol responde con el valor medio de las muestras de entrenamiento similares y suaviza los extremos. Esta limitación suele describirse como incapacidad de extrapolar, aunque en sentido estricto la extrapolación implica valores fuera del rango de entrenamiento, y una caída a 0.2 en escala normalizada está dentro del rango $[0,1]$. Una explicación alternativa es que esas caídas fueran poco frecuentes en la partición de entrenamiento y, por tanto, quedaran poco representadas en las hojas. Con estos datos no es posible distinguir entre ambas.
 
-Segunda, a pesar de su deficiencia en la extrapolación continua, el desempeño de clasificación binarizada de \textit{Random Forest} representa una mejora superlativa frente a la estadística tradicional, multiplicando el \textit{Recall} de ARIMA por un factor de 16. Esta ventaja se sustenta en la naturaleza estructural del ensamble: mientras que ARIMA depende de un proceso iterativo de suma y media móvil que difumina los picos súbitos (generando falsos negativos sistemáticos), las reglas lógicas no lineales 
-de los árboles de decisión son altamente sensibles a combinaciones específicas de las variables de rezago, permitiéndoles cruzar el umbral de alerta con mayor rapidez ante patrones incipientes de saturación.
+\textbf{Regresión en el primario.} El deterioro entre validación y prueba tiene otro origen: los picos de la Figura \ref{fig:rf_primario_regresion_test} alcanzan magnitudes de 0.5 y 0.7, que están dentro del rango de entrenamiento (hasta 0.979), así que no pueden atribuirse a falta de extrapolación. Una hipótesis plausible es que el modelo, entrenado con eventos sintéticos que incluyen una fase de ascenso gradual, haya aprendido a asociar niveles bajos de los rezagos con el inicio de una congestión. En ese caso, una misma entrada ocurriría tanto en el tráfico ocioso real como en el arranque de un evento sintético, y las hojas que mezclan ambos casos devolverían valores altos ante fluctuaciones inofensivas. La relación entre RMSE y MAE (cociente de 4.8 en prueba frente a 1.07 en validación) respalda que el error está concentrado en pocos episodios y no es generalizado. Esta explicación es una hipótesis; para verificarla habría que revisar qué entradas produjeron los dos picos y qué hojas los generaron.
 
-Tercera, la inversión del patrón de importancia de variables entre la fase piloto y el \textit{dataset} primario (Figura \ref{fig:rf_comparativa_importancia}) constituye un hallazgo metodológico crítico. Sugiere fuertemente que la granularidad temporal de la recolección ---1 segundo en el piloto, 1 minuto en el primario--- no es una decisión neutral, sino un factor que determina la topología informacional del modelo. A frecuencias de muestreo altas, el ruido transitorio en la red parece favorecer 
-predictores agregados (como la media móvil) para estabilizar la señal; sin embargo, a una granularidad más gruesa, cada observación individual ya integra inherentemente una unidad de tiempo mayor, promediando el estocasticismo transitorio y permitiendo que el nivel de tráfico más reciente actúe como el indicador más confiable del estado inmediato del canal. 
+\textbf{Clasificación.} Frente a ARIMA, el ensamble multiplica el \textit{recall} por 16 y mantiene una precisión alta, por lo que supera al modelo estadístico como detector de congestión, y su sincronía con los eventos (Figuras \ref{fig:rf_primario_clasificacion_val} y \ref{fig:rf_primario_clasificacion_test}) indica que sí capta la forma de los eventos. Aun así, el \textit{recall} de 29.8\,\% es insuficiente para un sistema de alerta temprana. El AUC-ROC alto (0.92), similar al de ARIMA, sugiere que la información está en la predicción continua y que el cuello de botella es la distancia entre la magnitud predicha y el umbral. Una calibración del umbral sobre la validación sería la vía natural para aprovechar esa señal, a costa de más falsas alarmas, que hoy son muy pocas (FP=6). La comparación con ARIMA es indicativa, no estricta, porque los conjuntos sobre los que se calcularon las matrices de confusión difieren en tamaño.
 
-Finalmente, la imposibilidad de evaluar la generalización de este modelo frente a MAWI ---a diferencia de ARIMA, que sí operó sobre las trazas reagregadas--- pone de manifiesto una tensión práctica vital en el despliegue de \textit{Machine Learning}: la riqueza predictiva que provee la ingeniería de características (como ventanas de tiempo ampliadas) mejora el desempeño dentro de un dominio conocido, pero sacrifica la portabilidad arquitectónica del modelo hacia infraestructuras o \textit{datasets} externos 
-que operan bajo restricciones estructurales distintas. Esta tensión entre precisión local y generalización global se retomará de forma integral en la Sección 6.5.
+\textbf{Importancia de variables.} La inversión entre media móvil y rezago inmediato admite al menos dos explicaciones. La primera es la granularidad: a 1 segundo el valor inmediato es ruidoso y el promedio lo filtra, mientras que a 1 minuto cada observación ya integra decenas de segundos de tráfico y el último valor basta. La segunda es la composición de los datos: el entrenamiento del primario incluye eventos sintéticos con perfil trapezoidal, en los que el valor anterior casi determina el siguiente, lo que favorecería al rezago inmediato independientemente de la granularidad. Con los experimentos realizados no se pueden separar ambos factores. Además, la importancia por impureza tiende a favorecer variables continuas con muchos valores distintos y no mide el efecto de cada variable sobre el desempeño, por lo que sus cifras deben leerse como orientativas.
+
+\textbf{Generalización.} La imposibilidad de evaluar el modelo sobre MAWI refleja un compromiso: la ingeniería de características con ventanas largas puede mejorar el desempeño dentro de un dominio, pero ata el modelo a datos con suficiente historia continua y reduce su portabilidad hacia conjuntos con restricciones distintas. Como consecuencia, ARIMA y \textit{Random Forest} no son comparables en esta dimensión.
+
+\textbf{Alcance.} En conjunto, \textit{Random Forest} mejora de forma clara la detección de congestión respecto a ARIMA, con pocas falsas alarmas, pero queda lejos de un \textit{recall} adecuado para alertar y mostró inestabilidad en la regresión sobre tráfico real ocioso. Estas conclusiones se contrastan con LSTM en las Secciones 6.4 y 6.5.
 
 \section{Resultados de LSTM}
 \label{sec:resultados_lstm}
 
-Esta sección consolida los resultados obtenidos con la red neuronal recurrente LSTM a lo largo de las distintas fases de esta investigación: su desempeño en la fase piloto sobre el \textit{dataset} MAWI (Sección \ref{sec:lstm_desarrollo}), su evaluación definitiva de regresión y clasificación sobre el \textit{dataset} primario, y una discusión analítica sobre la imposibilidad técnica de someter este modelo a la validación de generalización contra MAWI bajo los parámetros oficiales del \textit{pipeline}.
+Esta sección reporta los resultados de la red LSTM, configurada según la Sección \ref{sec:lstm_desarrollo}: la convergencia del entrenamiento en ambos conjuntos de datos, su desempeño en la fase piloto con MAWI, su evaluación de regresión y clasificación sobre el \textit{dataset} primario y las razones por las que no pudo someterse a la validación de generalización frente a MAWI. Cada resultado se acompaña de su lectura inmediata. La comparación con los demás modelos se presenta en la Sección 6.4 y la discusión conjunta en la Sección 6.5.
 
-\subsection*{Recapitulación: desempeño en la fase piloto (MAWI)}
+\subsection*{Convergencia del entrenamiento}
 
-Como se documentó en la Sección \ref{sec:lstm_desarrollo}, la arquitectura empleada (una capa LSTM de 32 unidades, una capa densa de 16 unidades y una capa de salida; 4\,897 parámetros entrenables) se entrenó sobre las 1\,044 secuencias del \textit{dataset} piloto, convergiendo mediante \textit{Early Stopping} en la época 12. La Tabla \ref{tab:recap_lstm_piloto} recuerda las métricas de regresión obtenidas.
+En el piloto, la red (4\,897 parámetros entrenables) se entrenó con 1\,044 secuencias y la detención temprana la detuvo en la época 12 de 100. Con una paciencia de 10 épocas, esto implica que los mejores pesos corresponden a la época 2. La Figura \ref{fig:lstm_curva} muestra que la pérdida MSE cae de forma abrupta en la primera época y luego se estabiliza, con una separación constante entre entrenamiento y validación y sin divergencia severa, por lo que no hay indicios de sobreajuste marcado.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{lstm_curva_aprendizaje.png}
+    \caption{Curva de aprendizaje de la red LSTM (pérdida MSE por época), \textit{dataset} piloto MAWI.}
+    \label{fig:lstm_curva}
+\end{figure}
+
+En el \textit{dataset} primario, la red se reentrenó con la misma arquitectura sobre 46\,582 secuencias y se detuvo en la época 16. La Figura \ref{fig:lstm_primario_curva} muestra una asimetría llamativa: la pérdida de entrenamiento (línea azul) baja de 0.010 a cerca de 0.006, mientras que la de validación (línea naranja discontinua) es prácticamente nula desde la primera época.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\textwidth]{lstm_primario_curva_aprendizaje.png}
+    \caption{Curva de aprendizaje de la red LSTM, \textit{dataset} primario. La separación entre curvas refleja la composición de las particiones: entrenamiento con eventos sintéticos (azul) y validación con tráfico real ocioso (naranja).}
+    \label{fig:lstm_primario_curva}
+\end{figure}
+
+Esta separación no indica una fuga de datos, sino la composición de las particiones definida en la Sección \ref{sec:obtencion_exploracion}. El entrenamiento incluye los 126 eventos sintéticos, con valores cercanos a 1, mientras que la validación de regresión es 100\,\% tráfico real ocioso, con un máximo normalizado de 0.0029 (Tabla \ref{tab:rangos_normalizados}). Sobre esa partición, el MSE de una predicción cercana a cero es mínimo. Por ello, la distancia entre ambas curvas no sirve por sí sola como indicador de sobreajuste. La pérdida de entrenamiento se estabiliza en torno a 0.006 (RMSE aproximado de 0.077), lo que indica que la red no ajusta por completo los eventos sintéticos ni siquiera en la partición que ve durante el entrenamiento.
+
+La Figura \ref{fig:lstm_primario_curva_split} separa ambas curvas en ejes independientes. En el panel de validación se observa una dinámica del orden de $10^{-4}$: el mínimo se alcanza en la época 1 (línea vertical discontinua) y, a partir de la época 2, la pérdida aumenta hacia $4.0 \times 10^{-4}$. La detención temprana identifica ese deterioro y restaura los pesos de la época 1.
+% VERIFICAR: con paciencia 10, detenerse en la época 16 implica un mejor modelo en la época 6, no en la 1.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{lstm_primario_curva_aprendizaje1.png}
+    \caption{Curva de aprendizaje en ejes independientes. Se aprecia la dinámica de validación en el orden de $10^{-4}$ y el punto de corte de la detención temprana.}
+    \label{fig:lstm_primario_curva_split}
+\end{figure}
+
+La Figura \ref{fig:lstm_primario_curva_log} unifica ambas curvas en escala logarítmica. Confirma una brecha de aproximadamente dos órdenes de magnitud entre entrenamiento ($\sim 10^{-2}$) y validación ($\sim 10^{-4}$), y muestra que ninguna de las curvas diverge a lo largo del entrenamiento.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_curva_aprendizaje_log.png}
+    \caption{Curva de aprendizaje de la red LSTM en escala logarítmica, \textit{dataset} primario.}
+    \label{fig:lstm_primario_curva_log}
+\end{figure}
+
+\subsection*{Fase piloto: regresión}
+
+La Tabla \ref{tab:resultados_lstm_regresion} presenta las métricas sobre MAWI, en escala normalizada.
 
 \begin{table}[H]
     \centering
@@ -3035,19 +2693,50 @@ Como se documentó en la Sección \ref{sec:lstm_desarrollo}, la arquitectura emp
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} & \textbf{MAPE} \\
         \hline
-        Validación (piloto, MAWI) & 0.0860 & 0.0664 & 11.53\,\% \\
-        Prueba (piloto, MAWI) & 0.0891 & 0.0690 & 11.00\,\% \\
+        Validación & 0.0860 & 0.0664 & 11.53\,\% \\
+        Prueba & 0.0891 & 0.0690 & 11.00\,\% \\
         \hline
     \end{tabular}
-    \caption{Recapitulación: métricas de regresión de LSTM (escala normalizada), fase piloto (Sección \ref{sec:lstm_desarrollo}).}
-    \label{tab:recap_lstm_piloto}
+    \caption{Métricas de regresión de LSTM (escala normalizada), \textit{dataset} piloto MAWI.}
+    \label{tab:resultados_lstm_regresion}
 \end{table}
 
-Al igual que con los modelos anteriores, la formulación de clasificación binarizada no pudo evaluarse formalmente durante la fase piloto, dada la ausencia de eventos de congestión naturales en el subconjunto de MAWI empleado (Sección \ref{sec:obtencion_exploracion}).
+El error es estable entre validación y prueba: el RMSE aumenta un 3.6\,\% y el MAPE incluso baja de 11.53\,\% a 11.00\,\%. A diferencia de \textit{Random Forest}, cuyo MAPE pasó de 12.83\,\% a 16.26\,\% (Sección \ref{sec:resultados_rf}), la red no se degrada en la partición de prueba. Respecto al ensamble, el RMSE de prueba baja un 32\,\% (de 0.1311 a 0.0891, ambos normalizados). Frente a ARIMA, que opera en escala original, la comparación exige reescalar: $0.0891 \times 0.306 \approx 0.027$, un valor del mismo orden que el 0.0282 de ARIMA, mientras que el MAPE de ARIMA (10.80\,\%) es ligeramente menor que el de LSTM (11.00\,\%). En regresión sobre el piloto, la red es comparable a la línea base estadística y mejor que el ensamble de árboles.
 
-\subsection*{Resultados de regresión sobre el \textit{dataset} primario}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_prediccion_vs_real.png}
+    \caption{LSTM: predicción frente al valor real, partición de prueba del piloto MAWI (escala normalizada).}
+    \label{fig:lstm_prediccion}
+\end{figure}
 
-Se esperaba analíticamente que la arquitectura recurrente ---al procesar la secuencia temporal completa y mantener un estado interno, en lugar de depender de rezagos aislados o promedios estáticos--- ofreciera el mejor desempeño de regresión continua, dada su superior capacidad de representación topológica (Sección \ref{sec:modelos_justificacion}). La red LSTM se reentrenó con idéntica configuración estructural sobre las 46\,582 secuencias del \textit{dataset} primario, convergiendo de manera estable en la época 16. La Tabla \ref{tab:recap_lstm_primario_regresion} presenta los resultados consolidados.
+La señal real de la Figura \ref{fig:lstm_prediccion} es la misma que la evaluada con \textit{Random Forest}, en escala normalizada; su aspecto distinto de las gráficas de ARIMA se debe a que este operó sobre la métrica sin escalar. La predicción de la red (línea púrpura discontinua) suaviza las oscilaciones de corto plazo y traza la tendencia, como ARIMA. Además, acompaña la caída profunda del final de la serie (cerca de la observación 330), donde el ensamble de árboles se quedaba en un piso. Esa caída está dentro del rango de entrenamiento, por lo que no se trata de extrapolación propiamente dicha, sino de una mejor respuesta a valores poco frecuentes.
+
+\subsection*{Fase piloto: clasificación}
+
+Con el umbral oficial $U_{th}=0.80$ la clasificación no es evaluable en MAWI (Sección \ref{sec:obtencion_exploracion}), por lo que se usó el umbral relativo de prueba $U_{test} \geq 0.25$. La Tabla \ref{tab:resultados_lstm_clasificacion} presenta el desempeño sobre la partición de prueba.
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|}
+        \hline
+        \textbf{Métrica ($U_{test} \geq 0.25$)} & \textbf{Prueba} \\
+        \hline
+        Precisión & 81.2\,\% \\
+        \textit{Recall} & 79.4\,\% \\
+        \textit{F1-score} & 80.3\,\% \\
+        \textbf{Tiempo de Anticipación Efectivo (TAE) promedio} & \textbf{3.9 minutos} \\
+        \hline
+    \end{tabular}
+    \caption{Clasificación y alertamiento (TAE) de LSTM, fase piloto.}
+    \label{tab:resultados_lstm_clasificacion}
+\end{table}
+
+Cuatro de cada cinco alertas corresponden a un evento real (precisión de 81.2\,\%) y el modelo detecta también cuatro de cada cinco eventos (\textit{recall} de 79.4\,\%). Respecto a ARIMA, el \textit{recall} sube 37.9 puntos porcentuales (de 41.5\,\% a 79.4\,\%) y, respecto a \textit{Random Forest}, 11.1 (de 68.3\,\%). El $TAE$ de 3.9 minutos equivale al 78\,\% del horizonte objetivo de 5 minutos, frente a 2.8 minutos del ensamble y 1.2 de ARIMA. En el piloto, y con un umbral bajo, la red es el mejor detector de los tres. Estas cifras validan el \textit{pipeline}, pero no son comparables con las del \textit{dataset} primario, que usan otro umbral y otros datos.
+
+\subsection*{\textit{Dataset} primario: regresión}
+
+La Tabla \ref{tab:lstm_primario_regresion} presenta las métricas sobre las particiones reales, en escala normalizada.
 
 \begin{table}[H]
     \centering
@@ -3055,45 +2744,44 @@ Se esperaba analíticamente que la arquitectura recurrente ---al procesar la sec
         \hline
         \textbf{Conjunto} & \textbf{RMSE} & \textbf{MAE} \\
         \hline
-        Validación (primario, real) & 0.000131 & 0.000019 \\
-        Prueba (primario, real) & 0.001036 & 0.000125 \\
+        Validación (real) & 0.000131 & 0.000019 \\
+        Prueba (real) & 0.001036 & 0.000125 \\
         \hline
     \end{tabular}
-    \caption{Métricas de regresión de LSTM sobre el \textit{dataset} primario (escala normalizada).}
-    \label{tab:recap_lstm_primario_regresion}
+    \caption{Métricas de regresión de LSTM, \textit{dataset} primario (escala normalizada).}
+    \label{tab:lstm_primario_regresion}
 \end{table}
 
-La evidencia empírica confirma esta hipótesis de manera categórica: el RMSE de prueba obtenido por la red neuronal (0.001036) resulta ser prácticamente \textbf{dos órdenes de magnitud inferior} a las marcas establecidas por ARIMA (0.0459, Sección \ref{sec:resultados_arima}) y \textit{Random Forest} (0.0496, Sección \ref{sec:resultados_rf}) sobre este mismo conjunto. 
-
-La Figura \ref{fig:lstm_sintesis_rmse} sitúa este desempeño en el contexto de los cuatro escenarios de evaluación de regresión a los que fue sometida la red. Dada la monumental reducción del error frente a los modelos clásicos y la brecha entre las distintas fases experimentales, resultó matemáticamente imperativo graficar el eje de las ordenadas en \textbf{escala logarítmica}; en una representación lineal estándar, las barras de regresión del \textit{dataset} primario habrían colapsado visualmente a cero.
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\textwidth]{lstm_sintesis_rmse.png}
-    \caption{Síntesis comparativa del RMSE de regresión de LSTM a través de los contextos de evaluación. La escala logarítmica ilustra la reducción masiva del error (magnitud $10^{-3}$) al transicionar al \textit{dataset} primario.}
-    \label{fig:lstm_sintesis_rmse}
-\end{figure}
-
-Este gráfico consagra la excepcional adaptabilidad de la topología recurrente. Mientras que ARIMA y \textit{Random Forest} sufrieron severas descompensaciones (sesgo de sobreestimación e hipersensibilidad, respectivamente) al enfrentar la asimetría del \textit{dataset} primario, la LSTM logró anclar su predicción al estado basal estricto del canal. Su estado celular (\textit{cell state}) le permitió retener el contexto a largo plazo de que la red operaba en un régimen de hiper-letargo, ignorando el ruido estocástico y logrando niveles microscópicos de error (en el orden de $10^{-3}$ y $10^{-4}$) inalcanzables para la estadística tradicional y los ensambles de decisión.
-Las Figuras \ref{fig:recap_lstm_regresion_val} y \ref{fig:recap_lstm_regresion_test} contrastan visualmente las predicciones del modelo contra los valores reales observados, demostrando un ajuste casi perfecto sobre la tendencia de bajo tráfico.
+El RMSE de prueba (0.001036) es unas 44 veces menor que el de ARIMA (0.0459) y unas 48 veces menor que el de \textit{Random Forest} (0.0496) sobre las mismas particiones, y el MAE (0.000125) es unas 120 veces menor que el de ARIMA (0.0151). Como el rango de entrenamiento es cercano a $[0,1]$, la escala normalizada es aproximadamente equivalente a la original, de modo que la comparación es razonable. El error crece entre validación y prueba (el RMSE se multiplica por 7.9 y el MAE por 6.6), y la relación RMSE/MAE (6.9 en validación y 8.3 en prueba) indica que el error se concentra en pocas desviaciones grandes, no en un desajuste generalizado.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_val.png}
-    \caption{LSTM: predicción vs. valor real, validación de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:recap_lstm_regresion_val}
+    \caption{LSTM: predicción frente al valor real, validación de regresión (\textit{dataset} primario, datos reales).}
+    \label{fig:lstm_primario_regresion_val}
 \end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_regresion_test.png}
-    \caption{LSTM: predicción vs. valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
-    \label{fig:recap_lstm_regresion_test}
+    \caption{LSTM: predicción frente al valor real, prueba de regresión (\textit{dataset} primario, datos reales).}
+    \label{fig:lstm_primario_regresion_test}
 \end{figure}
 
-\subsection*{Resultados de clasificación sobre datos sintéticos aislados}
+En validación (Figura \ref{fig:lstm_primario_regresion_val}), la predicción se mantiene anclada al cero real, con perturbaciones que no superan 0.006. En prueba (Figura \ref{fig:lstm_primario_regresion_test}) la red también reacciona ante algunas micro-fluctuaciones y genera picos transitorios, pero su magnitud máxima es de aproximadamente 0.03, unas 23 veces menor que los picos de 0.7 de \textit{Random Forest} sobre el mismo conjunto. Esos picos siguen siendo el doble de la utilización real máxima observada (0.0144) y explican el aumento del error en prueba. El sesgo de sobreestimación que afectó a ARIMA no aparece: la predicción base se adhiere a la señal real, con una oscilación leve hacia valores negativos, esperable en una capa de salida lineal sin restricción de rango.
 
-Dada la apabullante superioridad observada en la tarea de regresión continua, se esperaba ---de manera intuitiva--- que LSTM ofreciera también el mejor desempeño de clasificación temprana entre los tres modelos. La Tabla \ref{tab:recap_lstm_primario_clasificacion} presenta los resultados observados, y la Figura \ref{fig:lstm_sintesis_clasificacion} los compara entre validación y prueba.
+La Figura \ref{fig:lstm_sintesis_rmse} muestra el RMSE de regresión de la red en los cuatro contextos de evaluación, en escala logarítmica, porque los errores del \textit{dataset} primario (del orden de $10^{-3}$ y $10^{-4}$) quedarían indistinguibles del cero en escala lineal junto a los del piloto (del orden de $10^{-1}$). La diferencia entre ambos conjuntos no debe leerse como una mejora de la red, porque son series distintas: el tráfico real del primario es casi nulo (máximo de 1.44\,\%), y cualquier predicción cercana a cero produce errores absolutos pequeños.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_sintesis_rmse.png}
+    \caption{RMSE de regresión de LSTM en los contextos de evaluación (escala logarítmica).}
+    \label{fig:lstm_sintesis_rmse}
+\end{figure}
+
+\subsection*{\textit{Dataset} primario: clasificación}
+
+La Tabla \ref{tab:lstm_primario_clasificacion} presenta las métricas de clasificación sobre las particiones sintéticas aisladas, con $U_{th}=0.80$ (en escala normalizada).
 
 \begin{table}[H]
     \centering
@@ -3108,50 +2796,90 @@ Dada la apabullante superioridad observada en la tarea de regresión continua, s
         AUC-ROC & 0.8783 & 0.9000 \\
         \hline
     \end{tabular}
-    \caption{Métricas de clasificación de LSTM, umbralizado en $U_{th}=0.80$, datos sintéticos aislados.}
-    \label{tab:recap_lstm_primario_clasificacion}
+    \caption{Métricas de clasificación de LSTM, $U_{th}=0.80$, datos sintéticos aislados.}
+    \label{tab:lstm_primario_clasificacion}
 \end{table}
+
+El patrón es estable entre ambas particiones. Como en los otros modelos, la exactitud (0.975) tiene poco valor informativo por el desbalance de clases, pues los casos de congestión son cerca del 2.6\,\% de las observaciones. La precisión es aceptable (0.78) y el \textit{recall}, muy bajo (0.051), lo que da un \textit{F1-score} de 0.096. Frente a ARIMA (0.0185), el \textit{recall} es unas 2.8 veces mayor, aunque en términos absolutos sigue siendo muy bajo, y frente a \textit{Random Forest} (0.2982) es unas seis veces menor. El AUC-ROC de 0.90 es alto y casi igual al de los otros dos modelos (0.89 en ARIMA y 0.92 en \textit{Random Forest}).
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{lstm_sintesis_clasificacion.png}
-    \caption{Comparación de métricas de clasificación, validación vs. prueba, LSTM sobre el \textit{dataset} primario.}
+    \caption{Comparación de métricas de clasificación, validación frente a prueba, LSTM sobre el \textit{dataset} primario.}
     \label{fig:lstm_sintesis_clasificacion}
 \end{figure}
 
-Contrario a la expectativa planteada, los resultados observados no confirman la superioridad de LSTM en esta tarea: su \textit{Recall} de prueba (5.09\,\%) resulta dramáticamente inferior al de \textit{Random Forest} (29.82\,\%, Sección \ref{sec:resultados_rf}), aunque ligeramente superior al de ARIMA (1.85\,\%, Sección \ref{sec:resultados_arima}). La Ecuación \ref{eq:recap_confusion_lstm} reproduce la matriz de confusión del conjunto de prueba: de los 275 eventos de congestión reales, LSTM detectó correctamente apenas 14.
+La Figura \ref{fig:lstm_sintesis_clasificacion} confirma el patrón: exactitud y AUC-ROC altos, y \textit{recall} y \textit{F1-score} cercanos a cero en ambas particiones. La Ecuación \ref{eq:confusion_lstm} presenta la matriz de confusión sobre la partición de prueba.
 
 \begin{equation}
-    \begin{pmatrix} \mbox{VN}=10\,314 & \mbox{FP}=4 \\ \mbox{FN}=261 & \mbox{VP}=14 \end{pmatrix}
-    \label{eq:recap_confusion_lstm}
+    \begin{pmatrix} \text{VN}=10\,314 & \text{FP}=4 \\ \text{FN}=261 & \text{VP}=14 \end{pmatrix}
+    \label{eq:confusion_lstm}
 \end{equation}
 
-La Figura \ref{fig:recap_lstm_clasificacion} ilustra las predicciones del modelo sobre este conjunto, donde es evidente la resistencia de la red a cruzar el umbral de alerta.
+Sus componentes se interpretan así:
+\begin{itemize}
+    \item \textbf{Verdaderos negativos (VN=10\,314):} el modelo reconoce correctamente el tráfico normal, coherente con su buen ajuste del régimen ocioso en regresión.
+    \item \textbf{Falsos positivos (FP=4):} la tasa de falsas alarmas es de 0.04\,\% de las observaciones normales, y la precisión es de 77.78\,\% (14 de 18 alertas fueron correctas).
+    \item \textbf{Verdaderos positivos (VP=14):} de 275 instantes de congestión, se detectaron 14. Es mucho menos que los 82 de \textit{Random Forest}, aunque más que el único acierto de ARIMA.
+    \item \textbf{Falsos negativos (FN=261):} el 94.9\,\% de los instantes de congestión pasa sin alerta.
+\end{itemize}
+
+En términos operativos, la red emitió solo 18 alertas en toda la partición. Es un detector casi silencioso: confiable cuando alerta, pero que no avisa en la gran mayoría de las congestiones.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_val.png}
+    \caption{LSTM: predicción frente al valor real y umbral $U_{th}=0.80$, validación de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \label{fig:lstm_primario_clasificacion_val}
+\end{figure}
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\textwidth]{lstm_primario_clasificacion_test.png}
-    \caption{LSTM: predicción, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
-    \label{fig:recap_lstm_clasificacion}
+    \caption{LSTM: predicción frente al valor real y umbral $U_{th}=0.80$, prueba de clasificación (\textit{dataset} primario, datos sintéticos aislados).}
+    \label{fig:lstm_primario_clasificacion_test}
 \end{figure}
 
-La Figura \ref{fig:comparativa_recall} sitúa este resultado en el contexto de los tres modelos evaluados sobre la misma tarea, anticipando la comparativa integral de la Sección 6.4.
+Las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test} muestran el origen de los falsos negativos. La predicción (línea púrpura discontinua) reacciona ante las anomalías inyectadas y asciende de forma sincronizada con las crisis, pero con magnitud amortiguada: muchos picos se quedan justo por debajo de la línea de alerta (0.80), y solo 14 la cruzan. El patrón es el mismo en validación y en prueba.
+
+La Figura \ref{fig:comparativa_recall} sitúa este resultado frente a los otros dos modelos sobre la misma tarea, y la comparativa completa se desarrolla en la Sección 6.4. La comparación es indicativa, no estricta, porque las matrices de confusión de los modelos no se calcularon sobre el mismo número de observaciones.
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.7\textwidth]{comparativa_recall_tres_modelos.png}
-    \caption{\textit{Recall} de clasificación (prueba) de los tres modelos evaluados sobre el \textit{dataset} primario.}
+    \caption{\textit{Recall} de clasificación (prueba) de los tres modelos sobre el \textit{dataset} primario.}
     \label{fig:comparativa_recall}
 \end{figure}
 
-\subsection*{Imposibilidad de la validación de generalización}
+\subsection*{Piloto frente a \textit{dataset} primario}
 
-De manera análoga a \textit{Random Forest}, LSTM no pudo someterse a la validación de generalización frente a MAWI reagregado a la granularidad oficial de 1 minuto. La causa es igualmente estructural: la ventana de entrada de la red, establecida en $w=30$ pasos temporales (Sección \ref{sec:preprocesamiento}), no puede construirse a partir de una traza de MAWI cuya duración total captura apenas 15 minutos continuos por día. A diferencia de ARIMA ---que opera directamente sobre la serie temporal continua sin requerir una ventana 
-de longitud fija simultánea---, la arquitectura recurrente exige, por diseño tensorial, contar con al menos 30 observaciones consecutivas para generar una sola predicción, condición que ninguna traza individual de MAWI satisface bajo los parámetros del \textit{dataset} primario. Esta limitación se retoma con mayor profundidad en la Sección 6.5.
+La Tabla \ref{tab:comparativa_lstm_piloto_primario} resume la comparación de la red entre ambas fases.
 
-\subsection*{Síntesis completa de los resultados de LSTM}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|r|r|}
+        \hline
+        \textbf{Métrica (prueba)} & \textbf{Piloto (MAWI)} & \textbf{Primario} \\
+        \hline
+        Secuencias de entrenamiento & 1\,044 & 46\,582 \\
+        Épocas hasta la detención & 12 & 16 \\
+        RMSE (regresión, normalizado) & 0.0891 & 0.001036 \\
+        \textit{Recall} (clasificación) & 79.4\,\% ($U_{test}=0.25$) & 5.1\,\% ($U_{th}=0.80$) \\
+        \textit{F1-score} (clasificación) & 80.3\,\% ($U_{test}=0.25$) & 9.6\,\% ($U_{th}=0.80$) \\
+        AUC-ROC (clasificación) & N/A & 0.9000 \\
+        \hline
+    \end{tabular}
+    \caption{Comparación de LSTM entre la fase piloto y el \textit{dataset} primario. Los RMSE corresponden a series distintas y las métricas de clasificación usan umbrales distintos, por lo que no son directamente comparables. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}).}
+    \label{tab:comparativa_lstm_piloto_primario}
+\end{table}
 
-La Tabla \ref{tab:sintesis_completa_lstm} consolida la totalidad de los resultados de esta sección.
+\subsection*{Validación de generalización no realizada}
+
+Como \textit{Random Forest}, la red no pudo evaluarse sobre MAWI reagregado a la granularidad oficial de 1 minuto. Su ventana de entrada es de $w=30$ pasos (Sección \ref{sec:preprocesamiento}) y exige al menos 30 observaciones consecutivas para generar una predicción, mientras que cada traza de MAWI aporta solo 15 minutos continuos (Sección \ref{sec:obtencion_exploracion}). ARIMA, en cambio, opera sobre la serie continua sin requerir una ventana fija, y por eso sí pudo evaluarse. Acortar la ventana alteraría la configuración validada y haría injusta cualquier comparación, por lo que esta validación se reporta como no realizada.
+
+\subsection*{Síntesis de los resultados de LSTM}
+
+La Tabla \ref{tab:sintesis_completa_lstm} reúne las métricas de todos los contextos de evaluación.
 
 \begin{table}[H]
     \centering
@@ -3160,30 +2888,41 @@ La Tabla \ref{tab:sintesis_completa_lstm} consolida la totalidad de los resultad
         \hline
         \textbf{Contexto} & \textbf{Naturaleza de los datos} & \textbf{RMSE} & \textbf{\textit{Recall}} & \textbf{AUC-ROC} \\
         \hline
-        Piloto --- validación & 100\,\% Real (MAWI) & 0.0860 & N/A & N/A \\
-        Piloto --- prueba & 100\,\% Real (MAWI) & 0.0891 & N/A & N/A \\
-        Primario --- regresión (val.) & 100\,\% Real (Infraestructura) & 0.000131 & --- & --- \\
-        Primario --- regresión (prueba) & 100\,\% Real (Infraestructura) & 0.001036 & --- & --- \\
-        Primario --- clasificación (val.) & 100\,\% Sintético & --- & 0.0563 & 0.8783 \\
-        Primario --- clasificación (prueba) & 100\,\% Sintético & --- & 0.0509 & 0.9000 \\
-        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural, ver texto)} \\
+        Piloto --- validación & 100\,\% real (MAWI) & 0.0860 & N/A & N/A \\
+        Piloto --- prueba & 100\,\% real (MAWI) & 0.0891 & N/A & N/A \\
+        Primario --- regresión (val.) & 100\,\% real & 0.000131 & --- & --- \\
+        Primario --- regresión (prueba) & 100\,\% real & 0.001036 & --- & --- \\
+        Primario --- clasificación (val.) & 100\,\% sintético & --- & 0.0563 & 0.8783 \\
+        Primario --- clasificación (prueba) & 100\,\% sintético & --- & 0.0509 & 0.9000 \\
+        Generalización --- MAWI (oficial) & \multicolumn{4}{c|}{No evaluable (incompatibilidad estructural)} \\
         \hline
     \end{tabular}
-    \caption{Síntesis completa de los resultados de LSTM a través de todos los contextos de evaluación.}
+    \caption{Síntesis de los resultados de LSTM. N/A: no aplicable con el umbral oficial (Sección \ref{sec:obtencion_exploracion}). Los RMSE están en escala normalizada.}
     \label{tab:sintesis_completa_lstm}
 \end{table}
 
 \subsection*{Discusión de los resultados de LSTM}
 
-Tres observaciones críticas se desprenden del conjunto de resultados presentados en esta sección. Primera, la superioridad de LSTM en la tarea de regresión es contundente y consistente entre validación y prueba, confirmando la expectativa teórica planteada en el diseño metodológico: al procesar la secuencia completa de entrada en lugar de depender de una media incondicional (ARIMA) o de particiones discretas del espacio de variables (\textit{Random Forest}), la red logra reconocer con asombrosa precisión el patrón de bajo tráfico 
-característico del régimen real de la infraestructura estudiada.
+\textbf{Regresión.} Sobre el \textit{dataset} primario, la red obtiene el menor error de los tres modelos, con una diferencia de dos órdenes de magnitud en el MAE y de más de uno en el RMSE. Esa ventaja debe leerse con cautela. El tráfico real es casi nulo (media de $2.2 \times 10^{-5}$ y desviación estándar de $3.5 \times 10^{-4}$ en fracción, Tabla \ref{tab:estadisticas_real}), de modo que cualquier predicción pegada a cero tiene un error pequeño. ARIMA y \textit{Random Forest} quedan muy por detrás sobre todo porque presentan sesgo de sobreestimación y picos espurios, respectivamente, no porque la red capte una dinámica que los otros ignoran. Para sustentar una ventaja predictiva real habría que compararla con una línea base ingenua (por ejemplo, repetir el último valor o predecir la media), que no se evaluó en este trabajo. De hecho, el RMSE de prueba (0.001036) es aproximadamente tres veces la desviación estándar de toda la serie real, lo que muestra el peso de los pocos picos espurios, aunque la red los limita mucho más que los otros modelos. Una explicación plausible es que el estado interno de la red atenúa las fluctuaciones aisladas, pero con estos datos no puede demostrarse.
 
-Segunda, y de manera analíticamente notable, esta misma superioridad no se traduce en la tarea de clasificación binarizada, donde LSTM se ubica en un desempeño intermedio entre ARIMA y \textit{Random Forest} (Figura \ref{fig:comparativa_recall}). Este resultado, aparentemente contraintuitivo, resulta matemáticamente congruente con la función de pérdida empleada durante el entrenamiento: al minimizar el Error Cuadrático Medio (MSE) sobre un conjunto de entrenamiento dominado abrumadoramente por observaciones de bajo tráfico 
-(el 97.9\,\% de las observaciones se encuentra por debajo de $U_{th}$, Sección \ref{sec:obtencion_exploracion}), la red aprende a priorizar la reducción del error sobre el régimen mayoritario. Como consecuencia, el modelo produce predicciones altamente conservadoras que penalizan y difuminan la detección de los eventos infrecuentes de congestión. En otras palabras, el objetivo matemático de minimizar el RMSE global y el objetivo operativo de maximizar el \textit{Recall} de un evento anómalo y minoritario no están alineados; 
-esta tesis aporta evidencia empírica directa de dicha tensión topológica.
+\textbf{Piloto.} En el piloto la red es comparable a ARIMA en regresión (RMSE reescalado de 0.027 frente a 0.0282, y MAPE de 11.00\,\% frente a 10.80\,\%) y mejor que \textit{Random Forest}. Su mayor fortaleza está en la clasificación con umbral bajo: \textit{recall} de 79.4\,\% y $TAE$ de 3.9 minutos, el mejor de los tres modelos. Estas cifras, sin embargo, se obtienen con $U_{test}=0.25$ sobre otra serie, y no anticipan el comportamiento con el umbral oficial.
 
-Tercera, la imposibilidad de evaluar la generalización de LSTM frente a MAWI ---idéntica en su causa estructural a la de \textit{Random Forest}--- confirma que esta limitación no es un defecto específico de un algoritmo en particular, sino una consecuencia sistémica directa de la elección de los parámetros de ventana temporal (diseñados para capturar la dinámica de 30 minutos) frente a la fragmentación inherente de fuentes de datos externas. Este hallazgo, junto con los de las Secciones \ref{sec:resultados_arima} y 
-\ref{sec:resultados_rf}, se integra en la comparativa transversal de la Sección 6.4 y conformará el núcleo de las recomendaciones metodológicas en la Sección 6.5.
+\textbf{Clasificación en el primario.} El resultado contrasta con el piloto: el \textit{recall} cae a 5.1\,\%, menor que el del ensamble de árboles. Varias causas, no excluyentes, podrían explicarlo. La primera es la función de pérdida: al minimizar el MSE sobre un entrenamiento con el 97.9\,\% de las observaciones por debajo del umbral (Sección \ref{sec:obtencion_exploracion}), el error global se reduce sobre todo prediciendo bien el régimen mayoritario, y la curva de entrenamiento, que se estabiliza en 0.006, sugiere que los eventos quedan ajustados solo en parte. La segunda es el criterio de detención temprana, que se guía por la validación de regresión (100\,\% tráfico real ocioso): conserva los pesos que mejor predicen el tráfico ocioso, no los que mejor detectan congestión, y la curva sugiere que esos pesos son los de una etapa muy temprana del entrenamiento. La tercera es la distancia entre la magnitud predicha y el umbral fijo de 0.80, evidente en las Figuras \ref{fig:lstm_primario_clasificacion_val} y \ref{fig:lstm_primario_clasificacion_test}. Con los experimentos realizados no se puede aislar cuánto aporta cada una.
+
+\textbf{Umbral frente a señal.} El AUC-ROC de la red (0.90) es casi idéntico al de ARIMA (0.89) y al de \textit{Random Forest} (0.92), a pesar de que sus \textit{recall} difieren en más de un orden de magnitud. Esto indica que las tres predicciones continuas ordenan de forma parecida los instantes de congestión por encima de los normales, y que la diferencia en \textit{recall} proviene sobre todo de la amplitud de las predicciones frente al umbral fijo. Por tanto, la calibración del umbral sobre la partición de validación, o una función de pérdida que pondere los eventos, son vías para mejorar la detección que este trabajo no exploró. Con un desbalance tan fuerte, convendría además complementar el AUC-ROC con una curva precisión-\textit{recall}.
+
+\textbf{Generalización.} La imposibilidad de evaluar la red sobre MAWI, igual que en \textit{Random Forest}, tiene origen en la ventana de entrada de 30 pasos frente a trazas de 15 minutos. Es una consecuencia de la configuración elegida y no una propiedad de los algoritmos, pero limita la comparación con ARIMA, que fue el único modelo evaluable en este escenario.
+
+\textbf{Alcance.} En conjunto, la red ajusta mejor que los otros modelos el tráfico real ocioso, con picos espurios muy acotados, pero con el umbral oficial detecta menos congestión que \textit{Random Forest}. Estas conclusiones se integran con las de los otros modelos en las Secciones 6.4 y 6.5.
+
+
+
+
+
+
+#de aqui pabajo falta redactar
+
+
 
 \section{Comparativa de modelos}
 \label{sec:comparativa_modelos}
